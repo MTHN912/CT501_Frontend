@@ -97,25 +97,25 @@
           </p>
         </div>
       </div>
-      <!-- OTP field (if visible) appears under Email -->
-      <div v-if="showOTP" class="form-group otp-group">
-        <input
-          type="text"
-          id="otp"
-          v-model="otp"
-          placeholder="Nhập mã OTP"
-          required
-        />
-        <button
-          type="button"
-          @click="resendOTP"
-          :disabled="isOTPSending || otpTimer > 0"
-          class="btn-resend-otp"
-        >
-          {{ otpTimer > 0 ? otpTimer : "Gửi lại" }}
-        </button>
-        <!-- Hiển thị lỗi cho OTP -->
-        <p v-if="errors.otp" class="error-message">{{ errors.otp }}</p>
+      <div v-if="showOTP" class="form-row full-width otp-group">
+        <div class="form-group full-width">
+          <input
+            type="text"
+            id="otp"
+            v-model="otp"
+            placeholder="Nhập mã OTP"
+            required
+          />
+          <button
+            type="button"
+            @click="resendOTP"
+            :disabled="isOTPSending || otpTimer > 0"
+            class="btn-resend-otp"
+          >
+            {{ otpTimer > 0 ? otpTimer : "Gửi lại" }}
+          </button>
+          <p v-if="errors.otp" class="error-message">{{ errors.otp }}</p>
+        </div>
       </div>
 
       <button type="submit" class="btn-submit">
@@ -537,14 +537,20 @@ const handleGoogleLogin = () => {
   font-size: 14px;
 }
 
+.full-width {
+  grid-column: span 2;
+}
+
 .otp-group {
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: space-between;
 }
 
 .otp-group input {
-  flex: 1;
+  flex-grow: 1;
+  margin-right: 10px;
 }
 
 .btn-resend-otp {
