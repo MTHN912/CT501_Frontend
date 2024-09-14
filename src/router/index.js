@@ -1,7 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-// import deleteCookie from "../utils/deleteCookie";
-// import getCookieValue from "../utils/getCookie";
-// import isTokenValid from "../utils/isTokenValid";
 import AboutView from "../views/About.vue";
 import ContactView from "../views/Contact.vue";
 import EventView from "../views/Event.vue";
@@ -10,6 +7,7 @@ import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
 import RegisterView from "../views/Register.vue";
 import ServicesView from "../views/Service.vue";
+
 const routes = [
   {
     path: "/",
@@ -45,12 +43,32 @@ const routes = [
     path: "/login",
     name: "login",
     component: LoginView,
+    beforeEnter: (to, from, next) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Nếu có token, chuyển hướng về trang chủ
+        next('/');
+      } else {
+        // Nếu không có token, cho phép vào trang login
+        next();
+      }
+    },
   },
   {
     path: "/register",
     name: "register",
     component: RegisterView,
-  }
+    beforeEnter: (to, from, next) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Nếu có token, chuyển hướng về trang chủ
+        next('/');
+      } else {
+        // Nếu không có token, cho phép vào trang register
+        next();
+      }
+    },
+  },
 ];
 
 const router = createRouter({
