@@ -35,6 +35,7 @@
     "vue-select": "file:3/dist/vue-select.css",
     "vue3-cookies": "^1.0.6",
     "vue3-select": "^0.1.2",
+    "vuex": "^4.1.0",
     "yup": "^1.4.0"
   },
   "devDependencies": {

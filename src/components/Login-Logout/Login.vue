@@ -3,12 +3,12 @@
     <!-- Tiêu đề Đăng nhập -->
     <h2 class="login-title">Đăng Nhập</h2>
 
-    <form @submit.prevent="handleSubmit" class="login-form">
+    <form @submit.prevent="login" class="login-form">
       <div class="form-group">
         <input
           type="text"
           id="username"
-          v-model="loginForm.username"
+          v-model="username"
           placeholder="Tên tài khoản"
           required
         />
@@ -18,12 +18,11 @@
         <input
           :type="isPasswordVisible ? 'text' : 'password'"
           id="password"
-          v-model="loginForm.password"
+          v-model="password"
           placeholder="Mật khẩu"
           required
         />
         <span class="toggle-password" @click="togglePasswordVisibility">
-          <!-- Biểu tượng toggle mật khẩu -->
           <font-awesome-icon :icon="isPasswordVisible ? 'eye-slash' : 'eye'" />
         </span>
       </div>
@@ -78,28 +77,36 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useStore } from "vuex";
 
-const loginForm = ref({
-  username: "",
-  password: "",
-});
-
-const isPasswordVisible = ref(false);
-
+const store = useStore();
+const username = ref("");
+const password = ref("");
+const showPassword = ref(false);
+const isModalVisible = ref(false);
+const userRole = ref(""); // Thêm biến này để lưu trữ vai trò của người dùng
 const router = useRouter();
 
-const handleSubmit = () => {
-  if (loginForm.value.username && loginForm.value.password) {
-    console.log("Tên đăng nhập:", loginForm.value.username);
-    console.log("Mật khẩu:", loginForm.value.password);
+const toggleShowPassword = () => {
+  showPassword.value = !showPassword.value;
+};
+
+const login = async () => {
+  const role = await store.dispatch("login", {
+    username: username.value,
+    password: password.value,
+  });
+  if (role === "admin") {
     router.push("/");
-  } else {
-    alert("Vui lòng nhập đầy đủ thông tin");
+  } else if (role === "staff") {
+    router.push("/");
+  } else if (role === "unauthorized") {
+    isModalVisible.value = true;
   }
 };
 
-const togglePasswordVisibility = () => {
-  isPasswordVisible.value = !isPasswordVisible.value;
+const handleCancel = () => {
+  isModalVisible.value = false;
 };
 
 const handleFacebookLogin = () => {
@@ -107,9 +114,16 @@ const handleFacebookLogin = () => {
   // Thêm logic đăng nhập qua Facebook
 };
 
-const handleGoogleLogin = () => {
-  console.log("Login with Google");
-  // Thêm logic đăng nhập qua Google
+const handleGoogleLogin = async () => {
+  const role = await store.dispatch("googleLogin");
+
+  if (role === "admin") {
+    router.push("/");
+  } else if (role === "staff") {
+    router.push("/");
+  } else if (role === "unauthorized") {
+    isModalVisible.value = true;
+  }
 };
 </script>
 

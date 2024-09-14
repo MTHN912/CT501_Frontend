@@ -7,9 +7,9 @@
         alt="Promo"
         class="promo-image"
       />
-      <h2 class="promo-title">9.9 Ngày Siêu Mua Sắm</h2>
+      <h2 class="promo-title">10/10 Ngày Siêu Mua Sắm</h2>
       <p class="promo-subtitle">
-        Săn voucher đến 50%, phí ship 0 đồng, cơ hội trúng 99 iPhone
+        Săn voucher đến 70%, phí ship 0 đồng, cơ hội trúng 99 iPhone
       </p>
     </div>
 

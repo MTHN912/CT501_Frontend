@@ -102,24 +102,9 @@
           >
             <i class="fas fa-search"></i>
           </button>
-          <!-- <div class="d-flex">
-            <router-link
-              to="/login"
-              class="btn btn-sm btn-outline-primary rounded-circle me-2"
-              active-class="active"
-            >
-              <i class="fas fa-user"></i>
-            </router-link>
-            <router-link
-              to="/register"
-              class="btn btn-sm btn-outline-primary rounded-circle"
-              active-class="active"
-            >
-              <i class="fas fa-user-plus"></i>
-            </router-link>
-          </div> -->
 
           <!-- Dropdown cho nút trên thiết bị nhỏ -->
+
           <div class="dropdown">
             <button
               class="btn btn-sm btn-outline-primary dropdown-toggle"
@@ -129,22 +114,42 @@
             >
               <i class="fas fa-user"></i>
             </button>
+
             <ul class="dropdown-menu dropdown-menu-end">
-              <li>
+              <!-- Hiển thị "Trang Quản Lý" nếu người dùng là admin -->
+              <li v-if="isLoggedIn && isAdmin">
+                <router-link
+                  to="/admin"
+                  class="dropdown-item"
+                  active-class="active"
+                >
+                  Trang Quản Lý
+                </router-link>
+              </li>
+
+              <!-- Hiển thị nút "Đăng Xuất" nếu đã đăng nhập -->
+              <li v-if="isLoggedIn">
+                <button @click="logout" class="dropdown-item">Đăng Xuất</button>
+              </li>
+
+              <!-- Hiển thị "Đăng Nhập" và "Đăng Ký" nếu chưa đăng nhập -->
+              <li v-else>
                 <router-link
                   to="/login"
                   class="dropdown-item"
                   active-class="active"
-                  >Đăng Nhập</router-link
                 >
+                  Đăng Nhập
+                </router-link>
               </li>
-              <li>
+              <li v-if="!isLoggedIn">
                 <router-link
                   to="/register"
                   class="dropdown-item"
                   active-class="active"
-                  >Đăng Ký</router-link
                 >
+                  Đăng Ký
+                </router-link>
               </li>
             </ul>
           </div>
@@ -155,8 +160,42 @@
 </template>
 
 <script>
+import { computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useStore } from "vuex";
+
 export default {
   name: "Navbar",
+  setup() {
+    const store = useStore();
+    const router = useRouter();
+
+    // Kiểm tra trạng thái đăng nhập từ Vuex store
+    const isLoggedIn = computed(() => store.getters.isLoggedIn);
+    const userInfo = computed(() => store.getters.userInfo);
+
+    const isAdmin = computed(() => userInfo.value?.ROLE?.IS_ADMIN);
+
+    // Hàm đăng xuất
+    const logout = () => {
+      localStorage.removeItem("token");
+      isLoggedIn.value = false;
+      router.push("/login");
+    };
+
+    // onMounted(() => {
+    //   if (!isLoggedIn.value) {
+    //     store.dispatch("checkToken");
+    //   }
+    // });
+
+    return {
+      isLoggedIn,
+      isAdmin,
+      logout,
+      userInfo,
+    };
+  },
 };
 </script>
 
