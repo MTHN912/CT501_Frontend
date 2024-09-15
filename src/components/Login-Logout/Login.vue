@@ -109,9 +109,16 @@ const handleCancel = () => {
   isModalVisible.value = false;
 };
 
-const handleFacebookLogin = () => {
-  console.log("Login with Facebook");
-  // Thêm logic đăng nhập qua Facebook
+const handleFacebookLogin = async () => {
+  const role = await store.dispatch("facebookLogin");
+
+  if (role === "admin") {
+    router.push("/");
+  } else if (role === "staff") {
+    router.push("/");
+  } else if (role === "unauthorized") {
+    isModalVisible.value = true;
+  }
 };
 
 const handleGoogleLogin = async () => {

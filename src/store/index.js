@@ -213,6 +213,21 @@ const store = createStore({
       }
     },
     
+    async facebookLogin({ commit, dispatch }) {
+      try {
+        // Bước 1: Gọi API để lấy URL OAuth từ backend và chuyển hướng người dùng đến Facebook
+        const response = await axios.get("http://localhost:3000/user/auth/facebook");
+        const authUrl = response.data.authUrl;
+        window.location.href = authUrl;
+
+        // Sau khi người dùng quay lại từ Facebook, xử lý token ở bước khác trong app, không cần xử lý ở đây nữa
+        
+      } catch (error) {
+        console.error("Facebook login failed:", error);
+        return "error";
+      }
+    },
+    
     async getUserInfo({ commit }) {
       try {
         console.log("Starting getUserInfo action");
