@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
+import CartView from "../views/Cart.vue";
+import DishDetail from "../components/Menu/DishDetail.vue";
 import AboutView from "../views/About.vue";
 import ContactView from "../views/Contact.vue";
 import EventView from "../views/Event.vue";
@@ -7,7 +9,6 @@ import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
 import RegisterView from "../views/Register.vue";
 import ServicesView from "../views/Service.vue";
-
 const routes = [
   {
     path: "/",
@@ -38,6 +39,18 @@ const routes = [
     path: "/contact",
     name: "contact",
     component: ContactView,
+  },
+  {
+    path: '/dish/:id',
+    name: 'DishDetail',
+    component: DishDetail,
+    props: true,
+  },
+  {
+    path: '/cart',
+    name: 'Cart',
+    component: CartView,
+    props: true,
   },
   {
     path: "/login",
