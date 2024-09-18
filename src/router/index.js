@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
-import CartView from "../views/Cart.vue";
 import DishDetail from "../components/Menu/DishDetail.vue";
+import ProfileView from "../views/Profile.vue";
 import AboutView from "../views/About.vue";
+import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
 import EventView from "../views/Event.vue";
 import HomeView from "../views/Home.vue";
@@ -50,6 +51,12 @@ const routes = [
     path: '/cart',
     name: 'Cart',
     component: CartView,
+    props: true,
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: ProfileView,
     props: true,
   },
   {

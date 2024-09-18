@@ -135,7 +135,23 @@
                 </router-link>
               </li>
               <li v-if="isLoggedIn">
-                <button @click="logout" class="dropdown-item">Đăng Xuất</button>
+                <!-- Thêm mục xem thông tin cá nhân -->
+                <router-link
+                  to="/profile"
+                  class="dropdown-item"
+                  active-class="active"
+                >
+                  Thông Tin Cá Nhân
+                </router-link>
+              </li>
+              <li v-if="isLoggedIn">
+                <button
+                  @click="logout"
+                  class="dropdown-item"
+                  active-class="active"
+                >
+                  Đăng Xuất
+                </button>
               </li>
               <li v-else>
                 <router-link
