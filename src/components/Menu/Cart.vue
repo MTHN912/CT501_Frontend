@@ -125,11 +125,10 @@ export default {
 
     async removeItem(dishId) {
       try {
-        const response = await axios.post(
-          "http://localhost:3000/cart/removeCart",
-          { dishId: dishId }
-        );
-        this.cart = response.data.cart;
+        await axios.post("http://localhost:3000/cart/removeCart", {
+          dishId: dishId,
+        });
+        await this.fetchCart();
       } catch (error) {
         console.error("Lỗi khi bỏ món:", error);
       }

@@ -24,6 +24,7 @@ const store = createStore({
     packages: [],
     deletedPackages: [],
     users: [],
+    cart: { items: [] },
   },
   mutations: {
     SET_USER_INFO(state, userInfo) {
@@ -36,6 +37,17 @@ const store = createStore({
     LOGOUT(state) {
       state.isLoggedIn = false;
       state.userInfo = null;
+    },
+    SET_CART(state, cart) {
+      state.cart = cart;
+    },
+    ADD_TO_CART(state, payload) {
+      const item = state.cart.items.find(item => item.dishId === payload.dishId);
+      if (item) {
+        item.quantity += payload.quantity;
+      } else {
+        state.cart.items.push(payload);
+      }
     },
     // Cập nhật danh sách các gói trong state
     SET_PACKAGES(state, packages) {
@@ -267,7 +279,7 @@ const store = createStore({
         throw error; // Re-throw the error for handling in components
       }
     },
-    logout({ commit }) {
+    async logout({ commit }) {
       console.log("Token before removal:", localStorage.getItem("token"));
       localStorage.removeItem("token");
       commit("LOGOUT");
@@ -294,7 +306,35 @@ const store = createStore({
         console.error("Error while checking token:", error);
         dispatch("logout");
       }
-    }
+    },
+    async addToCart({ commit }, { dishId, quantity }) {
+      try {
+        const response = await axios.post("http://localhost:3000/cart/addCart", {
+          dishId,
+          quantity
+        });
+        if (response.status === 200 || response.status === 201) {
+          commit("ADD_TO_CART", { dishId, quantity });
+          message.success(`Đã thêm ${quantity} món vào giỏ hàng`);
+          return response;
+        } else {
+          throw new Error("Failed to add to cart");
+        }
+      } catch (error) {
+        message.error("Lỗi khi thêm món vào giỏ hàng: " + error.message);
+        throw error;
+      }
+    },
+    async fetchCart({ commit }) {
+      try {
+        const response = await axios.get("http://localhost:3000/cart/getCart");
+        commit('SET_CART', response.data.cart);
+        return response; // Trả về Promise để có thể sử dụng .then() và .catch()
+      } catch (error) {
+        console.error("Lỗi khi tải giỏ hàng:", error);
+        throw error; // Ném lỗi để có thể bắt được trong component
+      }
+    },
     
   },
   getters: {
@@ -303,6 +343,7 @@ const store = createStore({
     packages: (state) => state.packages,
     deletedPackages: state => state.deletedPackages,
     editingMode: (state) => state.editingMode,
+    cartItems: (state) => state.cart.items,
   },
 });
 

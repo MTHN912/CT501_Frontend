@@ -95,6 +95,16 @@
               >Liên Hệ</router-link
             >
           </div>
+
+          <!-- Phần giỏ hàng luôn hiển thị -->
+          <div class="cart-summary">
+            <router-link to="/cart" class="nav-link cart-icon">
+              <i class="fas fa-shopping-cart"></i>
+              <span class="badge bg-primary">{{ cartTotalQuantity }}</span>
+            </router-link>
+          </div>
+
+          <!-- Nút tìm kiếm -->
           <button
             class="btn-search btn btn-primary btn-md-square me-4 rounded-circle d-none d-lg-inline-flex"
             data-bs-toggle="modal"
@@ -103,8 +113,7 @@
             <i class="fas fa-search"></i>
           </button>
 
-          <!-- Dropdown cho nút trên thiết bị nhỏ -->
-
+          <!-- Dropdown cho tài khoản người dùng -->
           <div class="dropdown">
             <button
               class="btn btn-sm btn-outline-primary dropdown-toggle"
@@ -116,7 +125,6 @@
             </button>
 
             <ul class="dropdown-menu dropdown-menu-end">
-              <!-- Hiển thị "Trang Quản Lý" nếu người dùng là admin -->
               <li v-if="isLoggedIn && isAdmin">
                 <router-link
                   to="/admin"
@@ -126,21 +134,17 @@
                   Trang Quản Lý
                 </router-link>
               </li>
-
-              <!-- Hiển thị nút "Đăng Xuất" nếu đã đăng nhập -->
               <li v-if="isLoggedIn">
                 <button @click="logout" class="dropdown-item">Đăng Xuất</button>
               </li>
-
-              <!-- Hiển thị "Đăng Nhập" và "Đăng Ký" nếu chưa đăng nhập -->
               <li v-else>
                 <router-link
                   to="/login"
                   class="dropdown-item"
                   active-class="active"
                 >
-                  Đăng Nhập
-                </router-link>
+                  Đăng Nhập</router-link
+                >
               </li>
               <li v-if="!isLoggedIn">
                 <router-link
@@ -148,8 +152,8 @@
                   class="dropdown-item"
                   active-class="active"
                 >
-                  Đăng Ký
-                </router-link>
+                  Đăng Ký</router-link
+                >
               </li>
             </ul>
           </div>
@@ -160,45 +164,93 @@
 </template>
 
 <script>
-import { computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useStore } from "vuex";
+import axios from "axios";
 
 export default {
   name: "Navbar",
-  setup() {
-    const store = useStore();
-    const router = useRouter();
-
-    // Kiểm tra trạng thái đăng nhập từ Vuex store
-    const isLoggedIn = computed(() => store.getters.isLoggedIn);
-    const userInfo = computed(() => store.getters.userInfo);
-
-    const isAdmin = computed(() => userInfo.value?.ROLE?.IS_ADMIN);
-
-    // Hàm đăng xuất
-    const logout = () => {
-      localStorage.removeItem("token");
-      isLoggedIn.value = false;
-      router.push("/login");
-    };
-
-    // onMounted(() => {
-    //   if (!isLoggedIn.value) {
-    //     store.dispatch("checkToken");
-    //   }
-    // });
-
+  data() {
     return {
-      isLoggedIn,
-      isAdmin,
-      logout,
-      userInfo,
+      cart: { items: [] },
     };
+  },
+  computed: {
+    // Tính tổng số lượng món trong giỏ hàng
+    cartTotalQuantity() {
+      return this.cart.items.reduce((total, item) => total + item.quantity, 0);
+    },
+    // Kiểm tra trạng thái đăng nhập
+    isLoggedIn() {
+      return this.$store.getters.isLoggedIn;
+    },
+    // Kiểm tra quyền admin của người dùng
+    isAdmin() {
+      const userInfo = this.$store.getters.userInfo;
+      return userInfo?.ROLE?.IS_ADMIN;
+    },
+    cartTotalQuantity() {
+      // Tính tổng số lượng sản phẩm trong giỏ từ Vuex store
+      return this.$store.state.cart.items.reduce(
+        (total, item) => total + item.quantity,
+        0
+      );
+    },
+    cart() {
+      return this.$store.state.cart;
+    },
+  },
+  methods: {
+    // Lấy dữ liệu giỏ hàng từ server
+    async fetchCart() {
+      try {
+        const response = await axios.get("http://localhost:3000/cart/getCart");
+        this.cart = response.data.cart;
+      } catch (error) {
+        console.error("Lỗi khi tải giỏ hàng:", error);
+      }
+    },
+    async logout() {
+      try {
+        await this.$store.dispatch("logout");
+        // Điều hướng đến trang đăng nhập sau khi đăng xuất thành công
+        this.$router.push("/login");
+      } catch (error) {
+        console.error("Lỗi khi đăng xuất:", error);
+      }
+    },
+  },
+
+  mounted() {
+    // Tải giỏ hàng khi component được mount
+    this.fetchCart();
+
+    // Tự động cập nhật giỏ hàng khi Vuex Store thay đổi
+    this.$store.watch(
+      (state) => state.cart, // Theo dõi sự thay đổi của giỏ hàng trong store
+      (newCart) => {
+        this.cart = newCart; // Cập nhật giỏ hàng trong component
+      }
+    );
   },
 };
 </script>
 
 <style scoped>
-/* Add your CSS styles here, if necessary */
+.cart-summary {
+  position: relative;
+}
+
+.cart-icon {
+  position: relative;
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.cart-icon .badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #ff6600;
+  color: white;
+}
 </style>

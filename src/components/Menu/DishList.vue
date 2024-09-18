@@ -90,7 +90,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "axios"; // Import axios
 
 export default {
   name: "DishList",
@@ -98,12 +98,12 @@ export default {
     return {
       selectedCategory: "Tất cả",
       showCategories: true,
-      categories: [], // Lấy từ API
-      dishes: [], // Lấy từ API
-      cart: { items: [] }, // Lưu giỏ hàng
+      categories: [], // Danh mục lấy từ API
+      dishes: [], // Danh sách món ăn lấy từ API
     };
   },
   computed: {
+    // Lọc món ăn dựa trên danh mục được chọn
     filteredDishes() {
       if (this.selectedCategory === "Tất cả") {
         return this.dishes;
@@ -112,59 +112,65 @@ export default {
         (dish) => dish.category === this.selectedCategory
       );
     },
+    // Tổng số lượng món trong giỏ hàng
     cartTotalQuantity() {
-      return this.cart.items.reduce((total, item) => total + item.quantity, 0);
+      return this.$store.state.cart.items.reduce(
+        (total, item) => total + item.quantity,
+        0
+      );
+    },
+    // Truy cập giỏ hàng từ store
+    cart() {
+      return this.$store.state.cart;
     },
   },
   methods: {
+    // Lọc món ăn theo danh mục
     filterByCategory(category) {
       this.selectedCategory = category;
     },
+    // Điều hướng đến trang chi tiết món ăn
     goToDetail(id) {
       this.$router.push({ name: "DishDetail", params: { id: id } });
     },
+    // Hiện/Ẩn danh sách danh mục
     toggleCategory() {
       this.showCategories = !this.showCategories;
     },
-
-    // Chọn món và thêm vào giỏ hàng
-    async selectDish(dish) {
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/cart/addCart",
-          {
-            dishId: dish._id,
-            quantity: dish.quantity,
-          }
-        );
-        this.cart = response.data.cart;
-        alert(`Đã thêm ${dish.quantity} món ${dish.name} vào giỏ hàng`);
-      } catch (error) {
-        console.error("Lỗi khi thêm món vào giỏ hàng:", error);
-      }
+    // Thêm món vào giỏ hàng thông qua store
+    selectDish(dish) {
+      this.$store
+        .dispatch("addToCart", {
+          dishId: dish._id,
+          quantity: dish.quantity || 1, // Số lượng mặc định là 1 nếu không có
+        })
+        .then(() => {
+          alert(`Bạn muốn thêm ${dish.quantity || 1} món ${dish.name} vào giỏ hàng`);
+        })
+        .catch((error) => {
+          console.error("Lỗi khi thêm món vào giỏ hàng:", error);
+        });
     },
-
-    // Lấy giỏ hàng từ server
-    async fetchCart() {
-      try {
-        const response = await axios.get("http://localhost:3000/cart/getCart");
-        this.cart = response.data.cart;
-      } catch (error) {
-        console.error("Lỗi khi tải giỏ hàng:", error);
-      }
+    // Lấy giỏ hàng từ store
+    fetchCart() {
+      this.$store
+        .dispatch("fetchCart")
+        .then(() => {
+          console.log("Giỏ hàng đã được tải thành công");
+        })
+        .catch((error) => {
+          console.error("Lỗi khi tải giỏ hàng:", error);
+        });
     },
-
-    // Điều hướng đến trang xem giỏ hàng
+    // Điều hướng đến trang giỏ hàng
     goToCart() {
       this.$router.push({ name: "Cart" });
     },
-
     // Yêu thích món ăn
     toggleFavorite(dish) {
       dish.favorite = !dish.favorite;
     },
-
-    // Phương thức gọi API lấy danh mục
+    // Gọi API để lấy danh mục món ăn
     async fetchCategories() {
       try {
         const response = await axios.get(
@@ -175,8 +181,7 @@ export default {
         console.error("Lỗi khi tải danh mục:", error);
       }
     },
-
-    // Phương thức gọi API lấy danh sách món ăn
+    // Gọi API để lấy danh sách món ăn
     async fetchDishes() {
       try {
         const response = await axios.get("http://localhost:3000/dish/getDish");
@@ -190,7 +195,7 @@ export default {
     // Gọi API khi component được mount
     this.fetchCategories();
     this.fetchDishes();
-    this.fetchCart();
+    this.fetchCart(); // Lấy giỏ hàng từ store khi component mount
   },
 };
 </script>
