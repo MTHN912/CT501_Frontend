@@ -335,7 +335,17 @@ const store = createStore({
         throw error; // Ném lỗi để có thể bắt được trong component
       }
     },
-    
+    async removeItem({ commit, dispatch }, dishId) {
+      try {
+        await axios.post("http://localhost:3000/cart/removeCart", {
+          dishId: dishId,
+        });
+        // Sau khi xóa món thành công, gọi lại hành động fetchCart để cập nhật giỏ hàng
+        await dispatch('fetchCart');
+      } catch (error) {
+        console.error("Lỗi khi bỏ món:", error);
+      }
+    },
   },
   getters: {
     isLoggedIn: (state) => state.isLoggedIn,

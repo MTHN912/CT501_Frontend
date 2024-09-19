@@ -39,7 +39,10 @@
               </p>
             </div>
             <img :src="item.dishImage" alt="dish image" class="dish-image" />
-            <button @click="removeItem(item.dishId)" class="remove-button">
+            <button
+              @click="handleRemoveItem(item.dishId)"
+              class="remove-button"
+            >
               Bỏ món
             </button>
           </div>
@@ -65,17 +68,18 @@
 </template>
 
 <script>
-import axios from "axios";
+import { mapActions, mapState } from "vuex";
 
 export default {
   name: "CartDetail",
   data() {
     return {
-      cart: null, // Ban đầu cart là null, sẽ được gán dữ liệu từ server sau khi tải xong
       isLoading: true, // Trạng thái đang tải dữ liệu
     };
   },
   computed: {
+    ...mapState(["cart"]), // Lấy giỏ hàng từ state trong store
+
     totalQuantity() {
       if (this.cart && this.cart.items) {
         return this.cart.items.reduce(
@@ -96,52 +100,34 @@ export default {
     },
   },
   methods: {
-    // Tăng số lượng: chỉ gửi số lượng +1 đến API addCart
+    ...mapActions(["fetchCart", "addToCart", "removeItem"]), // Liên kết các hành động từ store
+
     async increaseQuantity(item) {
       try {
-        await axios.post("http://localhost:3000/cart/addCart", {
-          dishId: item.dishId,
-          quantity: 1, // Mỗi lần chỉ tăng 1
-        });
-        await this.fetchCart(); // Sau khi tăng, cập nhật lại giỏ hàng
+        await this.addToCart({ dishId: item.dishId, quantity: 1 });
+        await this.fetchCart(); // Cập nhật lại giỏ hàng sau khi tăng số lượng
       } catch (error) {
         console.error("Lỗi khi tăng số lượng:", error);
       }
     },
 
-    // Giảm số lượng: gọi API removeCart để giảm 1 món
     async decreaseQuantity(item) {
       if (item.quantity > 1) {
         try {
-          await axios.post("http://localhost:3000/cart/removeCart", {
-            dishId: item.dishId,
-          });
-          await this.fetchCart(); // Sau khi giảm, cập nhật lại giỏ hàng
+          await this.addToCart({ dishId: item.dishId, quantity: -1 });
+          await this.fetchCart(); // Cập nhật lại giỏ hàng sau khi giảm số lượng
         } catch (error) {
           console.error("Lỗi khi giảm số lượng:", error);
         }
       }
     },
 
-    async removeItem(dishId) {
+    async handleRemoveItem(dishId) {
       try {
-        await axios.post("http://localhost:3000/cart/removeCart", {
-          dishId: dishId,
-        });
-        await this.fetchCart();
+        // Gọi action từ Vuex store
+        await this.$store.dispatch("removeItem", dishId);
       } catch (error) {
         console.error("Lỗi khi bỏ món:", error);
-      }
-    },
-
-    async fetchCart() {
-      try {
-        const response = await axios.get("http://localhost:3000/cart/getCart");
-        this.cart = response.data.cart;
-      } catch (error) {
-        console.error("Lỗi khi tải giỏ hàng:", error);
-      } finally {
-        this.isLoading = false; // Dừng trạng thái tải sau khi dữ liệu đã lấy về
       }
     },
 
@@ -149,9 +135,12 @@ export default {
       this.$router.push({ name: "Checkout" });
     },
   },
-
-  mounted() {
-    this.fetchCart();
+  async mounted() {
+    try {
+      await this.fetchCart(); // Tải dữ liệu giỏ hàng từ store
+    } finally {
+      this.isLoading = false; // Dừng trạng thái tải sau khi dữ liệu đã lấy về
+    }
   },
 };
 </script>
@@ -188,9 +177,11 @@ export default {
 .cart-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid #ddd;
   padding: 15px 0;
   transition: background-color 0.3s ease;
+  min-height: 150px; /* Cố định chiều cao tối thiểu cho các mục */
 }
 
 .cart-item:hover {
@@ -200,9 +191,16 @@ export default {
 .cart-item-info {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 }
-
+.cart-item-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100px; /* Cố định chiều cao cho thông tin món ăn */
+}
 .cart-item-text button {
   background-color: #007bff;
   color: white;
@@ -212,6 +210,9 @@ export default {
   cursor: pointer;
   border-radius: 5px;
   font-size: 16px;
+  width: 40px; /* Cố định kích thước cho nút */
+  height: 40px;
+  text-align: center;
 }
 
 .cart-item-text button:disabled {
@@ -224,15 +225,14 @@ export default {
 }
 
 .dish-image {
-  width: 300px;
+  width: 300px; /* Cố định kích thước ảnh */
   height: 200px;
   object-fit: cover;
   margin-left: 40px;
-  margin-right: 20px; /* Khoảng cách giữa hình ảnh và nút bỏ món */
-  border-radius: 10px; /* Bo góc hình ảnh */
-  object-fit: cover; /* Đảm bảo hình ảnh không bị biến dạng */
+  margin-right: 20px;
+  border-radius: 10px;
+  align-self: center; /* Đảm bảo hình ảnh được căn giữa theo trục dọc */
 }
-
 .remove-button {
   background-color: #dc3545;
   color: white;
@@ -241,6 +241,7 @@ export default {
   cursor: pointer;
   border-radius: 5px;
   transition: background-color 0.3s ease;
+  white-space: nowrap;
 }
 
 .remove-button:hover {
@@ -248,17 +249,23 @@ export default {
 }
 
 .cart-summary {
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 2px solid #ddd;
+  position: fixed;
+  right: 20px; /* Khoảng cách từ bên phải */
+  bottom: 20px; /* Khoảng cách từ dưới cùng */
+  padding: 20px;
+  background-color: #fff; /* Nền trắng để dễ đọc */
+  border: 1px solid #ddd; /* Đường viền mỏng */
+  border-radius: 10px; /* Bo góc */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+  max-width: 300px; /* Chiều rộng tối đa để không chiếm quá nhiều diện tích */
+  z-index: 1000; /* Đảm bảo phần "Tổng Cộng" luôn ở trên cùng */
   text-align: right;
 }
 
-.cart-summary h3 {
-  margin-bottom: 10px;
-  font-size: 24px;
+.cart-summary h3,
+.cart-summary p {
+  margin-left: 20px; /* Khoảng cách giữa các dòng */
 }
-
 .checkout-button {
   background-color: #28a745;
   color: white;
@@ -268,6 +275,7 @@ export default {
   font-size: 18px;
   border-radius: 5px;
   transition: background-color 0.3s ease;
+  /* width: 100%; Cố định chiều rộng cho nút */
 }
 
 .checkout-button:hover {

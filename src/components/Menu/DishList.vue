@@ -80,12 +80,6 @@
         </li>
       </ul>
     </div>
-
-    <!-- Thông tin giỏ hàng tóm tắt -->
-    <div class="cart-summary" v-if="cart.items.length > 0">
-      <p>Bạn đã chọn {{ cartTotalQuantity }} món</p>
-      <button @click="goToCart">Xem Thực Đơn</button>
-    </div>
   </div>
 </template>
 
@@ -128,6 +122,12 @@ export default {
     // Lọc món ăn theo danh mục
     filterByCategory(category) {
       this.selectedCategory = category;
+
+      // Cuộn danh sách món ăn về đầu trang khi chọn danh mục mới
+      const dishList = this.$el.querySelector(".dish-list");
+      if (dishList) {
+        dishList.scrollIntoView({ behavior: "smooth" });
+      }
     },
     // Điều hướng đến trang chi tiết món ăn
     goToDetail(id) {
@@ -145,7 +145,9 @@ export default {
           quantity: dish.quantity || 1, // Số lượng mặc định là 1 nếu không có
         })
         .then(() => {
-          alert(`Bạn muốn thêm ${dish.quantity || 1} món ${dish.name} vào giỏ hàng`);
+          alert(
+            `Bạn muốn thêm ${dish.quantity || 1} món ${dish.name} vào giỏ hàng`
+          );
         })
         .catch((error) => {
           console.error("Lỗi khi thêm món vào giỏ hàng:", error);
@@ -210,6 +212,10 @@ export default {
 .category-list {
   width: 220px;
   margin-right: 25px;
+  position: sticky;
+  top: 20px; /* Khoảng cách từ đỉnh màn hình khi bắt đầu cố định */
+  max-height: 100vh; /* Giới hạn chiều cao tối đa bằng chiều cao màn hình */
+  overflow-y: auto; /* Cho phép cuộn nếu danh mục dài quá */
 }
 
 .category-list h3 {
