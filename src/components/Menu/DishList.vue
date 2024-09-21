@@ -126,7 +126,7 @@ export default {
       // Cuộn danh sách món ăn về đầu trang khi chọn danh mục mới
       const dishList = this.$el.querySelector(".dish-list");
       if (dishList) {
-        dishList.scrollIntoView({ behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     },
     // Điều hướng đến trang chi tiết món ăn
