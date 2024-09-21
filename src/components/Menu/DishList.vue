@@ -33,10 +33,10 @@
               :src="dish.image"
               alt="dish image"
               class="dish-image"
-              @click="goToDetail(dish.id)"
+              @click="goToDetail(dish._id)"
             />
             <div class="dish-details">
-              <h3 @click="goToDetail(dish.id)">{{ dish.name }}</h3>
+              <h3 @click="goToDetail(dish._id)">{{ dish.name }}</h3>
               <p>{{ dish.description }}</p>
               <p>{{ dish.detailedDescription }}</p>
               <span>Giá: {{ dish.price }} đ</span>
@@ -279,6 +279,10 @@ export default {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s, box-shadow 0.3s;
   background-color: #fff; /* Nền màu trắng cho từng món */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%; /* Đảm bảo các phần tử bên trong luôn giãn đều chiều cao */
 }
 
 .dish-item:hover {
@@ -300,12 +304,22 @@ export default {
 .dish-details p {
   margin: 5px 0;
   color: #666;
+  max-height: 60px; /* Giới hạn chiều cao cho mô tả */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Giới hạn số dòng */
+  -webkit-box-orient: vertical;
 }
 
 .dish-details h3 {
   font-size: 1.6rem;
   color: #333;
   font-weight: bold; /* Đậm hơn */
+  max-height: 40px; /* Giới hạn chiều cao cho tên món */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dish-details span {

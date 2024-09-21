@@ -1,13 +1,13 @@
 import { createRouter, createWebHistory } from "vue-router";
-import DishDetail from "../components/Menu/DishDetail.vue";
-import ProfileView from "../views/Profile.vue";
 import AboutView from "../views/About.vue";
 import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
+import DishDetail from "../views/DishDetail.vue";
 import EventView from "../views/Event.vue";
 import HomeView from "../views/Home.vue";
 import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
+import ProfileView from "../views/Profile.vue";
 import RegisterView from "../views/Register.vue";
 import ServicesView from "../views/Service.vue";
 const routes = [
@@ -42,7 +42,7 @@ const routes = [
     component: ContactView,
   },
   {
-    path: '/dish/:id',
+    path: '/:id',
     name: 'DishDetail',
     component: DishDetail,
     props: true,
