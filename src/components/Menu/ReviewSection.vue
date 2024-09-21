@@ -24,23 +24,56 @@
     <div class="tabs">
       <button
         :class="{ active: selectedTab === 'all' }"
-        @click="selectedTab = 'all'"
+        @click="
+          selectedTab = 'all';
+          fetchReviews(dishId);
+        "
       >
         Tất cả
       </button>
-      <button :class="{ active: selectedTab === 5 }" @click="selectedTab = 5">
+      <button
+        :class="{ active: selectedTab === 5 }"
+        @click="
+          selectedTab = 5;
+          fetchReviews(dishId);
+        "
+      >
         5 Sao
       </button>
-      <button :class="{ active: selectedTab === 4 }" @click="selectedTab = 4">
+      <button
+        :class="{ active: selectedTab === 4 }"
+        @click="
+          selectedTab = 4;
+          fetchReviews(dishId);
+        "
+      >
         4 Sao
       </button>
-      <button :class="{ active: selectedTab === 3 }" @click="selectedTab = 3">
+      <button
+        :class="{ active: selectedTab === 3 }"
+        @click="
+          selectedTab = 3;
+          fetchReviews(dishId);
+        "
+      >
         3 Sao
       </button>
-      <button :class="{ active: selectedTab === 2 }" @click="selectedTab = 2">
+      <button
+        :class="{ active: selectedTab === 2 }"
+        @click="
+          selectedTab = 2;
+          fetchReviews(dishId);
+        "
+      >
         2 Sao
       </button>
-      <button :class="{ active: selectedTab === 1 }" @click="selectedTab = 1">
+      <button
+        :class="{ active: selectedTab === 1 }"
+        @click="
+          selectedTab = 1;
+          fetchReviews(dishId);
+        "
+      >
         1 Sao
       </button>
     </div>
@@ -49,11 +82,12 @@
     <div v-if="filteredReviews.length > 0" class="reviews">
       <div
         v-for="review in filteredReviews"
-        :key="review.id"
+        :key="review._id"
         class="review-item"
       >
         <div class="review-header">
-          <h4>{{ review.username }}</h4>
+          <h4>{{ review.userId.USERNAME }}</h4>
+          <!-- Hiển thị tên người dùng -->
           <div class="review-rating">
             <span
               v-for="n in 5"
@@ -63,7 +97,10 @@
               >★</span
             >
           </div>
-          <p class="review-date">{{ review.date }}</p>
+          <p class="review-date">
+            {{ new Date(review.date).toLocaleDateString() }}
+          </p>
+          <!-- Định dạng ngày -->
         </div>
         <p>{{ review.comment }}</p>
 
@@ -75,7 +112,7 @@
           <img
             v-for="image in review.images"
             :src="image"
-            :alt="'Review image'"
+            :alt="'Hình ảnh đánh giá'"
             class="review-image"
           />
         </div>
@@ -86,50 +123,19 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
-      selectedTab: "all",
-      reviews: [
-        // Dữ liệu đánh giá mẫu
-        {
-          id: 1,
-          username: "NguyenThuyAnhDuongCute",
-          rating: 5,
-          date: "2023-11-08",
-          comment: "Hàng OK giao rất nhanh...",
-          images: ["/images/review1.png", "/images/review2.png"],
-        },
-        {
-          id: 2,
-          username: "TranVanA",
-          rating: 4,
-          date: "2023-09-15",
-          comment: "Sản phẩm đúng như mô tả...",
-          images: [],
-        },
-        {
-          id: 3,
-          username: "LeThiB",
-          rating: 3,
-          date: "2023-08-10",
-          comment: "Chất lượng ổn, giá hợp lý...",
-          images: [],
-        },
-      ],
+      averageRating: 0,
+      totalReviews: 0,
+      reviews: [],
+      selectedTab: "all", // Mặc định là tab tất cả
     };
   },
   computed: {
-    averageRating() {
-      const totalStars = this.reviews.reduce(
-        (total, review) => total + review.rating,
-        0
-      );
-      return (totalStars / this.reviews.length).toFixed(1);
-    },
-    totalReviews() {
-      return this.reviews.length;
-    },
+    // Lọc đánh giá dựa trên tab được chọn
     filteredReviews() {
       if (this.selectedTab === "all") {
         return this.reviews;
@@ -138,6 +144,47 @@ export default {
         (review) => review.rating === this.selectedTab
       );
     },
+  },
+  methods: {
+    // Phương thức lấy điểm đánh giá trung bình và tổng số đánh giá từ API
+    async fetchAverageRating(dishId) {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/review/getAverageRating/${dishId}`
+        );
+        this.averageRating = response.data.average;
+        this.totalReviews = response.data.totalReviews;
+      } catch (error) {
+        console.error("Lỗi khi lấy điểm đánh giá trung bình:", error);
+      }
+    },
+
+    // Phương thức lấy danh sách đánh giá từ API, có thể lọc theo số sao
+    async fetchReviews(dishId) {
+      try {
+        const ratingFilter =
+          this.selectedTab === "all" ? "" : `?rating=${this.selectedTab}`;
+        const response = await axios.get(
+          `http://localhost:3000/review/getReviews/${dishId}${ratingFilter}`
+        );
+        this.reviews = response.data;
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách đánh giá:", error);
+      }
+    },
+  },
+  watch: {
+    // Theo dõi thay đổi của tab và gọi lại API khi tab thay đổi
+    selectedTab() {
+      const dishId = this.$route.params.dishId;
+      this.fetchReviews(dishId);
+    },
+  },
+  mounted() {
+    const dishId = this.$route.params.id;
+    // Gọi API để lấy dữ liệu đánh giá khi component được mount
+    this.fetchAverageRating(dishId);
+    this.fetchReviews(dishId);
   },
 };
 </script>
