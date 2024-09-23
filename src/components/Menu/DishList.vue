@@ -1,7 +1,7 @@
 <template>
   <div class="menu-container">
     <!-- Danh mục món ăn -->
-    <aside class="category-list">
+    <aside class="category-list ">
       <h3 @click="toggleCategory">
         Danh mục<span v-if="!showCategories">▼</span><span v-else>▲</span>
       </h3>
@@ -210,6 +210,7 @@ export default {
 }
 
 .category-list {
+  /* margin-top: 100px; */
   width: 220px;
   margin-right: 25px;
   position: sticky;
@@ -261,6 +262,7 @@ export default {
 }
 
 .title {
+  /* margin-top: 100px; */
   font-size: 2rem;
   margin-bottom: 20px;
   text-align: center;

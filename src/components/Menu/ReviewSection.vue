@@ -86,6 +86,7 @@
         class="review-item"
       >
         <div class="review-header">
+          <img :src="review.userId.AVATAR" alt="Avatar" class="avatar" />
           <h4>{{ review.userId.USERNAME }}</h4>
           <!-- Hiển thị tên người dùng -->
           <div class="review-rating">
@@ -103,22 +104,63 @@
           <!-- Định dạng ngày -->
         </div>
         <p>{{ review.comment }}</p>
-
-        <!-- Hình ảnh review -->
-        <div
-          v-if="review.images && review.images.length > 0"
-          class="review-images"
-        >
-          <img
-            v-for="image in review.images"
-            :src="image"
-            :alt="'Hình ảnh đánh giá'"
-            class="review-image"
-          />
-        </div>
       </div>
     </div>
     <p v-else>Không có đánh giá nào cho tab này.</p>
+    <!-- Phần hiển thị đánh giá của người dùng -->
+    <div v-if="hasReviewed" class="user-review">
+      <h3>Đánh giá của bạn</h3>
+      <div class="review-item">
+        <div class="review-header">
+          <div class="review-rating">
+            <span
+              v-for="n in 5"
+              :key="n"
+              class="star"
+              :class="{ filled: n <= userReview.rating }"
+              >★</span
+            >
+          </div>
+          <p class="review-date">
+            {{ new Date(userReview.date).toLocaleDateString() }}
+          </p>
+        </div>
+        <p>{{ userReview.comment }}</p>
+      </div>
+    </div>
+
+    <!-- Phần biểu mẫu thêm đánh giá -->
+    <div v-if="isLoggedIn && !hasReviewed" class="review-form">
+      <h3>Thêm đánh giá của bạn</h3>
+      <form @submit.prevent="submitReview(dishId)">
+        <div class="rating-input">
+          <label for="rating">Số sao:</label>
+          <div class="stars2">
+            <span
+              v-for="n in 5"
+              :key="n"
+              class="star2"
+              :class="{ filled: n <= (hoverRating || newRating) }"
+              @click="newRating = n"
+              @mouseover="hoverRating = n"
+              @mouseleave="hoverRating = 0"
+              >★</span
+            >
+          </div>
+        </div>
+
+        <div class="comment-input">
+          <label for="comment">Bình luận:</label>
+          <textarea
+            v-model="newComment"
+            placeholder="Nhập bình luận của bạn..."
+            required
+          ></textarea>
+        </div>
+
+        <button type="submit">Gửi đánh giá</button>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -132,6 +174,13 @@ export default {
       totalReviews: 0,
       reviews: [],
       selectedTab: "all", // Mặc định là tab tất cả
+      newRating: 0,
+      hoverRating: 0,
+      newComment: "",
+      newImage: null, // Lưu ảnh nếu có
+      hasReviewed: false, // Kiểm tra nếu người dùng đã đánh giá
+      userReview: null, // Thông tin đánh giá của người dùng nếu có
+      successMessage: "",
     };
   },
   computed: {
@@ -144,9 +193,12 @@ export default {
         (review) => review.rating === this.selectedTab
       );
     },
+    isLoggedIn() {
+      return this.$store.getters.isLoggedIn; // Kiểm tra trạng thái đăng nhập
+    },
   },
   methods: {
-    // Phương thức lấy điểm đánh giá trung bình và tổng số đánh giá từ API
+    // Lấy điểm đánh giá trung bình và tổng số đánh giá từ API
     async fetchAverageRating(dishId) {
       try {
         const response = await axios.get(
@@ -159,7 +211,7 @@ export default {
       }
     },
 
-    // Phương thức lấy danh sách đánh giá từ API, có thể lọc theo số sao
+    // Lấy danh sách đánh giá từ API, có thể lọc theo số sao
     async fetchReviews(dishId) {
       try {
         const ratingFilter =
@@ -172,12 +224,88 @@ export default {
         console.error("Lỗi khi lấy danh sách đánh giá:", error);
       }
     },
+
+    async checkUserReview(dishId) {
+      try {
+        const userId = this.$store.getters.userInfo._id; // Lấy _id từ userInfo
+        const response = await axios.get(
+          `http://localhost:3000/review/checkUserReview/${dishId}`,
+          {
+            params: { userId }, // Truyền userId qua request
+          }
+        );
+        if (response.data.review) {
+          this.hasReviewed = true;
+          this.userReview = response.data.review; // Lưu đánh giá của người dùng
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra đánh giá của người dùng:", error);
+      }
+    },
+    // Xử lý upload ảnh
+    handleImageUpload(event) {
+      const file = event.target.files[0];
+      this.newImage = file; // Lưu ảnh để gửi lên server
+    },
+
+    // Phương thức gửi đánh giá
+    async submitReview() {
+      const dishId = this.$route.params.id;
+
+      // Kiểm tra trạng thái đăng nhập
+      if (!this.isLoggedIn) {
+        alert("Bạn cần đăng nhập để đánh giá.");
+        return;
+      }
+
+      // Kiểm tra nếu thiếu bất kỳ trường bắt buộc nào
+      if (!dishId || !this.newRating || !this.newComment) {
+        alert("Vui lòng điền đầy đủ thông tin (số sao và bình luận).");
+        return;
+      }
+
+      try {
+        // Gửi request trực tiếp với rating và comment mà không qua reviewData
+        const response = await axios.post(
+          `http://localhost:3000/review/createReview/${dishId}`,
+          {
+            rating: this.newRating,
+            comment: this.newComment,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // Thông báo thành công
+        this.successMessage = "Đánh giá của bạn đã được gửi thành công.";
+        setTimeout(() => {
+          this.successMessage = "";
+        }, 3000);
+
+        // Reset các trường sau khi gửi thành công
+        this.newRating = null;
+        this.newComment = "";
+        this.newImage = null;
+
+        // Cập nhật danh sách đánh giá
+        this.fetchReviews(dishId);
+        this.fetchAverageRating(dishId);
+        this.checkUserReview(dishId);
+      } catch (error) {
+        console.error("Lỗi khi gửi đánh giá:", error);
+        alert("Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.");
+      }
+    },
   },
   watch: {
     // Theo dõi thay đổi của tab và gọi lại API khi tab thay đổi
     selectedTab() {
-      const dishId = this.$route.params.dishId;
+      const dishId = this.$route.params.id;
       this.fetchReviews(dishId);
+      this.fetchAverageRating(dishId);
     },
   },
   mounted() {
@@ -185,6 +313,7 @@ export default {
     // Gọi API để lấy dữ liệu đánh giá khi component được mount
     this.fetchAverageRating(dishId);
     this.fetchReviews(dishId);
+    this.checkUserReview(dishId);
   },
 };
 </script>
@@ -282,5 +411,68 @@ export default {
   object-fit: cover;
   border-radius: 5px;
   flex-shrink: 0;
+}
+
+.review-form {
+  margin-top: 30px;
+}
+.review-form h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+.review-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.review-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+}
+.review-form select,
+.review-form input[type="file"],
+.review-form button {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+.review-form button {
+  background-color: #ff6600;
+  color: white;
+  cursor: pointer;
+}
+.review-form button:hover {
+  background-color: #e55a00;
+}
+.stars2 {
+  display: flex;
+  gap: 5px;
+  cursor: pointer;
+}
+.star2 {
+  font-size: 2rem;
+  color: #ddd; /* Màu xám cho sao chưa chọn */
+  transition: color 0.3s;
+}
+.star2.filled {
+  color: gold; /* Màu vàng cho sao đã chọn hoặc hover */
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+.success-message {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
+  text-align: center;
+  transition: opacity 0.3s ease;
 }
 </style>

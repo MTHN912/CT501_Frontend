@@ -1,5 +1,6 @@
 <template>
   <div class="container-fluid nav-bar">
+    <!-- fixed-top -->
     <div class="container">
       <nav class="navbar navbar-light navbar-expand-lg py-4">
         <router-link to="/" class="navbar-brand">
@@ -269,4 +270,11 @@ export default {
   background-color: #ff6600;
   color: white;
 }
+/* .fixed-top {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1000;
+} */
 </style>

@@ -5,7 +5,11 @@
       <div class="profile-title">
         <label for="avatarInput">
           <img
-            :src="userInfo?.AVATAR || avatarUrl || 'default-avatar.png'"
+            :src="
+              userInfo?.AVATAR ||
+              avatarUrl ||
+              'https://vivureviews.com/wp-content/uploads/2022/08/avatar-vo-danh-10.png'
+            "
             alt="Avatar"
             class="avatar"
           />
