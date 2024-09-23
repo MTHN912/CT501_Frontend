@@ -1,7 +1,7 @@
 <template>
   <div class="menu-container">
     <!-- Danh mục món ăn -->
-    <aside class="category-list ">
+    <aside class="category-list">
       <h3 @click="toggleCategory">
         Danh mục<span v-if="!showCategories">▼</span><span v-else>▲</span>
       </h3>
@@ -44,15 +44,40 @@
               <!-- Nút yêu thích và đánh giá -->
               <div class="dish-controls">
                 <div class="dish-rating">
+                  <!-- Kiểm tra nếu có dữ liệu đánh giá cho món ăn -->
                   <span
-                    v-for="n in 5"
-                    :key="n"
-                    class="star"
-                    :class="{ filled: n <= dish.rating }"
-                    >★</span
+                    v-if="
+                      ratings[dish._id] && ratings[dish._id].reviewCount > 0
+                    "
                   >
-                  <span>({{ dish.rating }})</span>
+                    <!-- Hiển thị điểm đánh giá trung bình -->
+                    <span class="average-rating">{{
+                      ratings[dish._id].averageRating.toFixed(1)
+                    }}</span>
+
+                    <!-- Hiển thị số sao dựa trên đánh giá trung bình -->
+                    <span class="stars">
+                      <span
+                        v-for="n in 5"
+                        :key="n"
+                        class="star"
+                        :class="{
+                          filled:
+                            n <= Math.round(ratings[dish._id].averageRating),
+                        }"
+                        >★</span
+                      >
+                    </span>
+
+                    <!-- Hiển thị số lượt đánh giá -->
+                    <span class="review-count"
+                      >| {{ ratings[dish._id].reviewCount }} đánh giá</span
+                    >
+                  </span>
+                  <span v-else>Chưa có đánh giá</span>
                 </div>
+
+                <!-- Nút yêu thích -->
                 <button @click="toggleFavorite(dish)" class="favorite-button">
                   <i
                     :class="dish.favorite ? 'fas fa-heart' : 'far fa-heart'"
@@ -94,6 +119,7 @@ export default {
       showCategories: true,
       categories: [], // Danh mục lấy từ API
       dishes: [], // Danh sách món ăn lấy từ API
+      ratings: {},
     };
   },
   computed: {
@@ -188,6 +214,19 @@ export default {
       try {
         const response = await axios.get("http://localhost:3000/dish/getDish");
         this.dishes = response.data;
+
+        // Gọi API để lấy đánh giá trung bình cho từng món ăn
+        for (const dish of this.dishes) {
+          const ratingResponse = await axios.get(
+            `http://localhost:3000/review/getAverageRating/${dish._id}`
+          );
+
+          // Lưu trữ kết quả vào ratings, đồng thời đổi tên thuộc tính cho phù hợp với template
+          this.ratings[dish._id] = {
+            averageRating: parseFloat(ratingResponse.data.average), // Đổi thành số thực
+            reviewCount: ratingResponse.data.totalReviews,
+          };
+        }
       } catch (error) {
         console.error("Lỗi khi tải danh sách món ăn:", error);
       }
@@ -210,13 +249,12 @@ export default {
 }
 
 .category-list {
-  /* margin-top: 100px; */
   width: 220px;
   margin-right: 25px;
   position: sticky;
-  top: 20px; /* Khoảng cách từ đỉnh màn hình khi bắt đầu cố định */
-  max-height: 100vh; /* Giới hạn chiều cao tối đa bằng chiều cao màn hình */
-  overflow-y: auto; /* Cho phép cuộn nếu danh mục dài quá */
+  top: 20px;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .category-list h3 {
@@ -262,7 +300,6 @@ export default {
 }
 
 .title {
-  /* margin-top: 100px; */
   font-size: 2rem;
   margin-bottom: 20px;
   text-align: center;
@@ -280,16 +317,16 @@ export default {
   padding: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s, box-shadow 0.3s;
-  background-color: #fff; /* Nền màu trắng cho từng món */
+  background-color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 100%; /* Đảm bảo các phần tử bên trong luôn giãn đều chiều cao */
+  height: 100%;
 }
 
 .dish-item:hover {
-  transform: scale(1.05); /* Hiệu ứng phóng to khi hover */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Thêm hiệu ứng bóng đổ khi hover */
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .dish-info {
@@ -306,19 +343,19 @@ export default {
 .dish-details p {
   margin: 5px 0;
   color: #666;
-  max-height: 60px; /* Giới hạn chiều cao cho mô tả */
+  max-height: 60px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* Giới hạn số dòng */
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
 .dish-details h3 {
   font-size: 1.6rem;
   color: #333;
-  font-weight: bold; /* Đậm hơn */
-  max-height: 40px; /* Giới hạn chiều cao cho tên món */
+  font-weight: bold;
+  max-height: 40px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -328,31 +365,46 @@ export default {
   font-weight: bold;
   color: #000;
   margin-top: 10px;
-  display: block;
 }
 
 .dish-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Giữ các phần tử ở hai đầu */
   align-items: center;
   margin-top: 15px;
 }
 
 .dish-rating {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 10px;
+  display: inline-flex; /* Chuyển sang inline-flex để các thành phần xếp liền nhau */
+  align-items: center;  /* Căn giữa theo trục dọc */
+  justify-content: flex-start; /* Bắt đầu từ bên trái */
+  gap: 5px; /* Thêm khoảng cách giữa các phần tử con (ngôi sao, số đánh giá) */
+}
+
+.average-rating {
+  font-weight: bold;
+  margin-right: 5px;
+  font-size: 1.2rem;
+}
+
+.stars {
+  display: inline-flex; /* Đảm bảo các sao nằm ngang */
+  margin-right: 5px;
 }
 
 .star {
+  font-size: 1.5rem;
   color: #ddd;
-  font-size: 1.2rem;
-  margin-right: 5px;
+  margin-right: 3px;
 }
 
 .star.filled {
   color: gold;
+}
+
+.review-count {
+  font-size: 1rem;
+  margin-left: 5px;
 }
 
 .favorite-button {
@@ -366,12 +418,12 @@ export default {
 }
 
 .favorite-button.active i {
-  color: red; /* Màu khi đã được yêu thích */
+  color: red;
 }
 
 .favorite-button:hover i {
-  color: #ff6666; /* Màu khi hover */
-  transform: scale(1.1); /* Hiệu ứng phóng to vừa phải khi hover */
+  color: #ff6666;
+  transform: scale(1.1);
 }
 
 .quantity-input {
@@ -404,6 +456,6 @@ export default {
 
 .select-button:hover {
   background-color: #ff4500;
-  transform: scale(1.1); /* Phóng to hơn khi hover */
+  transform: scale(1.1);
 }
 </style>

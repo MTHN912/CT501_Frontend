@@ -23,10 +23,10 @@
           v-for="n in 5"
           :key="n"
           class="star"
-          :class="{ filled: n <= dish.rating }"
+          :class="{ filled: n <= averageRating }"
           >★</span
         >
-        <span>({{ dish.reviewsCount || 0 }} đánh giá)</span>
+        <span>({{ totalReviews || 0 }} đánh giá)</span>
       </div>
 
       <!-- Nút yêu thích -->
@@ -65,13 +65,24 @@ export default {
   props: ["id"],
   data() {
     return {
-      dish: null, // Biến để lưu dữ liệu món ăn
-      error: null, // Biến để lưu thông báo lỗi nếu có
+      dish: null,
+      error: null,
       quantity: 1,
+      averageRating: 0,
+      totalReviews: 0,
     };
   },
   created() {
-    this.fetchDishDetails(); // Gọi hàm lấy thông tin món ăn khi component được tạo
+    this.fetchDishDetails();
+    this.fetchAverageRating();
+  },
+  computed: {
+    averageRating() {
+      return this.$store.getters.averageRating; // Lấy điểm đánh giá trung bình từ store
+    },
+    totalReviews() {
+      return this.$store.getters.totalReviews; // Lấy tổng số đánh giá từ store
+    },
   },
   methods: {
     async fetchDishDetails() {
@@ -84,6 +95,9 @@ export default {
       } catch (error) {
         console.error("Lỗi khi tải thông tin món ăn:", error);
       }
+    },
+    async fetchAverageRating(dishId) {
+      await this.$store.dispatch("fetchAverageRating", dishId); // Dispatch action từ store
     },
     toggleFavorite() {
       this.dish.favorite = !this.dish.favorite;
@@ -106,6 +120,7 @@ export default {
   },
   created() {
     this.fetchDishDetails();
+    this.fetchAverageRating();
   },
 };
 </script>

@@ -196,19 +196,17 @@ export default {
     isLoggedIn() {
       return this.$store.getters.isLoggedIn; // Kiểm tra trạng thái đăng nhập
     },
+    averageRating() {
+      return this.$store.getters.averageRating; // Lấy điểm đánh giá trung bình từ store
+    },
+    totalReviews() {
+      return this.$store.getters.totalReviews; // Lấy tổng số đánh giá từ store
+    },
   },
   methods: {
     // Lấy điểm đánh giá trung bình và tổng số đánh giá từ API
     async fetchAverageRating(dishId) {
-      try {
-        const response = await axios.get(
-          `http://localhost:3000/review/getAverageRating/${dishId}`
-        );
-        this.averageRating = response.data.average;
-        this.totalReviews = response.data.totalReviews;
-      } catch (error) {
-        console.error("Lỗi khi lấy điểm đánh giá trung bình:", error);
-      }
+      await this.$store.dispatch("fetchAverageRating", dishId); // Dispatch action từ store
     },
 
     // Lấy danh sách đánh giá từ API, có thể lọc theo số sao
@@ -227,7 +225,7 @@ export default {
 
     async checkUserReview(dishId) {
       try {
-        const userId = this.$store.getters.userInfo._id; // Lấy _id từ userInfo
+        const userId = this.$store.getters.userInfo; // Lấy _id từ userInfo
         const response = await axios.get(
           `http://localhost:3000/review/checkUserReview/${dishId}`,
           {

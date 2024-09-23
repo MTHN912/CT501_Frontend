@@ -25,6 +25,8 @@ const store = createStore({
     deletedPackages: [],
     users: [],
     cart: { items: [] },
+    averageRating: 0,
+    totalReviews: 0,
   },
   mutations: {
     SET_USER_INFO(state, userInfo) {
@@ -83,6 +85,11 @@ const store = createStore({
     SET_EDITING_MODE(state, mode) {
       state.editingMode = mode;
     },
+    SET_AVERAGE_RATING(state, { averageRating, totalReviews }) {
+      state.averageRating = averageRating;
+      state.totalReviews = totalReviews;
+    },
+    
   },
   actions: {
     async fetchPackages({ commit }) {
@@ -346,6 +353,17 @@ const store = createStore({
         console.error("Lỗi khi bỏ món:", error);
       }
     },
+    async fetchAverageRating({ commit }, dishId) {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/review/getAverageRating/${dishId}`
+        );
+        const { average, totalReviews } = response.data;
+        commit('SET_AVERAGE_RATING', { averageRating: average, totalReviews });
+      } catch (error) {
+        console.error("Lỗi khi lấy điểm đánh giá trung bình:", error);
+      }
+    },
   },
   getters: {
     isLoggedIn: (state) => state.isLoggedIn,
@@ -354,6 +372,8 @@ const store = createStore({
     deletedPackages: state => state.deletedPackages,
     editingMode: (state) => state.editingMode,
     cartItems: (state) => state.cart.items,
+    averageRating: (state) => state.averageRating,
+    totalReviews: (state) => state.totalReviews,
   },
 });
 
