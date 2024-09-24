@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AboutView from "../views/About.vue";
+import AdminDish from "../views/Admin/Dish/AdminDish.vue";
+import AdminHome from "../views/Admin/Home/AdminHome.vue";
+import AdminUser from "../views/Admin/User/AdminUser.vue";
 import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
 import DishDetail from "../views/DishDetail.vue";
@@ -58,6 +61,21 @@ const routes = [
     name: 'Profile',
     component: ProfileView,
     props: true,
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: AdminHome,
+  },
+  {
+    path: '/admindishes',
+    name: 'AdminDish',
+    component: AdminDish,
+  },
+  {
+    path: '/adminUsers',
+    name: 'AdminUser',
+    component: AdminUser,
   },
   {
     path: "/login",
