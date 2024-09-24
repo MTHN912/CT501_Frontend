@@ -9,7 +9,7 @@
         class="search"
         @input="fetchUsers"
       />
-    </div>
+    </div> 
 
     <!-- Thêm các tab -->
     <div class="tabs">

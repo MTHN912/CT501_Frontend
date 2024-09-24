@@ -14,7 +14,7 @@ export default {
     Sidebar,
     AdminDish,
   },
-};
+}; 
 </script>
 <style scoped>
 .admin-dashboard {

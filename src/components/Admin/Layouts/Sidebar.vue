@@ -57,7 +57,7 @@ export default {
           link: "/admindishes",
           icon: "fas fa-boxes",
         },
-        {
+        { 
           text: "Quản Lý Đơn Hàng",
           link: "/admin/orders",
           icon: "fas fa-receipt",

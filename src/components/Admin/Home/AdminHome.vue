@@ -11,7 +11,7 @@
 export default {
   name: "AdminHome",
 };
-</script>
+</script> 
 
 <style scoped>
 .content {

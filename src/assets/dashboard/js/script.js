@@ -9,7 +9,7 @@ document.querySelector(".grid").addEventListener("click", function () {
   document
     .querySelector(".products-area-wrapper")
     .classList.remove("tableView");
-});
+}); 
 
 document.querySelector(".list").addEventListener("click", function () {
   document.querySelector(".list").classList.add("active");

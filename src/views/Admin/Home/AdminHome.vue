@@ -15,7 +15,7 @@ export default {
     AdminHome,
   },
 };
-</script>
+</script> 
 <style scoped>
 .admin-dashboard {
   display: flex;

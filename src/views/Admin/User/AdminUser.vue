@@ -13,7 +13,7 @@ export default {
   components: {
     Sidebar,
     AdminUser,
-  },
+  }, 
 };
 </script>
 <style scoped>

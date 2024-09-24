@@ -229,7 +229,7 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  margin-right: 10px;
+  margin-right: 10px; 
   vertical-align: middle;
 }
 
