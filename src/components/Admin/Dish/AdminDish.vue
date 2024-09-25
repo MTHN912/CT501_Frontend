@@ -17,12 +17,13 @@
           <th @click="sortBy('name')">Tên món ⬍</th>
           <th @click="sortBy('description')">Mô tả ⬍</th>
           <th @click="sortBy('category')">Danh mục ⬍</th>
-          <th @click="sortBy('rating')">Đánh Giá ⬍</th>
+          <th @click="sortBy('averageRating')">Đánh Giá ⬍</th>
           <th @click="sortBy('price')">Đơn Giá ⬍</th>
+          <th>Hành động</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="food in filteredFoods" :key="food._id">
+        <tr v-for="food in paginatedFoods" :key="food._id">
           <td>
             <img :src="food.image" alt="Food image" class="food-image" />{{
               food.name
@@ -30,11 +31,30 @@
           </td>
           <td>{{ food.description }}</td>
           <td>{{ food.category }}</td>
-          <td>{{ food.rating }}</td>
+          <!-- Hiển thị giá trị đánh giá trung bình -->
+          <td>{{ food.averageRating || "Chưa có đánh giá" }}</td>
           <td>${{ food.price }}</td>
+          <td>
+            <!-- Nút cập nhật -->
+            <i @click="openUpdateModal(food)" class="fas fa-edit edit-icon"></i>
+            <!-- Nút xóa -->
+            <i
+              @click="deleteFood(food._id)"
+              class="fas fa-trash delete-icon"
+            ></i>
+          </td>
         </tr>
       </tbody>
     </table>
+
+    <!-- Phân trang -->
+    <div class="pagination">
+      <button @click="prevPage" :disabled="currentPage === 1">Trước</button>
+      <span>{{ currentPage }} / {{ totalPages }}</span>
+      <button @click="nextPage" :disabled="currentPage === totalPages">
+        Tiếp
+      </button>
+    </div>
 
     <!-- Modal thêm món ăn -->
     <div v-if="isModalOpen" class="modal">
@@ -93,11 +113,69 @@
         </form>
       </div>
     </div>
+    <!-- Modal cập nhật món ăn -->
+    <div v-if="isUpdateModalOpen" class="modal">
+      <div class="modal-content">
+        <h2>Cập nhật món ăn</h2>
+        <form @submit.prevent="submitUpdateFood">
+          <label for="image">Hình Ảnh:</label>
+          <input
+            v-model="selectedFood.image"
+            type="text"
+            id="image"
+            placeholder="URL hình ảnh"
+          />
+
+          <label for="name">Tên món:</label>
+          <input
+            v-model="selectedFood.name"
+            type="text"
+            id="name"
+            placeholder="Tên món ăn"
+          />
+
+          <label for="description">Mô tả:</label>
+          <input
+            v-model="selectedFood.description"
+            type="text"
+            id="description"
+            placeholder="Mô tả ngắn"
+          />
+
+          <label for="detailedDescription">Mô tả chi tiết:</label>
+          <textarea
+            v-model="selectedFood.detailedDescription"
+            id="detailedDescription"
+            placeholder="Mô tả chi tiết"
+          ></textarea>
+
+          <label for="category">Danh mục:</label>
+          <input
+            v-model="selectedFood.category"
+            type="text"
+            id="category"
+            placeholder="Danh mục món ăn"
+          />
+
+          <label for="price">Đơn giá:</label>
+          <input
+            v-model="selectedFood.price"
+            type="number"
+            id="price"
+            placeholder="Đơn giá"
+          />
+
+          <button type="submit">Cập nhật</button>
+          <button @click="closeUpdateModal" type="button">Hủy</button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 
 export default {
   data() {
@@ -106,6 +184,8 @@ export default {
       sortField: "",
       sortOrder: 1,
       foods: [],
+      currentPage: 1, // Trang hiện tại
+      itemsPerPage: 10, // Số món ăn tối đa trên mỗi trang
       isModalOpen: false, // Biến điều khiển trạng thái mở/đóng modal
       newFood: {
         image: "",
@@ -115,6 +195,8 @@ export default {
         category: "",
         price: 0,
       },
+      isUpdateModalOpen: false, // Biến điều khiển modal cập nhật
+      selectedFood: {}, // Chứa thông tin món ăn được chọn để cập nhật
     };
   },
   computed: {
@@ -134,8 +216,41 @@ export default {
 
       return filtered;
     },
+    paginatedFoods() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredFoods.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredFoods.length / this.itemsPerPage);
+    },
   },
   methods: {
+    async fetchAverageRating(dishId) {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/review/getAverageRating/${dishId}`
+        );
+        return response.data.average; // Trả về giá trị đánh giá trung bình
+      } catch (error) {
+        console.error("Error fetching average rating:", error);
+        return null; // Nếu lỗi, trả về null
+      }
+    },
+    async fetchFoods() {
+      try {
+        const response = await axios.get("http://localhost:3000/dish/getDish");
+        const foodsWithRatings = await Promise.all(
+          response.data.map(async (food) => {
+            const averageRating = await this.fetchAverageRating(food._id);
+            return { ...food, averageRating }; // Thêm thuộc tính averageRating vào món ăn
+          })
+        );
+        this.foods = foodsWithRatings;
+      } catch (error) {
+        console.error("Error fetching dishes:", error);
+      }
+    },
     sortBy(field) {
       if (this.sortField === field) {
         this.sortOrder *= -1;
@@ -156,19 +271,100 @@ export default {
           "http://localhost:3000/dish/addDish",
           this.newFood
         );
-        this.foods.push(response.data); // Thêm món ăn mới vào danh sách
+        const averageRating = await this.fetchAverageRating(response.data._id);
+        this.foods.push({ ...response.data, averageRating }); // Thêm món ăn mới cùng averageRating
+
         this.closeModal(); // Đóng modal sau khi thêm thành công
+
+        // Hiển thị thông báo thành công bằng SweetAlert2
+        Swal.fire({
+          icon: "success",
+          title: "Thành công",
+          text: "Món ăn đã được thêm thành công!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } catch (error) {
         console.error("Error adding food:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Đã xảy ra lỗi khi thêm món ăn.",
+        });
       }
     },
-    async fetchFoods() {
+    // Gửi yêu cầu cập nhật món ăn
+    async submitUpdateFood() {
       try {
-        const response = await axios.get("http://localhost:3000/dish/getDish");
-        this.foods = response.data;
+        await axios.put(
+          `http://localhost:3000/dish/updateDish/${this.selectedFood._id}`,
+          this.selectedFood
+        );
+        this.fetchFoods(); // Tải lại danh sách món ăn sau khi cập nhật
+        this.closeUpdateModal(); // Đóng modal sau khi cập nhật thành công
+
+        // Hiển thị thông báo thành công
+        Swal.fire({
+          icon: "success",
+          title: "Cập nhật thành công",
+          text: "Món ăn đã được cập nhật!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } catch (error) {
-        console.error("Error fetching dishes:", error);
+        console.error("Error updating food:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Đã xảy ra lỗi khi cập nhật món ăn.",
+        });
       }
+    },
+
+    // Gửi yêu cầu xóa món ăn
+    async deleteFood(foodId) {
+      if (confirm("Bạn có chắc chắn muốn xóa món ăn này không?")) {
+        try {
+          await axios.delete(`http://localhost:3000/dish/deleteDish/${foodId}`);
+          this.fetchFoods(); // Tải lại danh sách món ăn sau khi xóa
+
+          // Hiển thị thông báo thành công
+          Swal.fire({
+            icon: "success",
+            title: "Xóa thành công",
+            text: "Món ăn đã được xóa!",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } catch (error) {
+          console.error("Error deleting food:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Lỗi",
+            text: "Đã xảy ra lỗi khi xóa món ăn.",
+          });
+        }
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    // Mở modal cập nhật với thông tin của món ăn được chọn
+    openUpdateModal(food) {
+      this.selectedFood = { ...food }; // Sao chép dữ liệu món ăn vào selectedFood
+      this.isUpdateModalOpen = true; // Mở modal cập nhật
+    },
+
+    // Đóng modal cập nhật
+    closeUpdateModal() {
+      this.isUpdateModalOpen = false;
     },
   },
   mounted() {
@@ -190,6 +386,10 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.header h2 {
+  color: white;
 }
 
 .search {
@@ -229,17 +429,29 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  margin-right: 10px; 
+  margin-right: 10px;
   vertical-align: middle;
 }
 
-.active-status {
-  color: #2ba972;
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
-.disabled-status {
-  color: #59719d;
+.pagination button {
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  padding: 10px;
+  margin: 0 5px;
+  cursor: pointer;
 }
+
+.pagination span {
+  margin: 0 10px;
+}
+
 .modal {
   position: fixed;
   top: 0;
@@ -284,6 +496,16 @@ export default {
   color: white;
   border: none;
   border-radius: 5px;
+  cursor: pointer;
+}
+.edit-icon {
+  color: #4caf50;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.delete-icon {
+  color: #f44336;
   cursor: pointer;
 }
 </style>

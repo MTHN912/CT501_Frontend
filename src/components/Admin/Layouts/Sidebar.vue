@@ -57,7 +57,7 @@ export default {
           link: "/admindishes",
           icon: "fas fa-boxes",
         },
-        { 
+        {
           text: "Quản Lý Đơn Hàng",
           link: "/admin/orders",
           icon: "fas fa-receipt",
@@ -78,6 +78,7 @@ export default {
   methods: {
     toggleSidebar() {
       this.isCollapsed = !this.isCollapsed;
+      this.$emit("toggle-sidebar", this.isCollapsed);
     },
   },
   async mounted() {
@@ -106,6 +107,9 @@ export default {
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease-in-out;
+  position: fixed;
+  left: 0;
+  top: 0;
 }
 
 .sidebar-collapsed {

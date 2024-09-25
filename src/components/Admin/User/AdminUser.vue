@@ -9,7 +9,7 @@
         class="search"
         @input="fetchUsers"
       />
-    </div> 
+    </div>
 
     <!-- Thêm các tab -->
     <div class="tabs">
@@ -54,12 +54,10 @@
 
     <!-- Nút điều hướng trang -->
     <div class="pagination">
-      <button @click="changePage(page - 1)" :disabled="page === 1">
-        Previous
-      </button>
+      <button @click="changePage(page - 1)" :disabled="page === 1"><</button>
       <span>Page {{ page }} of {{ totalPages }}</span>
       <button @click="changePage(page + 1)" :disabled="page === totalPages">
-        Next
+        >
       </button>
     </div>
   </div>
@@ -158,6 +156,9 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+.header h2 {
+  color: white; /* Đặt màu chữ thành trắng */
 }
 
 .search {
