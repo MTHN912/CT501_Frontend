@@ -98,6 +98,7 @@ export default {
         FULLNAME: "",
         ADDRESS: "",
         GENDER: "",
+        AVATAR: "",
       },
       originalData: {},
     };
@@ -107,6 +108,47 @@ export default {
   },
   methods: {
     ...mapActions(["getUserInfo"]),
+    handleFileUpload(event) {
+      const file = event.target.files[0]; // Nhận file từ input
+      if (file) {
+        this.uploadAvatar(file);
+      }
+    },
+
+    async uploadAvatar(file) {
+      const formData = new FormData();
+      formData.append("image", file); // Đặt tên trường là "image" theo yêu cầu của API
+
+      try {
+        // Gọi API upload
+        const response = await axios.post(
+          "http://localhost:3000/upload",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data", // Định dạng multipart
+            },
+          }
+        );
+
+        // Kiểm tra nếu API trả về thành công
+        if (response.data.success) {
+          const imageUrl = response.data.data.url; // Lấy link ảnh từ JSON trả về
+          this.avatarUrl = imageUrl; // Cập nhật avatarUrl để hiển thị ảnh mới
+          this.editData.AVATAR = imageUrl; // Cập nhật link vào editData
+
+          // Gọi API updateUserInfo để cập nhật trường AVATAR
+          await this.updateUserInfo({ AVATAR: imageUrl });
+
+          // Cập nhật lại thông tin người dùng từ API
+          await this.getUserInfo();
+        } else {
+          console.error("Lỗi upload avatar:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Lỗi upload avatar:", error);
+      }
+    },
     editProfile() {
       this.originalData = { ...this.userInfo };
       this.editData = {
@@ -150,30 +192,6 @@ export default {
           error.response?.data?.message || error.message
         );
         throw error;
-      }
-    },
-    handleFileUpload(event) {
-      const file = event.target.files[0];
-      this.uploadAvatar(file);
-    },
-    async uploadAvatar(file) {
-      const formData = new FormData();
-      formData.append("AVATAR", file);
-
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/azure/upload",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        this.avatarUrl = response.data.imageUrl;
-      } catch (error) {
-        console.error("Lỗi upload avatar:", error);
       }
     },
     updateEditData(field, value) {

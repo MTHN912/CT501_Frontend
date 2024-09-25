@@ -62,12 +62,10 @@
         <h2>Thêm món ăn</h2>
         <form @submit.prevent="submitFood">
           <label for="image">Hình Ảnh:</label>
-          <input
-            v-model="newFood.image"
-            type="text"
-            id="image"
-            placeholder="URL hình ảnh"
-          />
+          <input type="file" id="image" @change="handleFileUpload" />
+          <div v-if="selectedImageName" class="image-name">
+            <strong>Tên file:</strong> {{ selectedImageName }}
+          </div>
 
           <label for="name">Tên món:</label>
           <input
@@ -119,12 +117,12 @@
         <h2>Cập nhật món ăn</h2>
         <form @submit.prevent="submitUpdateFood">
           <label for="image">Hình Ảnh:</label>
-          <input
-            v-model="selectedFood.image"
-            type="text"
-            id="image"
-            placeholder="URL hình ảnh"
-          />
+          <input type="file" id="image" @change="handleUpdateFileUpload" />
+
+          <!-- Hiển thị tên file ảnh đã chọn -->
+          <div v-if="selectedUpdateImageName" class="image-name">
+            <strong>Tên file:</strong> {{ selectedUpdateImageName }}
+          </div>
 
           <label for="name">Tên món:</label>
           <input
@@ -197,6 +195,9 @@ export default {
       },
       isUpdateModalOpen: false, // Biến điều khiển modal cập nhật
       selectedFood: {}, // Chứa thông tin món ăn được chọn để cập nhật
+      uploadedImageUrl: "",
+      selectedImageName: "",
+      selectedUpdateImageName: "",
     };
   },
   computed: {
@@ -226,6 +227,35 @@ export default {
     },
   },
   methods: {
+    async handleFileUpload(event) {
+      const file = event.target.files[0]; // Nhận file từ input
+      if (file) {
+        this.selectedImageName = file.name;
+        const formData = new FormData();
+        formData.append("image", file); // Gửi file đến API
+
+        try {
+          const response = await axios.post(
+            "http://localhost:3000/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (response.data.success) {
+            this.uploadedImageUrl = response.data.data.url; // Lưu URL ảnh tải lên
+            this.newFood.image = this.uploadedImageUrl; // Cập nhật URL vào trường image
+          } else {
+            console.error("Lỗi upload ảnh:", response.data.message);
+          }
+        } catch (error) {
+          console.error("Lỗi upload ảnh:", error);
+        }
+      }
+    },
     async fetchAverageRating(dishId) {
       try {
         const response = await axios.get(
@@ -267,6 +297,15 @@ export default {
     },
     async submitFood() {
       try {
+        // Đảm bảo đã có URL ảnh trước khi gọi API thêm món ăn
+        if (!this.newFood.image) {
+          Swal.fire({
+            icon: "error",
+            title: "Lỗi",
+            text: "Vui lòng tải lên hình ảnh cho món ăn.",
+          });
+          return;
+        }
         const response = await axios.post(
           "http://localhost:3000/dish/addDish",
           this.newFood
@@ -291,6 +330,35 @@ export default {
           title: "Lỗi",
           text: "Đã xảy ra lỗi khi thêm món ăn.",
         });
+      }
+    },
+    async handleUpdateFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.selectedUpdateImageName = file.name; // Lưu tên file ảnh đã chọn
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          const response = await axios.post(
+            "http://localhost:3000/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (response.data.success) {
+            this.selectedFood.image = response.data.data.url; // Cập nhật URL ảnh vào selectedFood
+          } else {
+            console.error("Lỗi upload ảnh:", response.data.message);
+          }
+        } catch (error) {
+          console.error("Lỗi upload ảnh:", error);
+        }
       }
     },
     // Gửi yêu cầu cập nhật món ăn
@@ -507,5 +575,20 @@ export default {
 .delete-icon {
   color: #f44336;
   cursor: pointer;
+}
+.image-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #4a4a4a;
+  margin-top: 10px;
+  background-color: #f9f9f9;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>
