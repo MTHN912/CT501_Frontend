@@ -58,6 +58,11 @@ export default {
           icon: "fas fa-boxes",
         },
         {
+          text: "Quản Lý Danh Mục",
+          link: "/admincategorys",
+          icon: "fas fa-boxes",
+        },
+        {
           text: "Quản Lý Đơn Hàng",
           link: "/admin/orders",
           icon: "fas fa-receipt",

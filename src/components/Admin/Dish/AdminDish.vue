@@ -91,12 +91,19 @@
           ></textarea>
 
           <label for="category">Danh mục:</label>
-          <input
+          <select
             v-model="newFood.category"
-            type="text"
             id="category"
-            placeholder="Danh mục món ăn"
-          />
+            placeholder="Danh mục"
+          >
+            <option
+              v-for="category in categories"
+              :key="category._id"
+              :value="category.name"
+            >
+              {{ category.name }}
+            </option>
+          </select>
 
           <label for="price">Đơn giá:</label>
           <input
@@ -148,12 +155,19 @@
           ></textarea>
 
           <label for="category">Danh mục:</label>
-          <input
+          <select
             v-model="selectedFood.category"
-            type="text"
             id="category"
-            placeholder="Danh mục món ăn"
-          />
+            placeholder="Danh mục"
+          >
+            <option
+              v-for="category in categories"
+              :key="category._id"
+              :value="category.name"
+            >
+              {{ category.name }}
+            </option>
+          </select>
 
           <label for="price">Đơn giá:</label>
           <input
@@ -178,6 +192,7 @@ import Swal from "sweetalert2";
 export default {
   data() {
     return {
+      categories: [],
       searchQuery: "",
       sortField: "",
       sortOrder: 1,
@@ -227,6 +242,27 @@ export default {
     },
   },
   methods: {
+    async fetchCategories() {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/category/getCategory"
+        );
+        this.categories = response.data; // Lưu các danh mục vào biến categories
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    },
+    // Các phương thức khác...
+    openModal() {
+      this.fetchCategories(); // Lấy danh mục món ăn khi mở modal
+      this.isModalOpen = true; // Mở modal thêm món ăn
+    },
+    openUpdateModal(food) {
+      this.fetchCategories(); // Lấy danh mục món ăn khi mở modal cập nhật
+      this.selectedFood = { ...food }; // Sao chép dữ liệu món ăn vào selectedFood
+      this.isUpdateModalOpen = true; // Mở modal cập nhật
+    },
+
     async handleFileUpload(event) {
       const file = event.target.files[0]; // Nhận file từ input
       if (file) {
@@ -289,11 +325,11 @@ export default {
         this.sortOrder = 1;
       }
     },
-    openModal() {
-      this.isModalOpen = true; // Mở modal
-    },
+    // openModal() {
+    //   this.isModalOpen = true;
+    // },
     closeModal() {
-      this.isModalOpen = false; // Đóng modal
+      this.isModalOpen = false;
     },
     async submitFood() {
       try {
@@ -425,10 +461,10 @@ export default {
       }
     },
     // Mở modal cập nhật với thông tin của món ăn được chọn
-    openUpdateModal(food) {
-      this.selectedFood = { ...food }; // Sao chép dữ liệu món ăn vào selectedFood
-      this.isUpdateModalOpen = true; // Mở modal cập nhật
-    },
+    // openUpdateModal(food) {
+    //   this.selectedFood = { ...food };
+    //   this.isUpdateModalOpen = true;
+    // },
 
     // Đóng modal cập nhật
     closeUpdateModal() {
@@ -538,7 +574,33 @@ export default {
   border-radius: 10px;
   width: 400px;
 }
-
+.modal-content select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  font-size: 16px;
+  color: #333;
+  appearance: none; /* Xóa kiểu mũi tên mặc định trên một số trình duyệt */
+  -webkit-appearance: none; /* Đảm bảo xóa trên trình duyệt Webkit */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23333" d="M2 0L0 2h4z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 12px 12px;
+}
+.modal-content option {
+  padding: 10px;
+  color: #333;
+  background-color: #fff;
+  font-size: 14px;
+}
+.modal-content select:focus {
+  border-color: #0084ff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 132, 255, 0.5);
+}
 .modal-content h2 {
   margin-bottom: 20px;
 }

@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
-    <contact />
+    <Payment />
     <Footer />
     <!-- Other components or content -->
   </div>
@@ -10,11 +10,11 @@
 <script>
 import Footer from "@/components/Layout/Footer.vue";
 import Navbar from "@/components/Layout/Navbar.vue";
-import contact from "@/components/contact/contact.vue";
+import Payment from "@/components/Payment/Payment.vue";
 export default {
   components: {
     Navbar,
-    contact,
+    Payment,
     Footer,
   },
 };

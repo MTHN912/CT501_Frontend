@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AboutView from "../views/About.vue";
+import AdminCategory from "../views/Admin/Category/Category.vue";
 import AdminDish from "../views/Admin/Dish/AdminDish.vue";
 import AdminHome from "../views/Admin/Home/AdminHome.vue";
 import AdminUser from "../views/Admin/User/AdminUser.vue";
@@ -10,6 +11,7 @@ import EventView from "../views/Event.vue";
 import HomeView from "../views/Home.vue";
 import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
+import CheckoutPage from "../views/Payment/Payment.vue";
 import ProfileView from "../views/Profile.vue";
 import RegisterView from "../views/Register.vue";
 import ServicesView from "../views/Service.vue";
@@ -76,6 +78,17 @@ const routes = [
     path: '/adminUsers',
     name: 'AdminUser',
     component: AdminUser,
+  },
+  {
+    path: '/admincategorys',
+    name: 'AdminCategory',
+    component: AdminCategory,
+  },
+
+  {
+    path: '/checkout',
+    name: 'Checkout',
+    component: CheckoutPage,
   },
   {
     path: "/login",
