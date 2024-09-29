@@ -7,19 +7,14 @@
     </div>
 
     <div v-else class="checkout-details">
-      <!-- Hiển thị chi tiết giỏ hàng với kiểu tương tự ảnh -->
       <ul class="order-summary">
         <li v-for="(item, index) in cart.items" :key="index" class="order-item">
           <div class="item-details">
-            <!-- Hiển thị hình ảnh món ăn -->
             <img :src="item.dishImage" alt="Dish image" class="item-image" />
             <div class="item-info">
-              <!-- Tên món ăn -->
               <h3 class="item-name">{{ item.dishName }}</h3>
               <p class="item-type">Danh mục: {{ item.dishCategory }}</p>
-              <!-- <p class="item-note">Đổi ý miễn phí trong 15 ngày</p> -->
             </div>
-            <!-- Giá và số lượng -->
             <div class="item-pricing">
               <p>
                 Đơn giá: <strong>{{ item.dishPrice }} đ</strong>
@@ -35,7 +30,6 @@
         </li>
       </ul>
 
-      <!-- Người dùng chọn số lượng bàn -->
       <div class="table-selection">
         <label for="number-of-tables">Số bàn muốn đặt:</label>
         <input
@@ -46,7 +40,6 @@
         />
       </div>
 
-      <!-- Phương thức thanh toán -->
       <div class="payment-method">
         <label>Phương thức thanh toán:</label>
         <select v-model="selectedPaymentMethod">
@@ -56,7 +49,6 @@
         </select>
       </div>
 
-      <!-- Nếu khách chọn tổ chức tiệc tại nhà thì hiển thị các trường nhập -->
       <div class="home-party-details">
         <div class="form-group">
           <label for="party-address">Địa chỉ tổ chức tiệc:</label>
@@ -86,7 +78,6 @@
         </div>
       </div>
 
-      <!-- Tổng kết và xác nhận -->
       <div class="checkout-summary">
         <p>
           Tổng số món: <strong>{{ totalQuantity }}</strong>
@@ -95,7 +86,11 @@
           Tổng tiền (cho {{ numberOfTables }} bàn):
           <strong>{{ totalPriceForTables }} đ</strong>
         </p>
-        <button @click="confirmOrder" class="confirm-button">
+        <button
+          @click="confirmOrder"
+          class="confirm-button"
+          :disabled="isSubmitting"
+        >
           Xác nhận đặt bàn
         </button>
       </div>
@@ -104,8 +99,9 @@
 </template>
 
 <script>
+import axios from "axios";
+import Swal from "sweetalert2";
 import { mapActions, mapState } from "vuex";
-
 export default {
   name: "CheckoutPage",
   data() {
@@ -113,10 +109,11 @@ export default {
       isLoading: true,
       numberOfTables: 1, // Số bàn muốn đặt, mặc định là 1
       selectedPaymentMethod: "cash", // Phương thức thanh toán mặc định
-      isHomeParty: false, // Trạng thái người dùng chọn tổ chức tiệc tại nhà
+      // isHomeParty: false,
       partyAddress: "", // Địa chỉ tổ chức tiệc
       phoneNumber: "", // Số điện thoại liên hệ
       note: "", // Ghi chú từ khách hàng
+      isSubmitting: false,
     };
   },
   computed: {
@@ -151,22 +148,35 @@ export default {
     ...mapActions(["fetchCart", "confirmOrder"]),
 
     async confirmOrder() {
+      this.isSubmitting = true;
       try {
         const orderDetails = {
           tables: this.numberOfTables,
           paymentMethod: this.selectedPaymentMethod,
           totalPrice: this.totalPriceForTables,
-          isHomeParty: this.isHomeParty, // Trạng thái có tổ chức tiệc tại nhà
-          partyAddress: this.partyAddress, // Địa chỉ tổ chức tiệc
-          phoneNumber: this.phoneNumber, // Số điện thoại liên hệ
-          note: this.note, // Ghi chú từ khách hàng
+          // isHomeParty: this.isHomeParty,
+          partyAddress: this.partyAddress || null,
+          phoneNumber: this.phoneNumber || null,
+          note: this.note || null,
         };
 
-        // Gửi dữ liệu đặt bàn và các chi tiết khác
-        await this.confirmOrder(orderDetails);
-        this.$router.push({ name: "OrderSuccess" });
+        // Gửi yêu cầu POST đến API để lưu trữ đơn hàng
+        await axios.post("http://localhost:3000/order/orders", orderDetails);
+        await this.fetchCart();
+        Swal.fire({
+          icon: "success",
+          title: "Đặt hàng thành công!",
+          text: "Cảm ơn bạn đã đặt hàng. Đang chuyển đến trang thành công...",
+          showConfirmButton: false,
+          timer: 3000, // Hiển thị trong 3 giây
+        });
+        setTimeout(() => {
+          this.$router.push({ name: "OrderSuccess" });
+        }, 3000); // Sau 3 giây
       } catch (error) {
         console.error("Lỗi khi xác nhận đặt bàn:", error);
+      } finally {
+        this.isSubmitting = false;
       }
     },
   },

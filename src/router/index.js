@@ -11,6 +11,7 @@ import EventView from "../views/Event.vue";
 import HomeView from "../views/Home.vue";
 import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
+import OrderSuccess from "../views/Payment/OrderSuccess.vue";
 import CheckoutPage from "../views/Payment/Payment.vue";
 import ProfileView from "../views/Profile.vue";
 import RegisterView from "../views/Register.vue";
@@ -84,11 +85,15 @@ const routes = [
     name: 'AdminCategory',
     component: AdminCategory,
   },
-
   {
     path: '/checkout',
     name: 'Checkout',
     component: CheckoutPage,
+  },
+  {
+    path: '/ordersuccess',
+    name: 'OrderSuccess',
+    component: OrderSuccess,
   },
   {
     path: "/login",
