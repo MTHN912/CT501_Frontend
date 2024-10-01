@@ -3,6 +3,7 @@ import AboutView from "../views/About.vue";
 import AdminCategory from "../views/Admin/Category/Category.vue";
 import AdminDish from "../views/Admin/Dish/AdminDish.vue";
 import AdminHome from "../views/Admin/Home/AdminHome.vue";
+import AdminOrder from "../views/Admin/Order/AdminOrder.vue";
 import AdminUser from "../views/Admin/User/AdminUser.vue";
 import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
@@ -11,7 +12,7 @@ import EventView from "../views/Event.vue";
 import HomeView from "../views/Home.vue";
 import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
-import OrderSuccess from "../views/Payment/OrderSuccess.vue";
+import OrderList from "../views/Payment/OrderList.vue";
 import CheckoutPage from "../views/Payment/Payment.vue";
 import ProfileView from "../views/Profile.vue";
 import RegisterView from "../views/Register.vue";
@@ -86,14 +87,24 @@ const routes = [
     component: AdminCategory,
   },
   {
+    path: '/adminorder',
+    name: 'AdminOrder',
+    component: AdminOrder,
+  },
+  {
     path: '/checkout',
     name: 'Checkout',
     component: CheckoutPage,
   },
   {
-    path: '/ordersuccess',
+    path: '/orderlist',
+    name: 'OrderList',
+    component: OrderList,
+  },
+  {
+    path: '/:id-ordersuccess',
     name: 'OrderSuccess',
-    component: OrderSuccess,
+    component: () => import('@/views/Payment/OrderSuccess.vue'),
   },
   {
     path: "/login",

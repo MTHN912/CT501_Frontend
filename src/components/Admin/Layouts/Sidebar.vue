@@ -64,7 +64,7 @@ export default {
         },
         {
           text: "Quản Lý Đơn Hàng",
-          link: "/admin/orders",
+          link: "/adminorder",
           icon: "fas fa-receipt",
         },
         {

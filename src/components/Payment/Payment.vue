@@ -1,6 +1,6 @@
 <template>
   <div class="checkout-container">
-    <h2 class="title">Xác nhận đơn hàng</h2>
+    <h2 class="title">Xác nhận đơn tiệc</h2>
 
     <div v-if="isLoading" class="loading">
       <p>Đang tải dữ liệu...</p>
@@ -40,6 +40,15 @@
         />
       </div>
 
+      <div class="party-type-selection">
+        <label for="party-type">Loại tiệc:</label>
+        <select v-model="selectedPartyType">
+          <option value="birthday">Sinh nhật</option>
+          <option value="wedding">Tiệc cưới</option>
+          <option value="company">Tiệc công ty</option>
+        </select>
+      </div>
+
       <div class="payment-method">
         <label>Phương thức thanh toán:</label>
         <select v-model="selectedPaymentMethod">
@@ -59,6 +68,16 @@
             placeholder="Nhập địa chỉ tổ chức tiệc"
           />
         </div>
+        <div class="party-datetime-selection">
+          <label for="party-date">Ngày diễn ra tiệc:</label>
+          <input type="date" id="party-date" v-model="partyDate" required />
+        </div>
+
+        <div class="party-time-selection">
+          <label for="party-time">Giờ diễn ra tiệc:</label>
+          <input type="time" id="party-time" v-model="partyTime" required />
+        </div>
+
         <div class="form-group">
           <label for="phone-number">Số điện thoại liên hệ:</label>
           <input
@@ -91,7 +110,7 @@
           class="confirm-button"
           :disabled="isSubmitting"
         >
-          Xác nhận đặt bàn
+          Xác nhận đặt tiệc
         </button>
       </div>
     </div>
@@ -108,11 +127,13 @@ export default {
     return {
       isLoading: true,
       numberOfTables: 1, // Số bàn muốn đặt, mặc định là 1
+      selectedPartyType: "birthday", // Loại tiệc mặc định
       selectedPaymentMethod: "cash", // Phương thức thanh toán mặc định
-      // isHomeParty: false,
       partyAddress: "", // Địa chỉ tổ chức tiệc
       phoneNumber: "", // Số điện thoại liên hệ
       note: "", // Ghi chú từ khách hàng
+      partyDate: "",
+      partyTime: "",
       isSubmitting: false,
     };
   },
@@ -152,29 +173,56 @@ export default {
       try {
         const orderDetails = {
           tables: this.numberOfTables,
+          partyType: this.selectedPartyType, // Loại tiệc được chọn
           paymentMethod: this.selectedPaymentMethod,
           totalPrice: this.totalPriceForTables,
-          // isHomeParty: this.isHomeParty,
           partyAddress: this.partyAddress || null,
           phoneNumber: this.phoneNumber || null,
           note: this.note || null,
+          partyDateTime: `${this.partyDate}T${this.partyTime}:00`,
+          items: this.cart.items.map((item) => ({
+            dishId: item.dishId, // Lấy dishId từ mỗi món ăn trong giỏ hàng
+            quantity: item.quantity, // Lấy số lượng
+            totalPriceForItem: item.totalPriceForItem, // Tổng giá của món
+          })), // Gửi toàn bộ thông tin món ăn từ giỏ hàng
         };
 
         // Gửi yêu cầu POST đến API để lưu trữ đơn hàng
-        await axios.post("http://localhost:3000/order/orders", orderDetails);
+        const response = await axios.post(
+          "http://localhost:3000/order/orders",
+          orderDetails
+        );
+        const orderId = response.data.order._id;
+
         await this.fetchCart();
+
         Swal.fire({
           icon: "success",
           title: "Đặt hàng thành công!",
-          text: "Cảm ơn bạn đã đặt hàng. Đang chuyển đến trang thành công...",
+          text: "Cảm ơn bạn đã đặt hàng.",
           showConfirmButton: false,
           timer: 3000, // Hiển thị trong 3 giây
         });
+
         setTimeout(() => {
-          this.$router.push({ name: "OrderSuccess" });
-        }, 3000); // Sau 3 giây
+          if (orderId) {
+            this.$router.push({
+              name: "OrderSuccess",
+              params: { id: orderId },
+            });
+          }
+        }, 1000);
       } catch (error) {
-        console.error("Lỗi khi xác nhận đặt bàn:", error);
+        if (error.response && error.response.status === 400) {
+          Swal.fire({
+            icon: "error",
+            title: "Lỗi!",
+            text: error.response.data.message, // Hiển thị thông báo lỗi từ API
+            showConfirmButton: true,
+          });
+        } else {
+          console.error("Lỗi khi xác nhận đặt bàn:", error);
+        }
       } finally {
         this.isSubmitting = false;
       }

@@ -144,6 +144,14 @@
                 >
                   Thông Tin Cá Nhân
                 </router-link>
+                <!-- Icon Xem Đơn Hàng -->
+                <router-link
+                  to="/orderlist"
+                  class="dropdown-item"
+                  active-class="active"
+                >
+                  Tiệc Của Bạn
+                </router-link>
               </li>
               <li v-if="isLoggedIn">
                 <button

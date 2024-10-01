@@ -57,7 +57,7 @@
         <p>
           Tổng giá tất cả: <strong>{{ totalPrice }} đ</strong>
         </p>
-        <button @click="checkout" class="checkout-button">Đặt Bàn</button>
+        <button @click="checkout" class="checkout-button">Đặt Tiệc</button>
       </div>
     </div>
 
