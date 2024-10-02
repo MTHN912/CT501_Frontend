@@ -4,7 +4,10 @@
     <div class="profile-card">
       <div class="profile-title">
         <label for="avatarInput">
+          <div v-if="loadingAvatar" class="spinner"></div>
+          <!-- Thêm hiệu ứng loading -->
           <img
+            v-else
             :src="
               userInfo?.AVATAR ||
               avatarUrl ||
@@ -13,7 +16,6 @@
             alt="Avatar"
             class="avatar"
           />
-          <!-- <h4>{{ userInfo?.USERNAME }}</h4> -->
         </label>
         <input
           id="avatarInput"
@@ -94,6 +96,7 @@ export default {
     return {
       avatarUrl: null,
       editing: false,
+      loadingAvatar: false,
       editData: {
         FULLNAME: "",
         ADDRESS: "",
@@ -118,6 +121,7 @@ export default {
     async uploadAvatar(file) {
       const formData = new FormData();
       formData.append("image", file); // Đặt tên trường là "image" theo yêu cầu của API
+      this.loadingAvatar = true;
 
       try {
         // Gọi API upload
@@ -147,6 +151,8 @@ export default {
         }
       } catch (error) {
         console.error("Lỗi upload avatar:", error);
+      } finally {
+        this.loadingAvatar = false; // Kết thúc hiệu ứng loading
       }
     },
     editProfile() {
@@ -305,5 +311,22 @@ button:hover {
 
 .content {
   margin-left: 8px;
+}
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

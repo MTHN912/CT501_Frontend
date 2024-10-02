@@ -79,16 +79,15 @@
     </div>
 
     <!-- Danh sách đánh giá -->
-    <div v-if="filteredReviews.length > 0" class="reviews">
+    <div v-if="paginatedReviews.length > 0" class="reviews">
       <div
-        v-for="review in filteredReviews"
+        v-for="review in paginatedReviews"
         :key="review._id"
         class="review-item"
       >
         <div class="review-header">
           <img :src="review.userId.AVATAR" alt="Avatar" class="avatar" />
           <h4>{{ review.userId.USERNAME }}</h4>
-          <!-- Hiển thị tên người dùng -->
           <div class="review-rating">
             <span
               v-for="n in 5"
@@ -101,12 +100,48 @@
           <p class="review-date">
             {{ new Date(review.date).toLocaleDateString() }}
           </p>
-          <!-- Định dạng ngày -->
         </div>
         <p>{{ review.comment }}</p>
       </div>
     </div>
-    <p v-else>Không có đánh giá nào cho tab này.</p>
+    <!-- Phân trang -->
+    <div class="pagination">
+      <button
+        @click="changePage(currentPage - 1)"
+        :disabled="currentPage === 1"
+      >
+        <i class="fas fa-arrow-left"></i>
+      </button>
+
+      <!-- Hiển thị một vài số trang trước và sau trang hiện tại -->
+      <button v-if="currentPage > 3" @click="changePage(1)">1</button>
+      <span v-if="currentPage > 3">...</span>
+
+      <button
+        v-for="page in pagesAroundCurrent"
+        :key="page"
+        @click="changePage(page)"
+        :class="{ active: currentPage === page }"
+      >
+        {{ page }}
+      </button>
+
+      <span v-if="currentPage < totalPages - 2">...</span>
+      <button
+        v-if="currentPage < totalPages - 2"
+        @click="changePage(totalPages)"
+      >
+        {{ totalPages }}
+      </button>
+
+      <button
+        @click="changePage(currentPage + 1)"
+        :disabled="currentPage === totalPages"
+      >
+        <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+
     <!-- Phần hiển thị đánh giá của người dùng -->
     <div v-if="hasReviewed" class="user-review">
       <h3>Đánh giá của bạn</h3>
@@ -126,6 +161,14 @@
           </p>
         </div>
         <p>{{ userReview.comment }}</p>
+        <!-- Nút xóa đánh giá chỉ hiện nếu người dùng đã đăng nhập -->
+        <button
+          v-if="isLoggedIn"
+          @click="deleteReview(userReview._id)"
+          class="delete-button"
+        >
+          Xóa đánh giá
+        </button>
       </div>
     </div>
 
@@ -181,6 +224,8 @@ export default {
       hasReviewed: false, // Kiểm tra nếu người dùng đã đánh giá
       userReview: null, // Thông tin đánh giá của người dùng nếu có
       successMessage: "",
+      currentPage: 1,
+      reviewsPerPage: 5,
     };
   },
   computed: {
@@ -193,6 +238,24 @@ export default {
         (review) => review.rating === this.selectedTab
       );
     },
+    pagesAroundCurrent() {
+      let pages = [];
+      let start = Math.max(this.currentPage - 2, 1);
+      let end = Math.min(this.currentPage + 2, this.totalPages);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      return pages;
+    },
+    paginatedReviews() {
+      const start = (this.currentPage - 1) * this.reviewsPerPage;
+      const end = start + this.reviewsPerPage;
+      return this.filteredReviews.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredReviews.length / this.reviewsPerPage);
+    },
     isLoggedIn() {
       return this.$store.getters.isLoggedIn; // Kiểm tra trạng thái đăng nhập
     },
@@ -204,6 +267,11 @@ export default {
     },
   },
   methods: {
+    changePage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+      }
+    },
     // Lấy điểm đánh giá trung bình và tổng số đánh giá từ API
     async fetchAverageRating(dishId) {
       await this.$store.dispatch("fetchAverageRating", dishId); // Dispatch action từ store
@@ -238,6 +306,26 @@ export default {
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra đánh giá của người dùng:", error);
+      }
+    },
+    async deleteReview(reviewId) {
+      const dishId = this.$route.params.id;
+      try {
+        // Gửi yêu cầu xóa đánh giá
+        await axios.delete(
+          `http://localhost:3000/review/deleteReview/${reviewId}`
+        );
+
+        // Cập nhật lại trạng thái hasReviewed thành false và xóa userReview
+        this.hasReviewed = false;
+        this.userReview = null;
+
+        // Cập nhật lại danh sách đánh giá và đánh giá trung bình
+        this.fetchReviews(dishId);
+        this.fetchAverageRating(dishId);
+      } catch (error) {
+        console.error("Lỗi khi xóa đánh giá:", error);
+        alert("Có lỗi xảy ra khi xóa đánh giá. Vui lòng thử lại.");
       }
     },
     // Xử lý upload ảnh
@@ -369,6 +457,7 @@ export default {
   flex-direction: column;
 }
 .review-item {
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   padding: 15px 0;
@@ -472,5 +561,90 @@ export default {
   border-radius: 5px;
   text-align: center;
   transition: opacity 0.3s ease;
+}
+.delete-button {
+  background-color: #ff4d4f; /* Màu đỏ nổi bật */
+  color: white; /* Màu chữ trắng */
+  border: none; /* Không có viền */
+  border-radius: 5px; /* Bo góc */
+  padding: 10px 20px; /* Khoảng cách trong */
+  font-size: 16px; /* Kích thước chữ */
+  cursor: pointer; /* Hiển thị biểu tượng tay khi hover */
+  transition: background-color 0.3s ease; /* Hiệu ứng chuyển màu */
+  margin-top: 10px; /* Khoảng cách phía trên nút */
+}
+
+.delete-button:hover {
+  background-color: #d43f40; /* Màu đỏ đậm hơn khi hover */
+}
+
+.delete-button:active {
+  background-color: #b33636; /* Màu khi click */
+  transform: scale(0.98); /* Hiệu ứng thu nhỏ nhẹ khi click */
+}
+
+.delete-button:focus {
+  outline: none; /* Bỏ viền khi nút được focus */
+  box-shadow: 0 0 5px rgba(255, 77, 79, 0.5); /* Hiệu ứng đổ bóng nhẹ khi focus */
+}
+h3 {
+  margin-top: 15px;
+}
+.user-review {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  padding: 15px;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  gap: 5px;
+}
+
+.pagination button {
+  background-color: #ddd;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.pagination button.active {
+  background-color: #e55a00;
+}
+
+.pagination button:disabled {
+  background-color: #e55a00;
+  cursor: not-allowed;
+}
+
+.pagination button:not(:disabled):hover {
+  background-color: #e55a00;
+}
+
+.pagination span {
+  font-size: 1rem;
+  margin: 0 5px;
+  color: #333;
+}
+
+.pagination .fas {
+  font-size: 1rem;
+  margin-right: 5px;
+}
+
+.pagination .active {
+  background-color: #333;
+  color: white;
 }
 </style>
