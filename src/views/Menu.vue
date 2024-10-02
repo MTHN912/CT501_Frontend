@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
-    <DishList />
+    <DishList class="dishlist" />
     <Footer />
     <!-- Other components or content -->
   </div>
@@ -20,3 +20,8 @@ export default {
   },
 };
 </script>
+<style scoped>
+.dishlist {
+  margin-top: 100px;
+}
+</style>

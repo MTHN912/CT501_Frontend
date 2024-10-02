@@ -1,10 +1,9 @@
 <template>
   <div id="app">
     <Navbar />
-    <DishDetail />
-    <ReviewSection />
+    <DishDetail class="dish-detail" />
+    <ReviewSection class="review-section" />
     <Footer />
-    <!-- Other components or content -->
   </div>
 </template>
 
@@ -23,3 +22,21 @@ export default {
   },
 };
 </script>
+<style scoped>
+.dish-detail {
+  margin-top: 120px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 10 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.review-section {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 10 4px 8px rgba(0, 0, 0, 0.1);
+}
+</style>

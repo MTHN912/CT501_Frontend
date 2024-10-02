@@ -213,6 +213,7 @@ export default {
 
 <style scoped>
 .party-package {
+  margin-top: 100px;
   padding: 30px 20px;
   font-family: Arial, sans-serif;
   text-align: center;

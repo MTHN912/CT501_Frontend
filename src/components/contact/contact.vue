@@ -79,6 +79,7 @@ export default {
 <style scoped>
 /* Căn chỉnh trang */
 .contact-page {
+  margin-top: 100px;
   padding: 40px;
   max-width: 1200px;
   margin: 0 auto;

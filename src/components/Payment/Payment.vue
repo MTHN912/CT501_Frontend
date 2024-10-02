@@ -249,6 +249,7 @@ export default {
 }
 
 .title {
+  margin-top: 110px;
   font-size: 28px;
   font-weight: bold;
   color: #333;

@@ -156,6 +156,7 @@ export default {
 }
 
 h2 {
+  margin-top: 110px;
   text-align: center;
   margin-bottom: 20px;
   font-size: 2rem;
@@ -163,6 +164,7 @@ h2 {
 }
 
 .list-group {
+  margin-top: 50px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;

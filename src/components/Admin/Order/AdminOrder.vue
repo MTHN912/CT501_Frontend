@@ -10,9 +10,22 @@
       />
     </div>
 
+    <!-- Tabs để phân loại đơn hàng -->
+    <div class="tabs">
+      <button
+        v-for="tab in tabs"
+        :key="tab.value"
+        @click="activeTab = tab.value"
+        :class="{ active: activeTab === tab.value }"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+
     <table class="order-table">
       <thead>
         <tr>
+          <th @click="sortBy('username')">Người đặt tiệc ⬍</th>
           <th @click="sortBy('partyType')">Loại Tiệc ⬍</th>
           <th @click="sortBy('tables')">Số bàn ⬍</th>
           <th @click="sortBy('eventDate')">Ngày Diễn Ra ⬍</th>
@@ -27,6 +40,7 @@
       </thead>
       <tbody>
         <tr v-for="order in paginatedOrders" :key="order._id">
+          <td>{{ order.username || "Đang tải..." }}</td>
           <td>{{ order.partyType }}</td>
           <td>{{ order.tables }}</td>
           <td>{{ formatDate(order.eventDate) }}</td>
@@ -129,7 +143,8 @@ import Swal from "sweetalert2";
 export default {
   data() {
     return {
-      orders: [],
+      ordersByCategory: {},
+      activeTab: "allOrders",
       searchQuery: "",
       sortField: "",
       sortOrder: 1,
@@ -138,31 +153,49 @@ export default {
       isDetailModalOpen: false,
       isUpdateModalOpen: false,
       selectedOrder: {},
+      tabs: [
+        { label: "Tất cả", value: "allOrders" },
+        { label: "Đã Hủy", value: "canceledOrders" },
+        { label: "Đã Thanh Toán", value: "paidOrders" },
+        { label: "Chưa Thanh Toán", value: "unpaidOrders" },
+        { label: "Chưa Diễn Ra", value: "upcomingOrders" },
+        { label: "Sắp Đến", value: "nearingOrders" },
+        { label: "Đang Diễn Ra", value: "ongoingOrders" },
+        { label: "Đã Kết Thúc", value: "finishedOrders" },
+      ],
     };
   },
   computed: {
+    allOrders() {
+      return Object.values(this.ordersByCategory).flat();
+    },
     filteredOrders() {
-      let filtered = this.orders.filter(
-        (order) =>
-          order._id.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          order.phoneNumber.includes(this.searchQuery)
+      let orders =
+        this.activeTab === "allOrders"
+          ? this.allOrders
+          : this.ordersByCategory[this.activeTab] || [];
+
+      return orders.filter((order) =>
+        order.phoneNumber.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
+    },
+    sortedOrders() {
+      return this.filteredOrders.sort((a, b) => {
+        let aVal = a[this.sortField];
+        let bVal = b[this.sortField];
 
-      if (this.sortField) {
-        filtered.sort((a, b) => {
-          let result = 0;
-          if (a[this.sortField] < b[this.sortField]) result = -1;
-          if (a[this.sortField] > b[this.sortField]) result = 1;
-          return result * this.sortOrder;
-        });
-      }
+        if (typeof aVal === "string") aVal = aVal.toLowerCase();
+        if (typeof bVal === "string") bVal = bVal.toLowerCase();
 
-      return filtered;
+        if (aVal < bVal) return -1 * this.sortOrder;
+        if (aVal > bVal) return 1 * this.sortOrder;
+        return 0;
+      });
     },
     paginatedOrders() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.filteredOrders.slice(start, end);
+      return this.sortedOrders.slice(start, end);
     },
     totalPages() {
       return Math.ceil(this.filteredOrders.length / this.itemsPerPage);
@@ -186,7 +219,8 @@ export default {
         const response = await axios.get(
           "http://localhost:3000/order/getAllOrders"
         );
-        this.orders = response.data;
+        this.ordersByCategory = response.data;
+        await this.fetchUsersForOrders();
       } catch (error) {
         console.error("Error fetching orders:", error);
         Swal.fire({
@@ -194,6 +228,27 @@ export default {
           title: "Lỗi",
           text: "Đã xảy ra lỗi khi tải danh sách đơn hàng.",
         });
+      }
+    },
+    async fetchUsersForOrders() {
+      for (const category in this.ordersByCategory) {
+        const userPromises = this.ordersByCategory[category].map(
+          async (order) => {
+            if (order.userId) {
+              try {
+                const response = await axios.get(
+                  `http://localhost:3000/user/getUserById/${order.userId}`
+                );
+                return { ...order, username: response.data.FULLNAME };
+              } catch (error) {
+                console.error(`Error fetching user ${order.userId}:`, error);
+                return { ...order, username: "Không tìm thấy người dùng" };
+              }
+            }
+            return { ...order, username: "Không xác định" };
+          }
+        );
+        this.ordersByCategory[category] = await Promise.all(userPromises);
       }
     },
     async fetchDishDetails(dishId) {
@@ -367,6 +422,34 @@ export default {
   border-radius: 5px;
   border: none;
   width: 200px;
+}
+
+/* Tabs CSS */
+.tabs {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  background-color: #1d283c;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.tabs button:hover {
+  background-color: #34495e;
+  transform: translateY(-2px);
+}
+
+.tabs .active {
+  background-color: #0084ff;
+  color: white;
 }
 
 .order-table {

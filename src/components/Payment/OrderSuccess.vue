@@ -114,6 +114,7 @@ export default {
 
 <style scoped>
 .order-success-container {
+  margin-top: 100px;
   text-align: center;
   padding: 50px;
 }
