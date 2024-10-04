@@ -1,31 +1,30 @@
 <template>
+  <!-- <h3 @click="toggleCategory">
+    Danh mục<span v-if="!showCategories">▼</span><span v-else>▲</span>
+  </h3> -->
+  <aside class="category-list">
+    <ul v-show="showCategories">
+      <li
+        @click="filterByCategory('Tất cả')"
+        :class="{ active: selectedCategory === 'Tất cả' }"
+      >
+        Tất cả
+      </li>
+      <li
+        v-for="category in categories"
+        :key="category"
+        @click="filterByCategory(category)"
+        :class="{ active: selectedCategory === category }"
+      >
+        {{ category }}
+      </li>
+    </ul>
+  </aside>
   <div class="menu-container">
     <!-- Danh mục món ăn -->
-    <aside class="category-list">
-      <h3 @click="toggleCategory">
-        Danh mục<span v-if="!showCategories">▼</span><span v-else>▲</span>
-      </h3>
-      <ul v-show="showCategories">
-        <li
-          @click="filterByCategory('Tất cả')"
-          :class="{ active: selectedCategory === 'Tất cả' }"
-        >
-          Tất cả
-        </li>
-        <li
-          v-for="category in categories"
-          :key="category"
-          @click="filterByCategory(category)"
-          :class="{ active: selectedCategory === category }"
-        >
-          {{ category }}
-        </li>
-      </ul>
-    </aside>
 
     <!-- Danh sách món ăn -->
-    <div class="dish-list">
-      <h2 class="title">Danh sách món ăn</h2>
+    <div class="dish-list" ref="dishList">
       <ul class="dish-grid">
         <li v-for="dish in filteredDishes" :key="dish.id" class="dish-item">
           <div class="dish-info">
@@ -37,8 +36,8 @@
             />
             <div class="dish-details">
               <h3 @click="goToDetail(dish._id)">{{ dish.name }}</h3>
-              <p>{{ dish.description }}</p>
-              <p>{{ dish.detailedDescription }}</p>
+              <p class="front1">{{ dish.description }}</p>
+              <p class="front2">{{ dish.detailedDescription }}</p>
               <span>Giá: {{ dish.price }} đ</span>
 
               <!-- Nút yêu thích và đánh giá -->
@@ -149,11 +148,12 @@ export default {
     filterByCategory(category) {
       this.selectedCategory = category;
 
-      // Cuộn danh sách món ăn về đầu trang khi chọn danh mục mới
-      const dishList = this.$el.querySelector(".dish-list");
-      if (dishList) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
+      this.$nextTick(() => {
+        const dishList = this.$refs.dishList;
+        if (dishList) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
     },
     // Điều hướng đến trang chi tiết món ăn
     goToDetail(id) {
@@ -244,17 +244,17 @@ export default {
 <style scoped>
 .menu-container {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 20px;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
 }
 
 .category-list {
-  width: 220px;
-  margin-right: 25px;
-  position: sticky;
-  top: 20px;
-  max-height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  justify-content: center; /* Căn giữa các mục danh mục */
+  margin-bottom: 20px; /* Tạo khoảng cách giữa danh mục và phần còn lại của nội dung */
+  width: 100%; /* Đảm bảo danh mục chiếm toàn bộ chiều ngang */
 }
 
 .category-list h3 {
@@ -271,28 +271,41 @@ export default {
 }
 
 .category-list ul {
+  display: flex;
+  gap: 15px; /* Khoảng cách giữa các tab */
   list-style: none;
   padding: 0;
   margin-top: 10px;
+  justify-content: center;
 }
 
 .category-list li {
   cursor: pointer;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-bottom: 10px;
+  padding: 10px 20px; /* Điều chỉnh kích thước tab */
+  border: 1px solid #d4a762; /* Đường viền rõ ràng hơn */
+  border-radius: 25px; /* Tạo hình dạng bo tròn */
+  margin-bottom: 0; /* Loại bỏ khoảng cách không cần thiết */
   text-align: center;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.3s, border-color 0.3s;
+  background-color: #f8f8f8; /* Màu nền mặc định */
+  font-size: 1rem; /* Điều chỉnh kích thước font */
+  font-weight: bold;
+  color: rgb(5, 7, 9); /* Màu chữ mặc định */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Thêm bóng nhẹ cho tab */
 }
 
 .category-list li.active {
-  background-color: #f5f5f5;
-  font-weight: bold;
+  background-color: #d4a762; /* Màu nền khi tab được chọn */
+  color: white; /* Màu chữ khi được chọn */
+  border-color: #d4a762; /* Đổi màu viền khi được chọn */
+  transform: scale(1.1); /* Phóng to nhẹ tab được chọn */
 }
 
 .category-list li:hover {
-  background-color: #e0e0e0;
+  background-color: #c09759; /* Màu nền khi hover */
+  border-color: #c09759; /* Màu viền khi hover */
+  transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
+  color: #333;
 }
 
 .dish-list {
@@ -313,14 +326,15 @@ export default {
 
 .dish-item {
   border: 1px solid #ddd;
-  border-radius: 15px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s, box-shadow 0.3s;
   background-color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  width: 400px;
   height: 100%;
 }
 
@@ -331,60 +345,70 @@ export default {
 
 .dish-info {
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .dish-image {
-  width: 300px;
+  margin-top: 15px;
+  width: 350px;
   height: 300px;
   object-fit: cover;
   border-radius: 10px;
 }
 
 .dish-details p {
-  margin: 5px 0;
+  margin: 3px 0; /* Giảm khoảng cách giữa các đoạn văn */
   color: #666;
-  max-height: 60px;
+  /* font-size: 0.8rem; */
+  max-height: 50px; /* Giới hạn chiều cao để tránh nội dung quá dài */
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-
+.front1 {
+  font-size: 1rem;
+}
+.front2 {
+  font-size: 0.8rem;
+}
 .dish-details h3 {
-  font-size: 1.6rem;
+  font-size: 1.4rem; /* Thu nhỏ kích thước tiêu đề */
   color: #333;
   font-weight: bold;
   max-height: 40px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin: 5px 0; /* Giảm khoảng cách trên dưới */
 }
 
 .dish-details span {
   font-weight: bold;
   color: #000;
-  margin-top: 10px;
+  margin-top: 7px; /* Giảm khoảng cách trên */
+  font-size: 0.95rem; /* Giảm nhẹ kích thước chữ của giá */
 }
 
 .dish-controls {
   display: flex;
-  justify-content: space-between; /* Giữ các phần tử ở hai đầu */
+  justify-content: space-between;
   align-items: center;
-  margin-top: 15px;
+  /* margin-top: 7px; */
 }
 
 .dish-rating {
-  display: inline-flex; /* Chuyển sang inline-flex để các thành phần xếp liền nhau */
-  align-items: center;  /* Căn giữa theo trục dọc */
-  justify-content: flex-start; /* Bắt đầu từ bên trái */
-  gap: 5px; /* Thêm khoảng cách giữa các phần tử con (ngôi sao, số đánh giá) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
 }
 
 .average-rating {
   font-weight: bold;
   margin-right: 5px;
-  font-size: 1.2rem;
+  font-size: 1rem; /* Giảm kích thước chữ đánh giá */
 }
 
 .stars {
@@ -403,10 +427,8 @@ export default {
 }
 
 .review-count {
-  font-size: 1rem;
-  margin-left: 5px;
+  font-size: 0.85rem; /* Giảm kích thước chữ số lượt đánh giá */
 }
-
 .favorite-button {
   background-color: transparent;
   border: none;
@@ -427,7 +449,7 @@ export default {
 }
 
 .quantity-input {
-  margin-top: 15px;
+  margin-top: 7px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -443,9 +465,9 @@ export default {
 }
 
 .select-button {
-  background-color: #ff6600;
+  background-color: #d4a762;
   color: white;
-  padding: 10px 25px;
+  padding: 5px 20px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -455,7 +477,7 @@ export default {
 }
 
 .select-button:hover {
-  background-color: #ff4500;
+  background-color: #c09759;
   transform: scale(1.1);
 }
 </style>
