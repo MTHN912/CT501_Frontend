@@ -2,6 +2,9 @@
   <!-- <h3 @click="toggleCategory">
     Danh mục<span v-if="!showCategories">▼</span><span v-else>▲</span>
   </h3> -->
+  <div v-if="showMessage" class="success-message">
+    {{ successMessage }}
+  </div>
   <aside class="category-list">
     <ul v-show="showCategories">
       <li
@@ -21,6 +24,10 @@
     </ul>
   </aside>
   <div class="menu-container">
+    <div v-if="showMessage" class="success-message">
+      {{ successMessage }}
+    </div>
+
     <!-- Danh mục món ăn -->
 
     <!-- Danh sách món ăn -->
@@ -86,19 +93,32 @@
               </div>
 
               <!-- Số lượng và nút chọn món -->
-              <div class="quantity-input">
-                <label for="quantity">Số lượng:</label>
-                <input
-                  type="number"
-                  id="quantity"
-                  v-model="dish.quantity"
-                  min="1"
-                  class="quantity-field"
-                />
+              <div class="quantity-container">
+                <div class="quantity-input">
+                  <button
+                    @click="decreaseQuantity(dish)"
+                    class="quantity-button"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    id="quantity"
+                    v-model="dish.quantity"
+                    min="1"
+                    class="quantity-field no-arrows"
+                  />
+                  <button
+                    @click="increaseQuantity(dish)"
+                    class="quantity-button"
+                  >
+                    +
+                  </button>
+                </div>
+                <button @click="selectDish(dish)" class="select-button">
+                  Chọn món
+                </button>
               </div>
-              <button @click="selectDish(dish)" class="select-button">
-                Chọn món
-              </button>
             </div>
           </div>
         </li>
@@ -119,6 +139,8 @@ export default {
       categories: [], // Danh mục lấy từ API
       dishes: [], // Danh sách món ăn lấy từ API
       ratings: {},
+      successMessage: "",
+      showMessage: false,
     };
   },
   computed: {
@@ -144,9 +166,21 @@ export default {
     },
   },
   methods: {
+    increaseQuantity(dish) {
+      dish.quantity++;
+    },
+    decreaseQuantity(dish) {
+      if (dish.quantity > 1) {
+        dish.quantity--;
+      }
+    },
+    // Lọc món ăn theo danh mục
     // Lọc món ăn theo danh mục
     filterByCategory(category) {
       this.selectedCategory = category;
+
+      // Gọi lại API để lấy món ăn theo danh mục đã chọn
+      this.fetchDishes(category);
 
       this.$nextTick(() => {
         const dishList = this.$refs.dishList;
@@ -165,15 +199,65 @@ export default {
     },
     // Thêm món vào giỏ hàng thông qua store
     selectDish(dish) {
+      const cartItem = this.cart.items.find((item) => item.dishId === dish._id);
+
+      if (cartItem) {
+        // Nếu món đã có trong giỏ hàng
+        const confirmMessage = `Món ${dish.name} đã có trong giỏ hàng với số lượng ${cartItem.quantity}. Bạn có muốn thêm ${dish.quantity} món này nữa không?`;
+
+        if (confirm(confirmMessage)) {
+          // Người dùng xác nhận, thêm số lượng mới vào giỏ hàng
+          this.addToCart(dish, true); // Truyền thêm cờ để biết đây là thêm số lượng
+        } else {
+          // Người dùng hủy hành động, không làm gì cả
+          return;
+        }
+      } else if (dish.quantity >= 2) {
+        // Nếu số lượng lớn hơn hoặc bằng 2 và món chưa có trong giỏ hàng
+        const confirmMessage = `Đây là chọn món cho một bàn tiệc, bạn có chắc muốn chọn ${dish.quantity} món này?`;
+
+        if (confirm(confirmMessage)) {
+          // Người dùng xác nhận, tiến hành thêm vào giỏ hàng
+          this.addToCart(dish);
+        } else {
+          // Người dùng hủy hành động, không làm gì cả
+          return;
+        }
+      } else {
+        // Số lượng nhỏ hơn 2 và món chưa có trong giỏ hàng, không cần cảnh báo
+        this.addToCart(dish);
+      }
+    },
+
+    addToCart(dish, isAddingExtra = false) {
+      let newQuantity = dish.quantity || 1;
+
+      // Nếu món đã có trong giỏ hàng và đang thêm số lượng mới, cộng dồn số lượng
+      if (isAddingExtra) {
+        const cartItem = this.cart.items.find(
+          (item) => item.dishId === dish._id
+        );
+        if (cartItem) {
+          newQuantity += cartItem.quantity;
+        }
+      }
+
       this.$store
         .dispatch("addToCart", {
           dishId: dish._id,
-          quantity: dish.quantity || 1, // Số lượng mặc định là 1 nếu không có
+          quantity: newQuantity,
         })
         .then(() => {
-          alert(
-            `Bạn muốn thêm ${dish.quantity || 1} món ${dish.name} vào giỏ hàng`
-          );
+          // Hiển thị thông báo thành công
+          this.successMessage = `Bạn đã thêm ${dish.quantity || 1} món ${
+            dish.name
+          } vào giỏ hàng thành công!`;
+          this.showMessage = true;
+
+          // Ẩn thông báo sau 3 giây
+          setTimeout(() => {
+            this.showMessage = false;
+          }, 3000);
         })
         .catch((error) => {
           console.error("Lỗi khi thêm món vào giỏ hàng:", error);
@@ -210,9 +294,17 @@ export default {
       }
     },
     // Gọi API để lấy danh sách món ăn
-    async fetchDishes() {
+    // Gọi API để lấy danh sách món ăn có thể tìm kiếm theo danh mục
+    async fetchDishes(category = "Tất cả") {
       try {
-        const response = await axios.get("http://localhost:3000/dish/getDish");
+        // Tạo URL động, nếu danh mục không phải là "Tất cả" thì thêm tham số query
+        let apiUrl = "http://localhost:3000/dish/getDish";
+        if (category !== "Tất cả") {
+          apiUrl += `?category=${category}`;
+        }
+
+        // Gọi API để lấy món ăn dựa trên danh mục đã chọn
+        const response = await axios.get(apiUrl);
         this.dishes = response.data;
 
         // Gọi API để lấy đánh giá trung bình cho từng món ăn
@@ -221,7 +313,7 @@ export default {
             `http://localhost:3000/review/getAverageRating/${dish._id}`
           );
 
-          // Lưu trữ kết quả vào ratings, đồng thời đổi tên thuộc tính cho phù hợp với template
+          // Lưu trữ kết quả vào ratings
           this.ratings[dish._id] = {
             averageRating: parseFloat(ratingResponse.data.average), // Đổi thành số thực
             reviewCount: ratingResponse.data.totalReviews,
@@ -253,7 +345,7 @@ export default {
 .category-list {
   display: flex;
   justify-content: center; /* Căn giữa các mục danh mục */
-  margin-bottom: 20px; /* Tạo khoảng cách giữa danh mục và phần còn lại của nội dung */
+  /* margin-bottom: 20px; */
   width: 100%; /* Đảm bảo danh mục chiếm toàn bộ chiều ngang */
 }
 
@@ -325,7 +417,6 @@ export default {
 }
 
 .dish-item {
-  border: 1px solid #ddd;
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -336,6 +427,7 @@ export default {
   justify-content: space-between;
   width: 400px;
   height: 100%;
+  border: 1px solid #d4a762;
 }
 
 .dish-item:hover {
@@ -368,9 +460,11 @@ export default {
   -webkit-box-orient: vertical;
 }
 .front1 {
+  margin-top: 5px;
   font-size: 1rem;
 }
 .front2 {
+  margin-top: 5px;
   font-size: 0.8rem;
 }
 .dish-details h3 {
@@ -447,37 +541,92 @@ export default {
   color: #ff6666;
   transform: scale(1.1);
 }
+.quantity-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  width: 100%; /* Đảm bảo container chiếm hết chiều ngang */
+}
 
 .quantity-input {
-  margin-top: 7px;
   display: flex;
-  justify-content: center;
   align-items: center;
+  /* border: 1px solid #d4a762; */
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .quantity-field {
-  width: 60px;
-  padding: 5px;
-  margin-left: 10px;
+  width: 40px;
+  padding: 4px;
+  border: none;
+  text-align: center;
   font-size: 1rem;
-  border-radius: 5px;
-  border: 1px solid #ddd;
+  background-color: #e6cca5;
+  height: 100%;
 }
 
+.quantity-button {
+  background-color: #d4a762;
+  color: white;
+  width: 30px;
+  height: 100%;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.quantity-button:hover {
+  background-color: #c09759; /* Đổi màu khi hover */
+  transform: scale(1.1); /* Hiệu ứng phóng to nhẹ */
+}
+
+.quantity-button:first-child {
+  border-right: 1px solid #fff; /* Viền giữa nút trừ và input */
+}
+
+.quantity-button:last-child {
+  border-left: 1px solid #fff; /* Viền giữa nút cộng và input */
+}
 .select-button {
   background-color: #d4a762;
   color: white;
-  padding: 5px 20px;
+  padding: 5px 15px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin-top: 15px;
-  transition: background-color 0.3s, transform 0.2s;
   font-size: 1rem;
+  margin-left: 15px; /* Khoảng cách giữa button và input */
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 .select-button:hover {
   background-color: #c09759;
   transform: scale(1.1);
+}
+.no-arrows::-webkit-outer-spin-button,
+.no-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.success-message {
+  background-color: #c09759;
+  color: white;
+  padding: 15px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
 }
 </style>

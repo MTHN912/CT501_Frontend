@@ -9,6 +9,9 @@
         <li class="breadcrumb-item">
           <a href="http://localhost:3001/">{{ homeText }}</a>
         </li>
+        <li class="breadcrumb-item">
+          <a href="http://localhost:3001/menu">{{ menuText }}</a>
+        </li>
         <li class="breadcrumb-item text-white" aria-current="page">
           {{ currentPage }}
         </li>
@@ -22,9 +25,10 @@
 export default {
   data() {
     return {
-      title: "Danh Sách Món Ăn",
+      title: "Chi Tiết Món Ăn",
       homeText: "Home",
-      currentPage: "Menu",
+      menuText: "Menu",
+      currentPage: "Detail",
     };
   },
   mounted() {

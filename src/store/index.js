@@ -322,7 +322,7 @@ const store = createStore({
         });
         if (response.status === 200 || response.status === 201) {
           commit("ADD_TO_CART", { dishId, quantity });
-          message.success(`Đã thêm ${quantity} món vào giỏ hàng`);
+          // message.success(`Đã thêm ${quantity} món vào giỏ hàng`);
           return response;
         } else {
           throw new Error("Failed to add to cart");

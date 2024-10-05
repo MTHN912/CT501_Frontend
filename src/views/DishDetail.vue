@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
+    <HeroDishDetail />
     <DishDetail class="dish-detail" />
     <ReviewSection class="review-section" />
     <Footer />
@@ -11,11 +12,13 @@
 import Footer from "@/components/Layout/Footer.vue";
 import Navbar from "@/components/Layout/Navbar.vue";
 import DishDetail from "@/components/Menu/DishDetail.vue";
+import HeroDishDetail from "@/components/Menu/HeroDishDetail.vue";
 import ReviewSection from "@/components/Menu/ReviewSection.vue";
 
 export default {
   components: {
     Navbar,
+    HeroDishDetail,
     DishDetail,
     Footer,
     ReviewSection,
@@ -24,7 +27,6 @@ export default {
 </script>
 <style scoped>
 .dish-detail {
-  margin-top: 120px;
   margin-bottom: 20px;
   padding: 20px;
   background-color: white;

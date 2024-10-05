@@ -1,5 +1,10 @@
 <template>
   <div class="dish-detail-container" v-if="dish">
+    <!-- Thông báo thành công -->
+    <div v-if="showMessage" class="success-message">
+      {{ successMessage }}
+    </div>
+
     <!-- Hình ảnh món ăn lớn bên trái -->
     <div class="image-section">
       <img :src="dish.image" alt="dish image" class="dish-image" />
@@ -70,6 +75,8 @@ export default {
       quantity: 1,
       averageRating: 0,
       totalReviews: 0,
+      successMessage: "",
+      showMessage: false,
     };
   },
   created() {
@@ -103,15 +110,60 @@ export default {
       this.dish.favorite = !this.dish.favorite;
     },
     selectDish() {
+      const cartItem = this.$store.state.cart.items.find(
+        (item) => item.dishId === this.dish._id
+      );
+
+      if (cartItem) {
+        // Nếu món đã có trong giỏ hàng
+        const confirmMessage = `Món ${this.dish.name} đã có trong giỏ hàng với số lượng ${cartItem.quantity}. Bạn có muốn thêm ${this.quantity} món này nữa không?`;
+
+        if (confirm(confirmMessage)) {
+          this.addToCart(this.quantity, true); // Truyền thêm cờ để biết đây là thêm số lượng
+        } else {
+          return;
+        }
+      } else if (this.quantity >= 2) {
+        // Nếu số lượng lớn hơn hoặc bằng 2 và món chưa có trong giỏ hàng
+        const confirmMessage = `Đây là chọn món cho một bàn tiệc, bạn có chắc muốn chọn ${this.quantity} món này?`;
+
+        if (confirm(confirmMessage)) {
+          this.addToCart(this.quantity);
+        } else {
+          return;
+        }
+      } else {
+        // Số lượng nhỏ hơn 2 và món chưa có trong giỏ hàng
+        this.addToCart(this.quantity);
+      }
+    },
+
+    addToCart(quantity, isAddingExtra = false) {
+      let newQuantity = quantity || 1;
+
+      if (isAddingExtra) {
+        const cartItem = this.$store.state.cart.items.find(
+          (item) => item.dishId === this.dish._id
+        );
+        if (cartItem) {
+          newQuantity += cartItem.quantity;
+        }
+      }
+
       this.$store
         .dispatch("addToCart", {
           dishId: this.$route.params.id,
-          quantity: this.quantity, // Lấy số lượng món từ input
+          quantity: newQuantity,
         })
         .then(() => {
-          alert(
-            `Bạn đã thêm ${this.quantity} món ${this.dish.name} vào giỏ hàng`
-          );
+          // Hiển thị thông báo thành công
+          this.successMessage = `Bạn đã thêm ${newQuantity} món ${this.dish.name} vào giỏ hàng thành công!`;
+          this.showMessage = true;
+
+          // Ẩn thông báo sau 3 giây
+          setTimeout(() => {
+            this.showMessage = false;
+          }, 3000);
         })
         .catch((error) => {
           console.error("Lỗi khi thêm món vào giỏ hàng:", error);
@@ -126,6 +178,22 @@ export default {
 </script>
 
 <style scoped>
+.success-message {
+  background-color: #c09759;
+  color: white;
+  padding: 15px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+
 .dish-detail-container {
   display: flex;
   padding: 25px;
@@ -197,7 +265,7 @@ export default {
 }
 
 .select-button {
-  background-color: #ff6600;
+  background-color: #d4a762;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -208,7 +276,7 @@ export default {
 }
 
 .select-button:hover {
-  background-color: #ff4500;
+  background-color: #c09759;
 }
 .quantity-selector {
   margin-bottom: 10px;
