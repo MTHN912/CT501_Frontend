@@ -2,18 +2,17 @@
   <div class="order-management">
     <div class="header">
       <h2>Quản lý đơn hàng</h2>
-      <input
-        type="text"
-        placeholder="Tìm kiếm..."
-        v-model="searchQuery"
-        class="search"
-      />
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          placeholder="Tìm kiếm..."
+          v-model="searchQuery"
+          class="search"
+        />
+      </div>
     </div>
 
-    <!-- Tabs để phân loại đơn hàng -->
-    <!-- Tab "Tất Cả" đặt riêng biệt bên ngoài -->
-
-    <!-- Các tab khác nằm trong .tabs -->
     <div class="ustabs">
       <div class="tab-all">
         <button
@@ -51,18 +50,15 @@
             </select>
           </template>
           <template v-else>
-            <!-- Không hiển thị dropdown cho các tab còn lại -->
             {{ tab.label }}
           </template>
         </button>
         <div class="date-range-filter">
-          <label>Bắt đầu từ:</label>
           <input
             type="date"
             v-model="startDate"
             @change="updateDateRangeFilter"
           />
-          <label>Đến ngày:</label>
           <input
             type="date"
             v-model="endDate"
@@ -75,40 +71,70 @@
     <table class="order-table">
       <thead>
         <tr>
-          <th @click="sortBy('username')">Người đặt tiệc ⬍</th>
-          <th @click="sortBy('partyType')">Loại Tiệc ⬍</th>
-          <th @click="sortBy('tables')">Số bàn ⬍</th>
-          <th @click="sortBy('eventDate')">Ngày Diễn Ra ⬍</th>
-          <th @click="sortBy('partyStatus')">Trạng Thái Tiệc ⬍</th>
-          <th @click="sortBy('paymentMethod')">Phương thức thanh toán ⬍</th>
-          <th @click="sortBy('totalPrice')">Tổng tiền ⬍</th>
-          <th @click="sortBy('phoneNumber')">Số điện thoại ⬍</th>
-          <th @click="sortBy('status')">Trạng thái ⬍</th>
-          <th @click="sortBy('createdAt')">Ngày tạo ⬍</th>
-          <th>Hành động</th>
+          <th @click="sortBy('username')" class="narrow-column1">
+            Người đặt tiệc
+          </th>
+          <th @click="sortBy('partyType')" class="narrow-column2">Loại Tiệc</th>
+          <th @click="sortBy('tables')" class="narrow-column">Số bàn</th>
+          <th @click="sortBy('eventDate')" class="narrow-column3">
+            Ngày Diễn Ra
+          </th>
+          <th @click="sortBy('partyStatus')" class="narrow-column4">
+            Trạng Thái Tiệc
+          </th>
+          <th @click="sortBy('paymentMethod')" class="narrow-column5">
+            Phương Thức Thanh Toán
+          </th>
+          <th @click="sortBy('totalPrice')" class="narrow-column6">
+            Tổng Tiền
+          </th>
+          <th @click="sortBy('phoneNumber')" class="narrow-column7">
+            Số Điện Thoại
+          </th>
+          <th @click="sortBy('status')" class="narrow-column8">
+            Trạng Thái Thanh Toán
+          </th>
+          <th>Hành Động</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="order in paginatedOrders" :key="order._id">
-          <td>{{ order.username || "Đang tải..." }}</td>
-          <td>{{ order.partyType }}</td>
-          <td>{{ order.tables }}</td>
-          <td>{{ formatDate(order.eventDate) }}</td>
-          <td>{{ order.partyStatus }}</td>
-          <td>{{ translatePaymentMethod(order.paymentMethod) }}</td>
-          <td>{{ formatCurrency(order.totalPrice) }}</td>
-          <td>{{ order.phoneNumber }}</td>
-          <td>{{ order.status }}</td>
-          <td>{{ formatDate(order.createdAt) }}</td>
+        <tr v-for="order in paginatedOrders" :key="order._id" class="order-row">
+          <td class="narrow-column1">{{ order.username || "Đang tải..." }}</td>
+          <td class="narrow-column2">{{ order.partyType }}</td>
+          <td class="narrow-column">{{ order.tables }}</td>
+          <td class="narrow-column3">{{ formatDate(order.eventDate) }}</td>
+          <td class="narrow-column4">
+            <span
+              :class="['status-badge', getPartyStatusClass(order.partyStatus)]"
+            >
+              {{ order.partyStatus }}
+            </span>
+          </td>
+          <td class="narrow-column5">
+            {{ translatePaymentMethod(order.paymentMethod) }}
+          </td>
+          <td class="narrow-column6">{{ formatCurrency(order.totalPrice) }}</td>
+          <td class="narrow-column7">{{ order.phoneNumber }}</td>
+          <td class="narrow-column8">
+            <span :class="['status-badge', getStatusClass(order.status)]">
+              {{ order.status }}
+            </span>
+          </td>
           <td>
-            <i @click="openDetailModal(order)" class="fas fa-eye view-icon"></i>
+            <i
+              @click="openDetailModal(order)"
+              class="fas fa-eye view-icon"
+              title="Xem"
+            ></i>
             <i
               @click="openUpdateModal(order)"
               class="fas fa-edit edit-icon"
+              title="Sửa"
             ></i>
             <i
               @click="deleteOrder(order._id)"
               class="fas fa-trash delete-icon"
+              title="Xóa"
             ></i>
           </td>
         </tr>
@@ -122,6 +148,11 @@
       <button @click="nextPage" :disabled="currentPage === totalPages">
         Tiếp
       </button>
+      <select v-model="itemsPerPage" @change="updateItemsPerPage">
+        <option :value="10">10 / trang</option>
+        <option :value="20">20 / trang</option>
+        <option :value="50">50 / trang</option>
+      </select>
     </div>
 
     <!-- Modal chi tiết đơn hàng -->
@@ -209,15 +240,6 @@ export default {
       tabs: [
         // { label: "Tất cả", value: "allOrders" },
         {
-          label: "Trạng Thái Thanh Toán",
-          value: "status",
-          options: [
-            { label: "Chưa Thanh Toán", value: "Chưa Thanh Toán" },
-            { label: "Đã Thanh Toán", value: "Đã Thanh Toán" },
-            { label: "Đã Hủy", value: "Đã Hủy" },
-          ],
-        },
-        {
           label: "Trạng Thái Tiệc",
           value: "partyStatus",
           options: [
@@ -225,6 +247,15 @@ export default {
             { label: "Sắp Đến", value: "Sắp Đến" },
             { label: "Đang Diễn Ra", value: "Đang Diễn Ra" },
             { label: "Đã Kết Thúc", value: "Đã Kết Thúc" },
+          ],
+        },
+        {
+          label: "Trạng Thái Thanh Toán",
+          value: "status",
+          options: [
+            { label: "Chưa Thanh Toán", value: "Chưa Thanh Toán" },
+            { label: "Đã Thanh Toán", value: "Đã Thanh Toán" },
+            { label: "Đã Hủy", value: "Đã Hủy" },
           ],
         },
       ],
@@ -281,6 +312,40 @@ export default {
     },
   },
   methods: {
+    applyFilters() {
+      this.fetchOrdersWithBothFilters();
+    },
+    resetFilters() {
+      this.selectedStatus = "";
+      this.selectedPartyStatus = "";
+      this.selectedEventDate = "";
+      this.startDate = "";
+      this.endDate = "";
+      this.fetchOrdersWithBothFilters();
+    },
+    getStatusClass(status) {
+      const statusMap = {
+        "Chưa Thanh Toán": "unpaid",
+        "Đã Thanh Toán": "paid",
+        "Đã Hủy": "cancelled",
+      };
+      return statusMap[status] || "";
+    },
+    getPartyStatusClass(partyStatus) {
+      const partyStatusMap = {
+        "Chưa Diễn Ra": "upcoming",
+        "Sắp Đến": "nearing",
+        "Đang Diễn Ra": "ongoing",
+        "Đã Kết Thúc": "finished",
+        "Đã Hủy": "cancelled",
+      };
+      return partyStatusMap[partyStatus] || "";
+    },
+    updateItemsPerPage() {
+      this.currentPage = 1; // Reset to first page
+      this.fetchOrdersWithBothFilters();
+    },
+
     updateDateRangeFilter() {
       this.fetchOrdersWithBothFilters();
     },
@@ -572,6 +637,7 @@ export default {
   background-color: #101827;
   color: #fff;
   width: 100%;
+  height: 950px;
 }
 
 .header {
@@ -585,15 +651,27 @@ export default {
   color: white;
 }
 
-.search {
-  padding: 10px;
-  background-color: #1d283c;
-  border-radius: 5px;
-  border: none;
-  width: 200px;
+.search-container {
+  position: relative;
 }
 
-/* Tabs CSS */
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.search {
+  padding: 10px 10px 10px 35px;
+  background-color: #1d283c;
+  border-radius: 5px;
+  border: 1px solid #444;
+  width: 250px;
+  color: white;
+}
+
 /* Tabs CSS */
 .ustabs {
   display: flex;
@@ -620,9 +698,9 @@ export default {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
-  min-width: 120px;
+  /* min-width: 120px; */
   height: 42px;
-  width: 210px;
+  width: 90px;
   position: relative;
   text-align: left;
 }
@@ -718,36 +796,145 @@ export default {
 
 .order-table {
   width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.order-table th,
-.order-table td {
-  padding: 10px;
-  border-bottom: 1px solid #444;
-}
-
-.order-table th {
-  cursor: pointer;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
+  border-collapse: separate;
+  border-spacing: 0 8px;
   margin-top: 20px;
 }
 
-.pagination button {
-  background-color: #0084ff;
-  color: white;
-  border: none;
-  padding: 10px;
+.order-table th {
+  padding: 12px;
+  text-align: center;
+  background-color: #1d283c;
+}
+
+.order-table td {
+  padding: 12px;
+  /* text-align: left; */
+  background-color: #1d283c;
+}
+
+.order-table th {
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.order-table tr {
+  transition: background-color 0.3s;
+}
+
+.order-table tr:hover {
+  background-color: #2c3e50;
+}
+
+.narrow-column {
+  width: 75px;
+}
+.narrow-column1 {
+  width: 200px;
+}
+.narrow-column2 {
+  width: 60px;
+}
+.narrow-column3 {
+  width: 130px;
+}
+.narrow-column4 {
+  width: 150px;
+  text-align: center;
+}
+.narrow-column5 {
+  width: 210px;
+  text-align: center;
+}
+.narrow-column6 {
+  width: 70px;
+  text-align: center;
+}
+.narrow-column7 {
+  width: 120px;
+  text-align: center;
+}
+.narrow-column8 {
+  width: 180px;
+  text-align: center;
+}
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.unpaid {
+  background-color: #ffa500;
+  color: #000;
+}
+.paid {
+  background-color: #4caf50;
+  color: #fff;
+}
+.cancelled {
+  background-color: #f44336;
+  color: #fff;
+}
+.upcoming {
+  background-color: #2196f3;
+  color: #fff;
+}
+.nearing {
+  background-color: #ff9800;
+  color: #000;
+}
+.ongoing {
+  background-color: #9c27b0;
+  color: #fff;
+}
+.finished {
+  background-color: #607d8b;
+  color: #fff;
+}
+
+.action-icon {
+  margin-right: 10px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.action-icon:hover {
+  color: #0084ff;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination button,
+.pagination select {
   margin: 0 5px;
+  padding: 8px 12px;
+  background-color: #1d283c;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-.pagination span {
-  margin: 0 10px;
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination select {
+  appearance: none;
+  padding-right: 25px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  background-repeat: no-repeat;
+  background-position-x: 100%;
+  background-position-y: 5px;
 }
 
 .modal {
@@ -867,9 +1054,12 @@ export default {
 }
 
 .date-range-filter input[type="date"] {
+  background-color: #1d283c;
+  height: 40px;
   padding: 5px 7px;
   border-radius: 5px;
   border: 1px solid #ddd;
+  color: #ddd;
   font-size: 14px;
   transition: border-color 0.3s ease;
 }
