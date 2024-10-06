@@ -1,7 +1,8 @@
 <template>
-  <!-- <h3 @click="toggleCategory">
-    Danh mục<span v-if="!showCategories">▼</span><span v-else>▲</span>
-  </h3> -->
+  <div v-if="isLoading" class="loading-overlay">
+    <div class="loading-spinner"></div>
+  </div>
+
   <div v-if="showMessage" class="success-message">
     {{ successMessage }}
   </div>
@@ -141,6 +142,7 @@ export default {
       ratings: {},
       successMessage: "",
       showMessage: false,
+      isLoading: false,
     };
   },
   computed: {
@@ -191,7 +193,14 @@ export default {
     },
     // Điều hướng đến trang chi tiết món ăn
     goToDetail(id) {
-      this.$router.push({ name: "DishDetail", params: { id: id } });
+      this.isLoading = true;
+      setTimeout(() => {
+        this.$router
+          .push({ name: "DishDetail", params: { id: id } })
+          .finally(() => {
+            this.isLoading = false; // Tắt loading sau khi hoàn tất
+          });
+      }, 2000);
     },
     // Hiện/Ẩn danh sách danh mục
     toggleCategory() {
@@ -326,6 +335,7 @@ export default {
   },
   mounted() {
     // Gọi API khi component được mount
+    window.scrollTo(0, 0);
     this.fetchCategories();
     this.fetchDishes();
     this.fetchCart(); // Lấy giỏ hàng từ store khi component mount
@@ -628,5 +638,43 @@ export default {
   text-align: center;
   font-size: 16px;
   font-weight: bold;
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.8); /* Màu nền overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.loading-spinner {
+  border: 8px solid #f3f3f3; /* Màu nền của spinner */
+  border-top: 8px solid #d4a762; /* Màu vàng theo tone chính */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1.5s linear infinite; /* Hiệu ứng xoay */
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -171,6 +171,7 @@ export default {
     },
   },
   created() {
+    window.scrollTo(0, 0);
     this.fetchDishDetails();
     this.fetchAverageRating();
   },

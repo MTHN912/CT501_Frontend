@@ -11,15 +11,65 @@
     </div>
 
     <!-- Tabs để phân loại đơn hàng -->
-    <div class="tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        @click="activeTab = tab.value"
-        :class="{ active: activeTab === tab.value }"
-      >
-        {{ tab.label }}
-      </button>
+    <!-- Tab "Tất Cả" đặt riêng biệt bên ngoài -->
+
+    <!-- Các tab khác nằm trong .tabs -->
+    <div class="ustabs">
+      <div class="tab-all">
+        <button
+          @click="selectTab('allOrders')"
+          :class="{ active: activeTab === 'allOrders' }"
+        >
+          Tất cả
+        </button>
+      </div>
+      <div class="tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab.value"
+          @click="selectTab(tab.value)"
+          :class="{ active: activeTab === tab.value }"
+        >
+          <template
+            v-if="tab.value === 'status' || tab.value === 'partyStatus'"
+          >
+            <select
+              :value="
+                tab.value === 'status' ? selectedStatus : selectedPartyStatus
+              "
+              @change="updateTabSelection($event, tab.value)"
+              @click.stop
+            >
+              <option value="">{{ tab.label }}</option>
+              <option
+                v-for="option in tab.options"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </template>
+          <template v-else>
+            <!-- Không hiển thị dropdown cho các tab còn lại -->
+            {{ tab.label }}
+          </template>
+        </button>
+        <div class="date-range-filter">
+          <label>Bắt đầu từ:</label>
+          <input
+            type="date"
+            v-model="startDate"
+            @change="updateDateRangeFilter"
+          />
+          <label>Đến ngày:</label>
+          <input
+            type="date"
+            v-model="endDate"
+            @change="updateDateRangeFilter"
+          />
+        </div>
+      </div>
     </div>
 
     <table class="order-table">
@@ -153,16 +203,33 @@ export default {
       isDetailModalOpen: false,
       isUpdateModalOpen: false,
       selectedOrder: {},
+      selectedEventDate: "",
+      startDate: "",
+      endDate: "",
       tabs: [
-        { label: "Tất cả", value: "allOrders" },
-        { label: "Đã Hủy", value: "canceledOrders" },
-        { label: "Đã Thanh Toán", value: "paidOrders" },
-        { label: "Chưa Thanh Toán", value: "unpaidOrders" },
-        { label: "Chưa Diễn Ra", value: "upcomingOrders" },
-        { label: "Sắp Đến", value: "nearingOrders" },
-        { label: "Đang Diễn Ra", value: "ongoingOrders" },
-        { label: "Đã Kết Thúc", value: "finishedOrders" },
+        // { label: "Tất cả", value: "allOrders" },
+        {
+          label: "Trạng Thái Thanh Toán",
+          value: "status",
+          options: [
+            { label: "Chưa Thanh Toán", value: "Chưa Thanh Toán" },
+            { label: "Đã Thanh Toán", value: "Đã Thanh Toán" },
+            { label: "Đã Hủy", value: "Đã Hủy" },
+          ],
+        },
+        {
+          label: "Trạng Thái Tiệc",
+          value: "partyStatus",
+          options: [
+            { label: "Chưa Diễn Ra", value: "Chưa Diễn Ra" },
+            { label: "Sắp Đến", value: "Sắp Đến" },
+            { label: "Đang Diễn Ra", value: "Đang Diễn Ra" },
+            { label: "Đã Kết Thúc", value: "Đã Kết Thúc" },
+          ],
+        },
       ],
+      selectedStatus: "",
+      selectedPartyStatus: "",
     };
   },
   computed: {
@@ -200,8 +267,46 @@ export default {
     totalPages() {
       return Math.ceil(this.filteredOrders.length / this.itemsPerPage);
     },
+    currentTabLabel() {
+      const currentTab = this.tabs.find((tab) => tab.value === this.activeTab);
+      if (currentTab.value === "status" && this.selectedStatus) {
+        return this.selectedStatus;
+      } else if (
+        currentTab.value === "partyStatus" &&
+        this.selectedPartyStatus
+      ) {
+        return this.selectedPartyStatus;
+      }
+      return currentTab.label;
+    },
   },
   methods: {
+    updateDateRangeFilter() {
+      this.fetchOrdersWithBothFilters();
+    },
+    updateEventDateFilter() {
+      this.startDate = ""; // Reset startDate
+      this.endDate = ""; // Reset endDate
+      this.fetchOrdersWithBothFilters();
+    },
+    getStatusFromTab(tab) {
+      const statusMap = {
+        canceledOrders: "Đã Hủy",
+        paidOrders: "Đã Thanh Toán",
+        unpaidOrders: "Chưa Thanh Toán",
+      };
+      return statusMap[tab] || undefined;
+    },
+
+    getPartyStatusFromTab(tab) {
+      const partyStatusMap = {
+        upcomingOrders: "Chưa Diễn Ra",
+        nearingOrders: "Sắp Đến",
+        ongoingOrders: "Đang Diễn Ra",
+        finishedOrders: "Đã Kết Thúc",
+      };
+      return partyStatusMap[tab] || undefined;
+    },
     translatePaymentMethod(paymentMethod) {
       switch (paymentMethod) {
         case "cash":
@@ -214,12 +319,74 @@ export default {
           return paymentMethod; // Trả về giá trị gốc nếu không khớp với bất kỳ trường hợp nào
       }
     },
+    selectTab(tabValue) {
+      this.activeTab = tabValue;
+      if (tabValue === "allOrders") {
+        this.selectedStatus = "";
+        this.selectedPartyStatus = "";
+        this.selectedEventDate = ""; // Reset ngày khi chọn "Tất cả"
+        this.fetchOrders();
+      }
+    },
+    updateTabSelection(event, tabValue) {
+      const selectedValue = event.target.value;
+
+      if (tabValue === "status") {
+        this.selectedStatus = selectedValue;
+      } else if (tabValue === "partyStatus") {
+        this.selectedPartyStatus = selectedValue;
+      }
+
+      // Gửi cả hai giá trị của status và partyStatus cùng lúc
+      this.fetchOrdersWithBothFilters();
+    },
+    filterByStatus() {
+      this.fetchOrders();
+    },
+
+    filterByPartyStatus() {
+      this.fetchOrders();
+    },
+    async fetchOrdersWithBothFilters() {
+      try {
+        // Gửi cả hai giá trị của status và partyStatus đến API
+        const response = await axios.get(
+          "http://localhost:3000/order/getAllOrders",
+          {
+            params: {
+              status: this.selectedStatus,
+              partyStatus: this.selectedPartyStatus,
+              eventDate: this.selectedEventDate,
+              startDate: this.startDate,
+              endDate: this.endDate,
+            },
+          }
+        );
+
+        this.ordersByCategory = { [this.activeTab]: response.data };
+        await this.fetchUsersForOrders();
+      } catch (error) {
+        console.error("Error fetching orders with both filters:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Đã xảy ra lỗi khi tải danh sách đơn hàng.",
+        });
+      }
+    },
     async fetchOrders() {
       try {
         const response = await axios.get(
-          "http://localhost:3000/order/getAllOrders"
+          "http://localhost:3000/order/getAllOrders",
+          {
+            params: {
+              status: this.selectedStatus,
+              partyStatus: this.selectedPartyStatus,
+              eventDate: this.selectedEventDate, // Thêm eventDate vào params
+            },
+          }
         );
-        this.ordersByCategory = response.data;
+        this.ordersByCategory = { [this.activeTab]: response.data };
         await this.fetchUsersForOrders();
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -230,6 +397,7 @@ export default {
         });
       }
     },
+
     async fetchUsersForOrders() {
       for (const category in this.ordersByCategory) {
         const userPromises = this.ordersByCategory[category].map(
@@ -393,6 +561,7 @@ export default {
   },
   mounted() {
     this.fetchOrders();
+    this.fetchOrdersWithBothFilters();
   },
 };
 </script>
@@ -425,12 +594,52 @@ export default {
 }
 
 /* Tabs CSS */
+/* Tabs CSS */
+.ustabs {
+  display: flex;
+}
 .tabs {
   display: flex;
   justify-content: flex-start;
   margin-bottom: 20px;
 }
 
+/* Tab 'Tất cả' không hiển thị mũi tên */
+.tab-all {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-all button {
+  padding: 10px 20px;
+  background-color: #1d283c;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  min-width: 120px;
+  height: 42px;
+  width: 210px;
+  position: relative;
+  text-align: left;
+}
+
+/* Hiệu ứng hover cho tab 'Tất cả' */
+.tab-all button:hover {
+  background-color: #34495e;
+  transform: translateY(-2px);
+}
+
+/* Khi tab 'Tất cả' được chọn */
+.tab-all button.active {
+  background-color: #0084ff;
+  color: white;
+}
+
+/* Định dạng cho các tab còn lại */
 .tabs button {
   padding: 10px 20px;
   margin-right: 10px;
@@ -440,16 +649,71 @@ export default {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
+  position: relative;
+  overflow: visible;
+  min-width: 120px;
+  width: 210px;
 }
 
+/* Hiệu ứng hover cho các tab */
 .tabs button:hover {
   background-color: #34495e;
   transform: translateY(-2px);
 }
 
+/* Khi một tab được chọn */
 .tabs .active {
   background-color: #0084ff;
   color: white;
+}
+
+/* Dropdown trong tab */
+.tabs select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  padding: 10px 20px;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  outline: none;
+}
+
+/* Loại bỏ mũi tên của dropdown trên các trình duyệt khác nhau */
+.tabs select::-ms-expand {
+  display: none;
+}
+
+/* Thêm mũi tên cho các tab có dropdown */
+.tabs button::after {
+  content: "\25BC"; /* Mũi tên xuống */
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.8em;
+}
+
+/* Đảm bảo kích thước đồng nhất cho tất cả các nút và dropdown */
+.tabs button,
+.tabs select {
+  width: 210px;
+  min-width: 120px;
+  height: 42px;
+}
+
+/* Các tùy chọn trong dropdown */
+.tabs select option {
+  background-color: #1d283c;
+  color: #fff;
 }
 
 .order-table {
@@ -467,7 +731,6 @@ export default {
 .order-table th {
   cursor: pointer;
 }
-
 .pagination {
   display: flex;
   justify-content: center;
@@ -553,5 +816,66 @@ export default {
 
 .delete-icon {
   color: #f44336;
+}
+.dropdown {
+  margin-left: 10px;
+}
+
+.dropdown select {
+  padding: 10px;
+  background-color: #1d283c;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-filter label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.date-filter input[type="date"] {
+  padding: 5px 7px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 20px;
+  transition: border-color 0.3s ease;
+}
+
+.date-filter input[type="date"]:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.date-filter input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+.date-filter input[type="date"]::-webkit-inner-spin-button {
+  display: none;
+}
+.date-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-range-filter input[type="date"] {
+  padding: 5px 7px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.date-range-filter input[type="date"]:focus {
+  border-color: #007bff;
+  outline: none;
 }
 </style>
