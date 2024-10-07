@@ -1,16 +1,34 @@
 <template>
   <div class="food-management">
     <div class="header">
-      <h2>Food Management</h2>
-      <input
-        type="text"
-        placeholder="Search..."
-        v-model="searchQuery"
-        class="search"
-      />
+      <h2>Quản Lý Món Ăn</h2>
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          placeholder="Tìm kiếm..."
+          v-model="searchQuery"
+          class="search"
+        />
+      </div>
       <button @click="openModal" class="add-button">Add Food</button>
     </div>
-
+    <!-- Tabs -->
+    <div class="tabs">
+      <button
+        v-for="category in ['Tất cả', ...categories]"
+        :key="category._id || 'all'"
+        :class="{
+          active:
+            selectedTab === category.name ||
+            (category === 'Tất cả' && selectedTab === ''),
+        }"
+        @click="selectTab(category)"
+      >
+        {{ category.name || "Tất cả" }}
+      </button>
+    </div>
+    <!-- Danh sách món ăn -->
     <table class="food-table">
       <thead>
         <tr>
@@ -23,7 +41,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="food in paginatedFoods" :key="food._id">
+        <tr v-if="paginatedFoods.length === 0">
+          <td colspan="6">Không có món nào trong danh mục này</td>
+        </tr>
+        <tr v-else v-for="food in paginatedFoods" :key="food._id">
           <td>
             <img :src="food.image" alt="Food image" class="food-image" />{{
               food.name
@@ -196,6 +217,7 @@ export default {
       searchQuery: "",
       sortField: "",
       sortOrder: 1,
+      selectedTab: "",
       foods: [],
       currentPage: 1, // Trang hiện tại
       itemsPerPage: 10, // Số món ăn tối đa trên mỗi trang
@@ -303,20 +325,28 @@ export default {
         return null; // Nếu lỗi, trả về null
       }
     },
-    async fetchFoods() {
+    async fetchFoods(category = "") {
       try {
-        const response = await axios.get("http://localhost:3000/dish/getDish");
+        // Gọi API để lấy danh sách món ăn dựa trên danh mục (nếu có)
+        const response = await axios.get("http://localhost:3000/dish/getDish", {
+          params: { category },
+        });
+
+        // Lấy danh sách món ăn và tính toán điểm đánh giá trung bình cho từng món ăn
         const foodsWithRatings = await Promise.all(
           response.data.map(async (food) => {
-            const averageRating = await this.fetchAverageRating(food._id);
-            return { ...food, averageRating }; // Thêm thuộc tính averageRating vào món ăn
+            const averageRating = await this.fetchAverageRating(food._id); // Gọi hàm fetchAverageRating với ID của món ăn
+            return { ...food, averageRating }; // Thêm thuộc tính averageRating vào object món ăn
           })
         );
+
+        // Cập nhật danh sách món ăn với điểm đánh giá trung bình
         this.foods = foodsWithRatings;
       } catch (error) {
         console.error("Error fetching dishes:", error);
       }
     },
+
     sortBy(field) {
       if (this.sortField === field) {
         this.sortOrder *= -1;
@@ -450,6 +480,11 @@ export default {
         }
       }
     },
+    selectTab(category) {
+      this.selectedTab = category.name || ""; // Chọn danh mục hoặc tất cả
+      this.currentPage = 1;
+      this.fetchFoods(this.selectedTab); // Lấy danh sách món ăn theo danh mục
+    },
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
@@ -472,6 +507,7 @@ export default {
     },
   },
   mounted() {
+    this.fetchCategories();
     this.fetchFoods();
   },
 };
@@ -483,7 +519,7 @@ export default {
   background-color: #101827;
   color: #fff;
   width: 100%;
-  height: 860px;
+  height: 870px;
 }
 
 .header {
@@ -497,12 +533,25 @@ export default {
   color: white;
 }
 
+.search-container {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
 .search {
-  padding: 10px;
+  padding: 10px 10px 10px 35px;
   background-color: #1d283c;
   border-radius: 5px;
-  border: none;
+  border: 1px solid #444;
   width: 200px;
+  color: white;
 }
 
 .add-button {
@@ -653,5 +702,23 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  padding: 10px;
+  background-color: #1d283c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.tabs .active {
+  background-color: #0084ff;
 }
 </style>

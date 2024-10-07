@@ -48,16 +48,6 @@
           <option value="company">Tiệc công ty</option>
         </select>
       </div>
-
-      <div class="payment-method">
-        <label>Phương thức thanh toán:</label>
-        <select v-model="selectedPaymentMethod">
-          <option value="cash">Thanh toán tiền mặt</option>
-          <option value="credit-card">Thẻ tín dụng</option>
-          <option value="momo">Ví Momo</option>
-        </select>
-      </div>
-
       <div class="home-party-details">
         <div class="form-group">
           <label for="party-address">Địa chỉ tổ chức tiệc:</label>
@@ -86,6 +76,25 @@
             v-model="phoneNumber"
             placeholder="Nhập số điện thoại"
           />
+        </div>
+        <div class="deposit-section">
+          <label for="deposit-amount"> Số tiền đặt cọc: </label>
+          <input
+            type="number"
+            id="deposit-amount"
+            v-model.number="depositAmount"
+            :placeholder="`Số tiền đặt cọc tối thiểu là
+          ${calculatedDeposit} đ`"
+          />
+        </div>
+
+        <div class="payment-method">
+          <label>Phương thức thanh toán:</label>
+          <select v-model="selectedPaymentMethod">
+            <option value="cash">Thanh toán tiền mặt</option>
+            <option value="credit-card">Thẻ tín dụng</option>
+            <option value="momo">Ví Momo</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="note">Ghi chú:</label>
@@ -135,29 +144,35 @@ export default {
       partyDate: "",
       partyTime: "",
       isSubmitting: false,
+      depositAmount: 0,
     };
   },
   computed: {
     ...mapState(["cart"]), // Lấy dữ liệu giỏ hàng từ Vuex Store
+    calculatedDeposit() {
+      if (this.totalPriceForTables >= 20000000) {
+        return this.totalPriceForTables * 0.5;
+      } else if (this.totalPriceForTables >= 10000000) {
+        return this.totalPriceForTables * 0.4;
+      } else if (this.totalPriceForTables >= 5000000) {
+        return this.totalPriceForTables * 0.3;
+      }
+      return this.depositAmount || 0; // Đặt cọc tùy chọn
+    },
 
     totalQuantity() {
-      if (this.cart && this.cart.items) {
-        return this.cart.items.reduce(
-          (total, item) => total + item.quantity,
-          0
-        );
-      }
-      return 0;
+      return this.cart && this.cart.items
+        ? this.cart.items.reduce((total, item) => total + item.quantity, 0)
+        : 0;
     },
 
     totalPrice() {
-      if (this.cart && this.cart.items) {
-        return this.cart.items.reduce(
-          (total, item) => total + item.totalPriceForItem,
-          0
-        );
-      }
-      return 0;
+      return this.cart && this.cart.items
+        ? this.cart.items.reduce(
+            (total, item) => total + item.totalPriceForItem,
+            0
+          )
+        : 0;
     },
 
     // Tính tổng tiền dựa trên số lượng bàn
@@ -173,37 +188,45 @@ export default {
       try {
         const orderDetails = {
           tables: this.numberOfTables,
-          partyType: this.selectedPartyType, // Loại tiệc được chọn
+          partyType: this.selectedPartyType,
           paymentMethod: this.selectedPaymentMethod,
           totalPrice: this.totalPriceForTables,
+          depositAmount: this.depositAmount, // Số tiền đặt cọc người dùng nhập
           partyAddress: this.partyAddress || null,
           phoneNumber: this.phoneNumber || null,
           note: this.note || null,
-          partyDateTime: `${this.partyDate}T${this.partyTime}:00`,
+          partyDateTime: `${this.partyDate}T${this.partyTime}:00`, // Kết hợp ngày và giờ tiệc
           items: this.cart.items.map((item) => ({
-            dishId: item.dishId, // Lấy dishId từ mỗi món ăn trong giỏ hàng
-            quantity: item.quantity, // Lấy số lượng
-            totalPriceForItem: item.totalPriceForItem, // Tổng giá của món
-          })), // Gửi toàn bộ thông tin món ăn từ giỏ hàng
+            dishId: item.dishId,
+            dishName: item.dishName,
+            dishPrice: item.dishPrice,
+            quantity: item.quantity,
+            totalPriceForItem: item.totalPriceForItem,
+          })),
         };
 
-        // Gửi yêu cầu POST đến API để lưu trữ đơn hàng
+        // Gọi API tạo đơn hàng với thông tin đã chuẩn bị
         const response = await axios.post(
           "http://localhost:3000/order/orders",
           orderDetails
         );
+
+        // Lấy mã đơn hàng sau khi tạo thành công
         const orderId = response.data.order._id;
 
+        // Làm trống giỏ hàng sau khi đơn hàng thành công
         await this.fetchCart();
 
+        // Thông báo đặt hàng thành công
         Swal.fire({
           icon: "success",
           title: "Đặt hàng thành công!",
           text: "Cảm ơn bạn đã đặt hàng.",
           showConfirmButton: false,
-          timer: 3000, // Hiển thị trong 3 giây
+          timer: 3000,
         });
 
+        // Điều hướng người dùng tới trang thành công sau khi hoàn tất
         setTimeout(() => {
           if (orderId) {
             this.$router.push({
@@ -213,11 +236,12 @@ export default {
           }
         }, 1000);
       } catch (error) {
+        // Xử lý các lỗi trả về từ API, ví dụ lỗi 400
         if (error.response && error.response.status === 400) {
           Swal.fire({
             icon: "error",
             title: "Lỗi!",
-            text: error.response.data.message, // Hiển thị thông báo lỗi từ API
+            text: error.response.data.message,
             showConfirmButton: true,
           });
         } else {
@@ -233,6 +257,7 @@ export default {
       await this.fetchCart(); // Lấy lại dữ liệu giỏ hàng
     } finally {
       this.isLoading = false;
+      window.scrollTo(0, 0);
     }
   },
 };

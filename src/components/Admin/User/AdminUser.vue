@@ -1,14 +1,16 @@
 <template>
   <div class="user-management">
     <div class="header">
-      <h2>User Management</h2>
-      <input
-        type="text"
-        placeholder="Search users..."
-        v-model="searchQuery"
-        class="search"
-        @input="fetchUsers"
-      />
+      <h2>Quản Lý Người Dùng</h2>
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          placeholder="Tìm kiếm..."
+          v-model="searchQuery"
+          class="search"
+        />
+      </div>
     </div>
 
     <!-- Thêm các tab -->
@@ -28,12 +30,13 @@
     <table class="user-table">
       <thead>
         <tr>
-          <th @click="sortBy('USERNAME')">Username ⬍</th>
-          <th @click="sortBy('FULLNAME')">Full Name ⬍</th>
+          <th @click="sortBy('USERNAME')">Tài Khoản ⬍</th>
+          <th @click="sortBy('FULLNAME')">Họ Tên ⬍</th>
           <th @click="sortBy('EMAIL')">Email ⬍</th>
-          <th @click="sortBy('GENDER')">Gender ⬍</th>
-          <th @click="sortBy('ADDRESS')">Address ⬍</th>
-          <th @click="sortBy('IS_ACTIVATED')">Activated ⬍</th>
+          <th @click="sortBy('GENDER')">Giới Tính ⬍</th>
+          <th @click="sortBy('ADDRESS')">Địa Chỉ ⬍</th>
+          <th @click="sortBy('IS_ACTIVATED')">Trạng Thái ⬍</th>
+          <th @click="sortBy('ORDER_COUNT')">Tiệc Đã Đặt</th>
         </tr>
       </thead>
       <tbody>
@@ -47,7 +50,8 @@
           <td>{{ user.EMAIL }}</td>
           <td>{{ user.GENDER }}</td>
           <td>{{ user.ADDRESS }}</td>
-          <td>{{ user.IS_ACTIVATED ? "Yes" : "No" }}</td>
+          <td>{{ user.IS_ACTIVATED ? "Đã Xác Thực" : "Chưa Xác Thực" }}</td>
+          <td>{{ user.ORDER_COUNT }}</td>
         </tr>
       </tbody>
     </table>
@@ -65,7 +69,7 @@
 
 <script>
 import axios from "axios";
-
+import { debounce } from "lodash";
 export default {
   data() {
     return {
@@ -81,9 +85,7 @@ export default {
   },
   computed: {
     filteredUsers() {
-      let filtered = this.users.filter((user) =>
-        user.USERNAME.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
+      let filtered = this.users;
 
       if (this.sortField) {
         filtered.sort((a, b) => {
@@ -136,6 +138,14 @@ export default {
         console.error("Error fetching users:", error);
       }
     },
+    debounceFetchUsers: debounce(function () {
+      this.fetchUsers();
+    }, 500),
+  },
+  watch: {
+    searchQuery() {
+      this.debounceFetchUsers();
+    },
   },
   mounted() {
     this.fetchUsers();
@@ -149,7 +159,7 @@ export default {
   background-color: #101827;
   color: #fff;
   width: 100%;
-  height: 860px;
+  height: 1000px;
 }
 
 .header {
@@ -162,12 +172,25 @@ export default {
   color: white; /* Đặt màu chữ thành trắng */
 }
 
+.search-container {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
 .search {
-  padding: 10px;
+  padding: 10px 10px 10px 35px;
   background-color: #1d283c;
   border-radius: 5px;
-  border: none;
+  border: 1px solid #444;
   width: 200px;
+  color: white;
 }
 
 .tabs {

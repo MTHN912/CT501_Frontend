@@ -1,7 +1,7 @@
 <template>
   <div class="order-management">
     <div class="header">
-      <h2>Quản lý đơn hàng</h2>
+      <h2>Quản lý đơn tiệc</h2>
       <div class="search-container">
         <i class="fas fa-search search-icon"></i>
         <input
@@ -88,13 +88,16 @@
           <th @click="sortBy('totalPrice')" class="narrow-column6">
             Tổng Tiền
           </th>
+          <th @click="sortBy('depositAmount')" class="narrow-column9">
+            Đã Trả
+          </th>
           <th @click="sortBy('phoneNumber')" class="narrow-column7">
             Số Điện Thoại
           </th>
           <th @click="sortBy('status')" class="narrow-column8">
             Trạng Thái Thanh Toán
           </th>
-          <th>Hành Động</th>
+          <th class="narrow-column10">Hành Động</th>
         </tr>
       </thead>
       <tbody>
@@ -114,6 +117,9 @@
             {{ translatePaymentMethod(order.paymentMethod) }}
           </td>
           <td class="narrow-column6">{{ formatCurrency(order.totalPrice) }}</td>
+          <td class="narrow-column9">
+            {{ formatCurrency(order.depositAmount) }}
+          </td>
           <td class="narrow-column7">{{ order.phoneNumber }}</td>
           <td class="narrow-column8">
             <span :class="['status-badge', getStatusClass(order.status)]">
@@ -205,11 +211,14 @@
             <option value="Đã Thanh Toán">Đã Thanh Toán</option>
             <option value="Đã Hủy">Đã Hủy</option>
           </select>
-
-          <label for="note">Ghi chú:</label>
-          <textarea v-model="selectedOrder.note" id="note"></textarea>
-
           <button type="submit">Cập nhật</button>
+          <button
+            v-if="selectedOrder.partyStatus === 'Chưa Xác Nhận'"
+            @click="confirmOrder"
+            type="button"
+          >
+            Xác nhận đơn hàng
+          </button>
           <button @click="closeUpdateModal" type="button">Hủy</button>
         </form>
       </div>
@@ -243,6 +252,7 @@ export default {
           label: "Trạng Thái Tiệc",
           value: "partyStatus",
           options: [
+            { label: "Chưa Xác Nhận", value: "Chưa Xác Nhận" },
             { label: "Chưa Diễn Ra", value: "Chưa Diễn Ra" },
             { label: "Sắp Đến", value: "Sắp Đến" },
             { label: "Đang Diễn Ra", value: "Đang Diễn Ra" },
@@ -255,6 +265,7 @@ export default {
           options: [
             { label: "Chưa Thanh Toán", value: "Chưa Thanh Toán" },
             { label: "Đã Thanh Toán", value: "Đã Thanh Toán" },
+            { label: "Đã Cọc", value: "Đã Cọc" },
             { label: "Đã Hủy", value: "Đã Hủy" },
           ],
         },
@@ -273,8 +284,15 @@ export default {
           ? this.allOrders
           : this.ordersByCategory[this.activeTab] || [];
 
-      return orders.filter((order) =>
-        order.phoneNumber.toLowerCase().includes(this.searchQuery.toLowerCase())
+      return orders.filter(
+        (order) =>
+          (order.username &&
+            order.username
+              .toLowerCase()
+              .includes(this.searchQuery.toLowerCase())) || // Tìm kiếm theo tên người đặt tiệc
+          order.phoneNumber
+            .toLowerCase()
+            .includes(this.searchQuery.toLowerCase()) // Tìm kiếm theo số điện thoại (giữ nguyên)
       );
     },
     sortedOrders() {
@@ -325,6 +343,7 @@ export default {
     },
     getStatusClass(status) {
       const statusMap = {
+        "Đã Cọc": "disposet",
         "Chưa Thanh Toán": "unpaid",
         "Đã Thanh Toán": "paid",
         "Đã Hủy": "cancelled",
@@ -333,6 +352,7 @@ export default {
     },
     getPartyStatusClass(partyStatus) {
       const partyStatusMap = {
+        "Chưa Xác Nhận": "unconfirmed",
         "Chưa Diễn Ra": "upcoming",
         "Sắp Đến": "nearing",
         "Đang Diễn Ra": "ongoing",
@@ -472,7 +492,7 @@ export default {
                 const response = await axios.get(
                   `http://localhost:3000/user/getUserById/${order.userId}`
                 );
-                return { ...order, username: response.data.FULLNAME };
+                return { ...order, username: response.data.FULLNAME }; // Lưu tên người đặt tiệc vào `username`
               } catch (error) {
                 console.error(`Error fetching user ${order.userId}:`, error);
                 return { ...order, username: "Không tìm thấy người dùng" };
@@ -578,6 +598,46 @@ export default {
         });
       }
     },
+    async confirmOrder() {
+      try {
+        const response = await axios.put(
+          `http://localhost:3000/order/oders/${this.selectedOrder._id}/confirm`,
+          {}
+        );
+
+        if (response.status === 200) {
+          const { order } = response.data;
+
+          // Cập nhật trạng thái đơn hàng trong dữ liệu local
+          this.selectedOrder.partyStatus = order.partyStatus;
+
+          // Đóng modal cập nhật
+          this.closeUpdateModal();
+
+          // Cập nhật lại danh sách đơn hàng
+          this.fetchOrders();
+
+          // Hiển thị thông báo xác nhận thành công
+          Swal.fire({
+            icon: "success",
+            title: "Xác nhận thành công",
+            text: `Đơn hàng đã được xác nhận! Trạng thái mới: ${order.partyStatus}`,
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        }
+      } catch (error) {
+        console.error("Error confirming order:", error);
+        // Hiển thị thông báo lỗi
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text:
+            error.response?.data?.error ||
+            "Đã xảy ra lỗi khi xác nhận đơn hàng.",
+        });
+      }
+    },
     async deleteOrder(orderId) {
       if (
         await Swal.fire({
@@ -637,7 +697,7 @@ export default {
   background-color: #101827;
   color: #fff;
   width: 100%;
-  height: 950px;
+  height: 100%px;
 }
 
 .header {
@@ -668,7 +728,7 @@ export default {
   background-color: #1d283c;
   border-radius: 5px;
   border: 1px solid #444;
-  width: 250px;
+  width: 200px;
   color: white;
 }
 
@@ -844,7 +904,7 @@ export default {
   text-align: center;
 }
 .narrow-column5 {
-  width: 210px;
+  width: 175px;
   text-align: center;
 }
 .narrow-column6 {
@@ -858,6 +918,12 @@ export default {
 .narrow-column8 {
   width: 180px;
   text-align: center;
+}
+.narrow-column9 {
+  text-align: center;
+}
+.narrow-column10 {
+  vertical-align: middle;
 }
 .status-badge {
   padding: 5px 10px;
@@ -893,6 +959,14 @@ export default {
 .finished {
   background-color: #607d8b;
   color: #fff;
+}
+.unconfirmed {
+  background-color: #adb4ad; /* Màu xanh lá */
+  color: white;
+}
+.disposet {
+  background-color: #fa4802;
+  color: white;
 }
 
 .action-icon {

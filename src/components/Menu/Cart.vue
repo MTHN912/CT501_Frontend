@@ -140,6 +140,7 @@ export default {
       await this.fetchCart(); // Tải dữ liệu giỏ hàng từ store
     } finally {
       this.isLoading = false; // Dừng trạng thái tải sau khi dữ liệu đã lấy về
+      window.scrollTo(0, 0);
     }
   },
 };
