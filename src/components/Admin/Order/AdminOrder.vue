@@ -254,7 +254,7 @@ export default {
           options: [
             { label: "Chưa Xác Nhận", value: "Chưa Xác Nhận" },
             { label: "Chưa Diễn Ra", value: "Chưa Diễn Ra" },
-            { label: "Sắp Đến", value: "Sắp Đến" },
+            { label: "Chuẩn Bị", value: "Chuẩn Bị" },
             { label: "Đang Diễn Ra", value: "Đang Diễn Ra" },
             { label: "Đã Kết Thúc", value: "Đã Kết Thúc" },
           ],
@@ -354,7 +354,7 @@ export default {
       const partyStatusMap = {
         "Chưa Xác Nhận": "unconfirmed",
         "Chưa Diễn Ra": "upcoming",
-        "Sắp Đến": "nearing",
+        "Chuẩn Bị": "nearing",
         "Đang Diễn Ra": "ongoing",
         "Đã Kết Thúc": "finished",
         "Đã Hủy": "cancelled",
@@ -386,7 +386,7 @@ export default {
     getPartyStatusFromTab(tab) {
       const partyStatusMap = {
         upcomingOrders: "Chưa Diễn Ra",
-        nearingOrders: "Sắp Đến",
+        nearingOrders: "Chuẩn Bị",
         ongoingOrders: "Đang Diễn Ra",
         finishedOrders: "Đã Kết Thúc",
       };

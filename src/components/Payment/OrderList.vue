@@ -23,8 +23,14 @@
             {{ formatDate(order.eventDate) }}
           </p>
           <p><strong>Địa Chỉ Tiệc:</strong> {{ order.partyAddress }}</p>
-          <p><strong>Trạng Thái Tiệc:</strong> {{ order.partyStatus }}</p>
-          <p><strong>Trạng Thái Thanh Toán:</strong> {{ order.status }}</p>
+          <p>
+            <strong>Trạng Thái Tiệc:</strong>
+            <span class="status">{{ order.partyStatus }}</span>
+          </p>
+          <p>
+            <strong>Trạng Thái Thanh Toán:</strong>
+            <span class="status">{{ order.status }}</span>
+          </p>
           <p>
             <strong>Hình Thức Thanh Toán:</strong> {{ order.paymentMethod }}
           </p>
@@ -36,22 +42,42 @@
           <p><strong>Ghi Chú:</strong> {{ order.note }}</p>
 
           <!-- Danh sách món ăn -->
-          <h3>Các món đã đặt</h3>
-          <ul>
+          <h3 v-if="order.items.length">
+            Các món đã đặt
+            <span @click="toggleItems(order._id)" class="toggle-btn"
+              >[{{ order.showItems ? "Ẩn" : "Xem" }}]</span
+            >
+          </h3>
+          <ul v-if="order.showItems">
             <li v-for="(item, index) in order.items" :key="index">
               <strong>Món:</strong> {{ item.name }} - <strong>Giá:</strong>
               {{ item.price }} đ - <strong>Số lượng:</strong>
               {{ item.quantity }}
             </li>
           </ul>
-
-          <!-- Nút hủy đơn -->
-          <div v-if="order.partyStatus === 'Đã Hủy'">
-            <button class="btn btn-secondary mt-2" disabled>Đã Hủy Tiệc</button>
-          </div>
-          <div v-else>
-            <button @click="cancelOrder(order._id)" class="btn btn-danger mt-2">
+          <div class="action-buttons">
+            <!-- Nút Hủy Đơn -->
+            <button
+              v-if="order.partyStatus !== 'Đã Hủy'"
+              @click="cancelOrder(order._id)"
+              class="btn btn-danger"
+            >
               Hủy Tiệc
+            </button>
+            <button v-else class="btn btn-secondary" disabled>
+              Đã Hủy Tiệc
+            </button>
+            <!-- Nút Thanh Toán -->
+            <button
+              v-if="
+                (order.status === 'Đã Cọc' ||
+                  order.status === 'Chưa Thanh Toán') &&
+                order.partyStatus !== 'Chưa Xác Nhận'
+              "
+              @click="payOrder(order._id)"
+              class="btn btn-success"
+            >
+              Thanh Toán
             </button>
           </div>
         </div>
@@ -78,7 +104,11 @@ export default {
         const response = await axios.get(
           "http://localhost:3000/order/getOrdersByUserId"
         );
-        this.orders = response.data; // Cập nhật danh sách đơn hàng
+        // Thêm thuộc tính showItems mặc định là false cho mỗi đơn hàng
+        this.orders = response.data.map((order) => ({
+          ...order,
+          showItems: false, // Mặc định ẩn các món ăn
+        }));
         await this.fetchDishDetails();
       } catch (error) {
         console.error("Lỗi khi lấy đơn hàng:", error);
@@ -140,6 +170,13 @@ export default {
         }
       }
     },
+    // Hàm để ẩn/hiện danh sách món ăn trong một đơn hàng
+    toggleItems(orderId) {
+      const order = this.orders.find((o) => o._id === orderId);
+      if (order) {
+        order.showItems = !order.showItems; // Chuyển đổi trạng thái ẩn/hiện
+      }
+    },
   },
   mounted() {
     // Gọi API lấy danh sách đơn hàng khi component được mount
@@ -168,34 +205,41 @@ h2 {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  gap: 30px; /* Tạo khoảng cách giữa các tiệc */
   justify-content: space-between;
 }
 
 .list-group-item {
-  width: auto; /* Chiếm 30% chiều rộng để có 3 cột */
-  background-color: #f9f9f9;
+  width: 30%;
+  background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
   display: flex;
-  flex-direction: column; /* Đặt các thành phần theo cột */
-  justify-content: space-between; /* Đẩy nút bấm xuống dưới */
-  transition: box-shadow 0.3s ease;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
 }
 
 .list-group-item:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02); /* Tăng nhẹ kích thước khi hover */
 }
 
 h5 {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   color: #007bff;
 }
 
 p {
   margin: 5px 0;
   font-size: 0.95rem;
+}
+
+.status {
+  font-weight: bold;
+  color: #28a745; /* Xanh lá để trạng thái hiển thị rõ hơn */
 }
 
 ul {
@@ -207,6 +251,12 @@ ul li {
   margin-bottom: 8px;
 }
 
+.toggle-btn {
+  font-size: 0.85rem;
+  color: #007bff;
+  cursor: pointer;
+}
+
 .alert-info {
   text-align: center;
   font-size: 1.1rem;
@@ -215,11 +265,7 @@ ul li {
   border: 1px solid #bde5f0;
   color: #31708f;
 }
-/* Cố định vị trí nút bấm ở cuối */
-.list-group-item button {
-  align-self: flex-end;
-  margin-top: auto;
-}
+
 .btn-danger {
   background-color: #dc3545;
   border-color: #dc3545;
@@ -232,13 +278,35 @@ ul li {
 
 @media (max-width: 1024px) {
   .list-group-item {
-    width: 48%; /* Trên màn hình trung bình, hiển thị 2 đơn hàng trên một hàng */
+    width: 48%;
   }
 }
 
 @media (max-width: 768px) {
   .list-group-item {
-    width: 100%; /* Trên màn hình nhỏ hơn, đơn hàng chiếm toàn bộ chiều rộng */
+    width: 100%;
   }
+}
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
+}
+
+.btn-success:active {
+  background-color: #1e7e34;
+  transform: scale(1); /* Trở lại kích thước gốc khi bấm nút */
+}
+.action-buttons {
+  display: flex;
+  justify-content: space-between; /* Căn đều hai bên */
+  gap: 10px; /* Tạo khoảng cách giữa các nút */
+  margin-top: 15px; /* Khoảng cách từ phần thông tin phía trên */
 }
 </style>

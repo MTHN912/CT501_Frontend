@@ -42,12 +42,14 @@
 
       <div class="party-type-selection">
         <label for="party-type">Loại tiệc:</label>
-        <select v-model="selectedPartyType">
-          <option value="birthday">Sinh nhật</option>
-          <option value="wedding">Tiệc cưới</option>
-          <option value="company">Tiệc công ty</option>
-        </select>
+        <input
+          type="text"
+          id="party-type"
+          v-model="selectedPartyType"
+          placeholder="Nhập loại tiệc (VD: Sinh nhật, Tiệc cưới...)"
+        />
       </div>
+
       <div class="home-party-details">
         <div class="form-group">
           <label for="party-address">Địa chỉ tổ chức tiệc:</label>
@@ -77,14 +79,16 @@
             placeholder="Nhập số điện thoại"
           />
         </div>
+
         <div class="deposit-section">
           <label for="deposit-amount"> Số tiền đặt cọc: </label>
           <input
             type="number"
             id="deposit-amount"
-            v-model.number="depositAmount"
-            :placeholder="`Số tiền đặt cọc tối thiểu là
-          ${calculatedDeposit} đ`"
+            v-model.number="computedDepositAmount"
+            :placeholder="`Số tiền đặt cọc tối thiểu là ${calculatedDeposit} đ`"
+            @input="handleDepositInput"
+            class="no-arrows"
           />
         </div>
 
@@ -96,6 +100,7 @@
             <option value="momo">Ví Momo</option>
           </select>
         </div>
+
         <div class="form-group">
           <label for="note">Ghi chú:</label>
           <textarea
@@ -113,6 +118,10 @@
         <p>
           Tổng tiền (cho {{ numberOfTables }} bàn):
           <strong>{{ totalPriceForTables }} đ</strong>
+        </p>
+        <p>
+          Số tiền đặt cọc:
+          <strong>{{ depositAmount || calculatedDeposit }} đ</strong>
         </p>
         <button
           @click="confirmOrder"
@@ -136,7 +145,7 @@ export default {
     return {
       isLoading: true,
       numberOfTables: 1, // Số bàn muốn đặt, mặc định là 1
-      selectedPartyType: "birthday", // Loại tiệc mặc định
+      selectedPartyType: "", // Loại tiệc mặc định
       selectedPaymentMethod: "cash", // Phương thức thanh toán mặc định
       partyAddress: "", // Địa chỉ tổ chức tiệc
       phoneNumber: "", // Số điện thoại liên hệ
@@ -149,6 +158,14 @@ export default {
   },
   computed: {
     ...mapState(["cart"]), // Lấy dữ liệu giỏ hàng từ Vuex Store
+    computedDepositAmount: {
+      get() {
+        return this.depositAmount === 0 ? "" : this.depositAmount;
+      },
+      set(value) {
+        this.depositAmount = value;
+      },
+    },
     calculatedDeposit() {
       if (this.totalPriceForTables >= 20000000) {
         return this.totalPriceForTables * 0.5;
@@ -182,6 +199,12 @@ export default {
   },
   methods: {
     ...mapActions(["fetchCart", "confirmOrder"]),
+
+    handleDepositInput() {
+      if (this.depositAmount === 0) {
+        this.depositAmount = 0; // Set về null để không hiển thị số 0
+      }
+    },
 
     async confirmOrder() {
       this.isSubmitting = true;
@@ -265,21 +288,21 @@ export default {
 
 <style scoped>
 .checkout-container {
-  padding: 50px;
-  max-width: 1200px;
+  padding: 40px;
+  max-width: 1000px;
   margin: 0 auto;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 .title {
-  margin-top: 110px;
-  font-size: 28px;
+  margin-top: 120px;
+  font-size: 30px;
   font-weight: bold;
-  color: #333;
+  color: #2c3e50;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .loading {
@@ -345,31 +368,39 @@ export default {
 .table-selection,
 .payment-method,
 .home-party {
-  margin-top: 20px;
+  margin-top: 25px;
 }
-
 .form-group {
   margin-top: 10px;
+}
+.form-group label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #34495e;
+  display: block;
+  margin-bottom: 8px;
 }
 
 .form-group input,
 .form-group textarea,
 select {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 16px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
+
 .form-group input:focus,
 .form-group textarea:focus,
 select:focus {
-  border-color: #28a745;
-  box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
   outline: none;
 }
+
 select {
   appearance: none;
   background-color: #fff;
@@ -382,28 +413,124 @@ select {
 select::-ms-expand {
   display: none;
 }
+
 .form-group input,
 .form-group textarea,
 select {
   margin-bottom: 15px;
 }
-.checkout-summary {
-  margin-top: 20px;
-  text-align: right;
+
+.checkout-summary p {
+  font-size: 16px;
+  color: #2c3e50;
+  font-weight: bold;
 }
 
 .confirm-button {
-  background-color: #28a745;
+  background-color: #27ae60;
   color: white;
   border: none;
-  padding: 12px 20px;
+  padding: 15px 25px;
   cursor: pointer;
-  font-size: 18px;
-  border-radius: 5px;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 10px;
   transition: background-color 0.3s ease;
 }
 
 .confirm-button:hover {
-  background-color: #218838;
+  background-color: #2ecc71;
+}
+.party-datetime-selection,
+.party-time-selection {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.party-datetime-selection label,
+.party-time-selection label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #34495e;
+  margin-bottom: 8px;
+}
+
+.party-datetime-selection input,
+.party-time-selection input {
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>')
+    no-repeat right 15px center;
+  background-color: #f9f9f9;
+}
+
+.party-time-selection input {
+  background: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>')
+    no-repeat right 15px center;
+}
+
+.party-datetime-selection input:focus,
+.party-time-selection input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  outline: none;
+}
+.deposit-section {
+  margin-top: 20px;
+}
+
+.deposit-section label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #34495e;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.deposit-section input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+.deposit-section input::placeholder {
+  font-style: italic;
+  color: #999;
+}
+
+.deposit-section input:focus {
+  border-color: #e67e22;
+  box-shadow: 0 0 5px rgba(230, 126, 34, 0.5);
+  outline: none;
+}
+.no-arrows::-webkit-outer-spin-button,
+.no-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.party-type-selection input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.party-type-selection input:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+  outline: none;
 }
 </style>
