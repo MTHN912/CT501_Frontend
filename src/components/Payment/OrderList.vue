@@ -181,6 +181,7 @@ export default {
   mounted() {
     // Gọi API lấy danh sách đơn hàng khi component được mount
     this.fetchOrders();
+    window.scrollTo(0, 0);
   },
 };
 </script>

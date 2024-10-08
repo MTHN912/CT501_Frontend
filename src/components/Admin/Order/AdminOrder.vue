@@ -395,9 +395,9 @@ export default {
     translatePaymentMethod(paymentMethod) {
       switch (paymentMethod) {
         case "cash":
-          return "Thanh Toán Tiền Mặt";
+          return "Thanh Toán Sau Tiệc";
         case "credit-card":
-          return "Thẻ Tín Dụng";
+          return "VN-Pay";
         case "momo":
           return "Ví Momo";
         default:

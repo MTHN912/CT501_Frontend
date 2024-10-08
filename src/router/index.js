@@ -102,7 +102,7 @@ const routes = [
     component: OrderList,
   },
   {
-    path: '/:id-ordersuccess',
+    path: '/ordersuccess',
     name: 'OrderSuccess',
     component: () => import('@/views/Payment/OrderSuccess.vue'),
   },

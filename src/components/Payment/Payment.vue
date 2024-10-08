@@ -95,8 +95,8 @@
         <div class="payment-method">
           <label>Phương thức thanh toán:</label>
           <select v-model="selectedPaymentMethod">
-            <option value="cash">Thanh toán tiền mặt</option>
-            <option value="credit-card">Thẻ tín dụng</option>
+            <option value="cash">Thanh toán sau tiệc</option>
+            <option value="credit-card">VN-Pay</option>
             <option value="momo">Ví Momo</option>
           </select>
         </div>
@@ -163,9 +163,15 @@ export default {
         return this.depositAmount === 0 ? "" : this.depositAmount;
       },
       set(value) {
-        this.depositAmount = value;
+        // Chỉ cập nhật nếu giá trị là số hợp lệ hoặc chuỗi trống
+        if (value === "") {
+          this.depositAmount = 0; // Nếu giá trị nhập là chuỗi trống, đặt về 0
+        } else if (!isNaN(value)) {
+          this.depositAmount = Number(value); // Chuyển đổi giá trị nhập thành số
+        }
       },
     },
+
     calculatedDeposit() {
       if (this.totalPriceForTables >= 20000000) {
         return this.totalPriceForTables * 0.5;
@@ -201,20 +207,32 @@ export default {
     ...mapActions(["fetchCart", "confirmOrder"]),
 
     handleDepositInput() {
-      if (this.depositAmount === 0) {
-        this.depositAmount = 0; // Set về null để không hiển thị số 0
+      // Đảm bảo rằng giá trị không bị thay đổi nếu người dùng nhập 0 hoặc để trống
+      if (this.depositAmount === "") {
+        this.depositAmount = 0;
       }
     },
-
     async confirmOrder() {
       this.isSubmitting = true;
       try {
+        // Kiểm tra ngày và giờ tiệc
+        if (!this.partyDate || !this.partyTime) {
+          Swal.fire({
+            icon: "error",
+            title: "Lỗi!",
+            text: "Ngày và giờ tiệc không được để trống.",
+          });
+          this.isSubmitting = false;
+          return;
+        }
+
+        // Dữ liệu đặt hàng
         const orderDetails = {
           tables: this.numberOfTables,
           partyType: this.selectedPartyType,
           paymentMethod: this.selectedPaymentMethod,
-          totalPrice: this.totalPriceForTables,
-          depositAmount: this.depositAmount, // Số tiền đặt cọc người dùng nhập
+          totalPrice: Math.floor(this.totalPriceForTables), // Chuyển đổi thành số nguyên
+          depositAmount: Math.floor(this.depositAmount),
           partyAddress: this.partyAddress || null,
           phoneNumber: this.phoneNumber || null,
           note: this.note || null,
@@ -228,19 +246,116 @@ export default {
           })),
         };
 
-        // Gọi API tạo đơn hàng với thông tin đã chuẩn bị
+        // Lưu đơn hàng
         const response = await axios.post(
           "http://localhost:3000/order/orders",
           orderDetails
         );
 
-        // Lấy mã đơn hàng sau khi tạo thành công
+        // Kiểm tra xem đơn hàng có thực sự được tạo thành công hay không
+        if (!response.data || !response.data.order) {
+          throw new Error("Đơn hàng không được tạo thành công.");
+        }
+
         const orderId = response.data.order._id;
 
-        // Làm trống giỏ hàng sau khi đơn hàng thành công
-        await this.fetchCart();
+        // Nếu người dùng chọn "Thanh Toán Sau Tiệc" nhưng có yêu cầu đặt cọc
+        if (
+          this.selectedPaymentMethod === "cash" &&
+          this.calculatedDeposit > 0
+        ) {
+          // Hiển thị yêu cầu thanh toán đặt cọc
+          Swal.fire({
+            title: "Bạn cần đặt cọc bằng hình thức thanh toán online",
+            text: "Vui lòng chọn phương thức thanh toán để tiếp tục.",
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonText: "VNPay",
+            cancelButtonText: "Ví Momo",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              // Thanh toán qua VNPay với số tiền đặt cọc
+              const paymentData = {
+                amount: this.depositAmount, // Số tiền đặt cọc
+                orderId: orderId, // Truyền orderId vào dữ liệu thanh toán
+                bankCode: "", // Có thể để trống nếu không chọn ngân hàng cụ thể
+                language: "vn", // hoặc 'en' tùy theo ngôn ngữ bạn muốn sử dụng
+              };
 
-        // Thông báo đặt hàng thành công
+              try {
+                const vnpayResponse = await axios.post(
+                  "http://localhost:3000/order/create_payment_url",
+                  paymentData
+                );
+
+                // Chuyển hướng đến URL thanh toán của VNPay
+                if (vnpayResponse.data && vnpayResponse.data.paymentUrl) {
+                  window.location.href = vnpayResponse.data.paymentUrl;
+                } else {
+                  throw new Error("Không thể tạo URL thanh toán.");
+                }
+              } catch (error) {
+                console.error("Lỗi khi tạo URL thanh toán VNPay:", error);
+                Swal.fire({
+                  icon: "error",
+                  title: "Lỗi tạo URL thanh toán",
+                  text:
+                    error.message ||
+                    "Không thể tạo URL thanh toán. Vui lòng thử lại sau.",
+                });
+              }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+              Swal.fire({
+                icon: "warning",
+                title: "Chức năng thanh toán Ví Momo chưa được hỗ trợ.",
+                text: "Vui lòng chọn phương thức khác hoặc thử lại sau.",
+              });
+            }
+          });
+
+          // Dừng lại để không hiển thị thông báo "Đặt hàng thành công"
+          return;
+        }
+
+        // Nếu phương thức thanh toán là VNPay (credit-card), tạo URL thanh toán sau khi lưu đơn
+        if (this.selectedPaymentMethod === "credit-card") {
+          const paymentData = {
+            amount: this.totalPriceForTables, // Đảm bảo đây là số nguyên
+            orderId: orderId, // Truyền orderId vào dữ liệu thanh toán
+            bankCode: "", // Có thể để trống nếu không chọn ngân hàng cụ thể
+            language: "vn", // hoặc 'en' tùy theo ngôn ngữ bạn muốn sử dụng
+          };
+
+          try {
+            const vnpayResponse = await axios.post(
+              "http://localhost:3000/order/create_payment_url",
+              paymentData
+            );
+
+            // Chuyển hướng đến URL thanh toán của VNPay
+            if (vnpayResponse.data && vnpayResponse.data.paymentUrl) {
+              window.location.href = vnpayResponse.data.paymentUrl;
+            } else {
+              throw new Error("Không thể tạo URL thanh toán.");
+            }
+          } catch (error) {
+            console.error("Lỗi khi tạo URL thanh toán VNPay:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Lỗi tạo URL thanh toán",
+              text:
+                error.message ||
+                "Không thể tạo URL thanh toán. Vui lòng thử lại sau.",
+            });
+          }
+
+          // Dừng lại để không hiển thị thông báo "Đặt hàng thành công"
+          return;
+        }
+
+        // Nếu không có yêu cầu đặt cọc, hiển thị thông báo đặt hàng thành công
+        await this.fetchCart(); // Làm trống giỏ hàng
+
         Swal.fire({
           icon: "success",
           title: "Đặt hàng thành công!",
@@ -249,32 +364,22 @@ export default {
           timer: 3000,
         });
 
-        // Điều hướng người dùng tới trang thành công sau khi hoàn tất
         setTimeout(() => {
-          if (orderId) {
-            this.$router.push({
-              name: "OrderSuccess",
-              params: { id: orderId },
-            });
-          }
+          this.$router.push({ name: "OrderSuccess" });
         }, 1000);
       } catch (error) {
-        // Xử lý các lỗi trả về từ API, ví dụ lỗi 400
-        if (error.response && error.response.status === 400) {
-          Swal.fire({
-            icon: "error",
-            title: "Lỗi!",
-            text: error.response.data.message,
-            showConfirmButton: true,
-          });
-        } else {
-          console.error("Lỗi khi xác nhận đặt bàn:", error);
-        }
+        console.error("Lỗi khi xác nhận đặt bàn:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi!",
+          text: error.response?.data?.message || "Đã có lỗi xảy ra.",
+        });
       } finally {
         this.isSubmitting = false;
       }
     },
   },
+
   async mounted() {
     try {
       await this.fetchCart(); // Lấy lại dữ liệu giỏ hàng
