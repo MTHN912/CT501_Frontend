@@ -214,6 +214,7 @@ export default {
     },
     async confirmOrder() {
       this.isSubmitting = true;
+
       try {
         // Kiểm tra ngày và giờ tiệc
         if (!this.partyDate || !this.partyTime) {
@@ -312,6 +313,43 @@ export default {
               });
             }
           });
+
+          // Dừng lại để không hiển thị thông báo "Đặt hàng thành công"
+          return;
+        }
+        if (
+          this.selectedPaymentMethod === "credit-card" &&
+          this.calculatedDeposit > 0
+        ) {
+          const paymentData = {
+            amount: this.depositAmount, // Đảm bảo đây là số nguyên
+            orderId: orderId, // Truyền orderId vào dữ liệu thanh toán
+            bankCode: "", // Có thể để trống nếu không chọn ngân hàng cụ thể
+            language: "vn", // hoặc 'en' tùy theo ngôn ngữ bạn muốn sử dụng
+          };
+
+          try {
+            const vnpayResponse = await axios.post(
+              "http://localhost:3000/order/create_payment_url",
+              paymentData
+            );
+
+            // Chuyển hướng đến URL thanh toán của VNPay
+            if (vnpayResponse.data && vnpayResponse.data.paymentUrl) {
+              window.location.href = vnpayResponse.data.paymentUrl;
+            } else {
+              throw new Error("Không thể tạo URL thanh toán.");
+            }
+          } catch (error) {
+            console.error("Lỗi khi tạo URL thanh toán VNPay:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Lỗi tạo URL thanh toán",
+              text:
+                error.message ||
+                "Không thể tạo URL thanh toán. Vui lòng thử lại sau.",
+            });
+          }
 
           // Dừng lại để không hiển thị thông báo "Đặt hàng thành công"
           return;

@@ -32,14 +32,31 @@
             <span class="status">{{ order.status }}</span>
           </p>
           <p>
-            <strong>Hình Thức Thanh Toán:</strong> {{ order.paymentMethod }}
+            <strong>Phương Thức Thanh Toán:</strong> {{ order.paymentMethod }}
           </p>
           <p><strong>Số Bàn:</strong> {{ order.tables }}</p>
           <p>
             <strong>Tổng Tiền:</strong>
             {{ order.totalPrice.toLocaleString() }} VND
           </p>
+          <p>
+            <strong>Đã Trả:</strong>
+            {{ order.paidDepositAmount.toLocaleString() }} VND
+          </p>
           <p><strong>Ghi Chú:</strong> {{ order.note }}</p>
+
+          <!-- Cảnh báo nếu chưa thanh toán và số tiền đã trả ít hơn mức cần đặt cọc -->
+          <div
+            v-if="
+              order.status === 'Chưa Thanh Toán' &&
+              order.paidDepositAmount < calculatedDeposit(order.totalPrice)
+            "
+          >
+            <p class="alert alert-warning">
+              Tiệc của bạn có giá trị cao, cần phải cọc tiền trước mới để được
+              xác nhận tiệc.
+            </p>
+          </div>
 
           <!-- Danh sách món ăn -->
           <h3 v-if="order.items.length">
@@ -67,12 +84,20 @@
             <button v-else class="btn btn-secondary" disabled>
               Đã Hủy Tiệc
             </button>
-            <!-- Nút Thanh Toán -->
+
+            <!-- Điều kiện hiển thị nút "Đặt Cọc" và "Thanh Toán" -->
             <button
               v-if="
-                (order.status === 'Đã Cọc' ||
-                  order.status === 'Chưa Thanh Toán') &&
-                order.partyStatus !== 'Chưa Xác Nhận'
+                order.status === 'Chưa Thanh Toán' && order.totalPrice > 1000000
+              "
+              @click="depositOrder(order._id)"
+              class="btn btn-warning"
+            >
+              Đặt Cọc
+            </button>
+            <button
+              v-if="
+                order.status === 'Chưa Thanh Toán' || order.status === 'Đã Cọc'
               "
               @click="payOrder(order._id)"
               class="btn btn-success"
@@ -88,26 +113,24 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 
 export default {
   name: "OrderList",
   data() {
     return {
-      orders: [], // Mảng lưu trữ danh sách đơn hàng
+      orders: [],
     };
   },
   methods: {
-    // Gọi API lấy danh sách đơn hàng của người dùng
     async fetchOrders() {
       try {
-        // Thay thế userId bằng userId từ store hoặc session nếu cần
         const response = await axios.get(
           "http://localhost:3000/order/getOrdersByUserId"
         );
-        // Thêm thuộc tính showItems mặc định là false cho mỗi đơn hàng
         this.orders = response.data.map((order) => ({
           ...order,
-          showItems: false, // Mặc định ẩn các món ăn
+          showItems: false,
         }));
         await this.fetchDishDetails();
       } catch (error) {
@@ -116,7 +139,6 @@ export default {
     },
     async fetchDishDetails() {
       try {
-        // Duyệt qua tất cả các đơn hàng
         for (const order of this.orders) {
           const itemsWithDetails = await Promise.all(
             order.items.map(async (item) => {
@@ -124,7 +146,6 @@ export default {
                 const response = await axios.get(
                   `http://localhost:3000/dish/getDishById/${item.dishId}`
                 );
-                // Gộp thông tin món ăn với item
                 return {
                   ...item,
                   name: response.data.name,
@@ -132,18 +153,26 @@ export default {
                 };
               } catch (error) {
                 console.error("Lỗi khi lấy thông tin món ăn:", error);
-                return item; // Trả về item gốc nếu có lỗi
+                return item;
               }
             })
           );
-          // Cập nhật order.items với chi tiết món ăn
           order.items = itemsWithDetails;
         }
       } catch (error) {
         console.error("Lỗi khi lấy thông tin món ăn:", error);
       }
     },
-    // Định dạng ngày tháng hiển thị cho người dùng
+    calculatedDeposit(totalPriceForTables) {
+      if (totalPriceForTables >= 20000000) {
+        return totalPriceForTables * 0.5;
+      } else if (totalPriceForTables >= 10000000) {
+        return totalPriceForTables * 0.4;
+      } else if (totalPriceForTables >= 5000000) {
+        return totalPriceForTables * 0.3;
+      }
+      return 0; // Đặt cọc tùy chọn
+    },
     formatCurrency(value) {
       return new Intl.NumberFormat("vi-VN", {
         style: "currency",
@@ -156,13 +185,10 @@ export default {
     async cancelOrder(orderId) {
       if (confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
         try {
-          // Gọi API PATCH để hủy đơn hàng với đường dẫn chính xác
           await axios.patch(
             `http://localhost:3000/order/orders/${orderId}/cancel`
           );
           alert("Đơn hàng đã được hủy thành công!");
-
-          // Cập nhật lại danh sách đơn hàng sau khi hủy
           this.fetchOrders();
         } catch (error) {
           console.error("Lỗi khi hủy đơn hàng:", error);
@@ -170,16 +196,117 @@ export default {
         }
       }
     },
-    // Hàm để ẩn/hiện danh sách món ăn trong một đơn hàng
     toggleItems(orderId) {
       const order = this.orders.find((o) => o._id === orderId);
       if (order) {
-        order.showItems = !order.showItems; // Chuyển đổi trạng thái ẩn/hiện
+        order.showItems = !order.showItems;
       }
+    },
+    async depositOrder(orderId) {
+      const order = this.orders.find((o) => o._id === orderId);
+      const depositAmount = this.calculatedDeposit(order.totalPrice);
+
+      Swal.fire({
+        title: "Bạn cần đặt cọc bằng hình thức thanh toán online",
+        text: `Số tiền cần thanh toán là ${depositAmount.toLocaleString()} VND. Vui lòng chọn phương thức thanh toán để tiếp tục.`,
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "VNPay",
+        cancelButtonText: "Ví Momo",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const response = await axios.post(
+              "http://localhost:3000/order/create_payment_url",
+              {
+                orderId: orderId,
+                amount: depositAmount, // Gửi số tiền đúng định dạng
+                bankCode: "", // Tuỳ chọn, nếu không chọn thì để rỗng
+                language: "vn", // Ngôn ngữ mặc định là "vn"
+              }
+            );
+
+            if (response.data && response.data.paymentUrl) {
+              window.location.href = response.data.paymentUrl; // Chuyển hướng tới URL thanh toán của VNPay
+            } else {
+              Swal.fire(
+                "Lỗi",
+                "Không thể tạo URL thanh toán, vui lòng thử lại sau.",
+                "error"
+              );
+            }
+          } catch (error) {
+            console.error("Lỗi khi gọi API thanh toán:", error);
+            Swal.fire(
+              "Lỗi",
+              "Đã xảy ra lỗi khi thanh toán. Vui lòng thử lại sau.",
+              "error"
+            );
+          }
+        }
+      });
+    },
+    async payOrder(orderId) {
+      const order = this.orders.find((o) => o._id === orderId);
+      const remainingAmount = order.totalPrice - order.paidDepositAmount;
+
+      Swal.fire({
+        title: "Chọn Phương Thức Thanh Toán",
+        text: `Số tiền còn lại cần thanh toán là ${remainingAmount.toLocaleString()} VND. Bạn có thể chọn lại phương thức thanh toán.`,
+        icon: "info",
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "VNPay",
+        denyButtonText: "Ví Momo",
+        cancelButtonText: "Thanh Toán Sau Tiệc",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          // Nếu chọn VNPay
+          try {
+            const response = await axios.post(
+              "http://localhost:3000/order/create_payment_url",
+              {
+                orderId: orderId,
+                amount: remainingAmount, // Gửi số tiền còn lại để thanh toán
+                bankCode: "", // Tuỳ chọn, nếu không chọn thì để rỗng
+                language: "vn", // Ngôn ngữ mặc định là "vn"
+              }
+            );
+
+            if (response.data && response.data.paymentUrl) {
+              window.location.href = response.data.paymentUrl; // Chuyển hướng tới URL thanh toán của VNPay
+            } else {
+              Swal.fire(
+                "Lỗi",
+                "Không thể tạo URL thanh toán, vui lòng thử lại sau.",
+                "error"
+              );
+            }
+          } catch (error) {
+            console.error("Lỗi khi gọi API thanh toán:", error);
+            Swal.fire(
+              "Lỗi",
+              "Đã xảy ra lỗi khi thanh toán. Vui lòng thử lại sau.",
+              "error"
+            );
+          }
+        } else if (result.isDenied) {
+          // Nếu chọn Ví Momo
+          Swal.fire(
+            "Ví Momo chưa được tích hợp. Vui lòng chọn phương thức khác.",
+            "info"
+          );
+        } else if (result.isDismissed) {
+          // Nếu chọn "Thanh Toán Sau Tiệc"
+          Swal.fire(
+            "Bạn đã chọn thanh toán sau tiệc. Vui lòng thanh toán sau khi sự kiện kết thúc.",
+            "success"
+          );
+        }
+      });
     },
   },
   mounted() {
-    // Gọi API lấy danh sách đơn hàng khi component được mount
     this.fetchOrders();
     window.scrollTo(0, 0);
   },

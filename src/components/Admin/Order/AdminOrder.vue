@@ -118,7 +118,7 @@
           </td>
           <td class="narrow-column6">{{ formatCurrency(order.totalPrice) }}</td>
           <td class="narrow-column9">
-            {{ formatCurrency(order.depositAmount) }}
+            {{ formatCurrency(order.paidDepositAmount) }}
           </td>
           <td class="narrow-column7">{{ order.phoneNumber }}</td>
           <td class="narrow-column8">
