@@ -250,6 +250,8 @@ export default {
       const order = this.orders.find((o) => o._id === orderId);
       const remainingAmount = order.totalPrice - order.paidDepositAmount;
 
+      const newOrderId = `${orderId}_installment${Date.now()}`; // Tạo mã đơn hàng mới cho phần thanh toán còn lại
+
       Swal.fire({
         title: "Chọn Phương Thức Thanh Toán",
         text: `Số tiền còn lại cần thanh toán là ${remainingAmount.toLocaleString()} VND. Bạn có thể chọn lại phương thức thanh toán.`,
@@ -266,7 +268,7 @@ export default {
             const response = await axios.post(
               "http://localhost:3000/order/create_payment_url",
               {
-                orderId: orderId,
+                orderId: newOrderId, // Sử dụng mã đơn hàng mới
                 amount: remainingAmount, // Gửi số tiền còn lại để thanh toán
                 bankCode: "", // Tuỳ chọn, nếu không chọn thì để rỗng
                 language: "vn", // Ngôn ngữ mặc định là "vn"
@@ -291,13 +293,11 @@ export default {
             );
           }
         } else if (result.isDenied) {
-          // Nếu chọn Ví Momo
           Swal.fire(
             "Ví Momo chưa được tích hợp. Vui lòng chọn phương thức khác.",
             "info"
           );
         } else if (result.isDismissed) {
-          // Nếu chọn "Thanh Toán Sau Tiệc"
           Swal.fire(
             "Bạn đã chọn thanh toán sau tiệc. Vui lòng thanh toán sau khi sự kiện kết thúc.",
             "success"

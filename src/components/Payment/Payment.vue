@@ -80,12 +80,12 @@
           />
         </div>
 
-        <div class="deposit-section">
-          <label for="deposit-amount"> Số tiền đặt cọc: </label>
+        <div v-if="showDepositInput" class="deposit-section">
+          <label for="deposit-amount">Số tiền đặt cọc:</label>
           <input
             type="number"
             id="deposit-amount"
-            v-model.number="computedDepositAmount"
+            v-model.number="depositAmount"
             :placeholder="`Số tiền đặt cọc tối thiểu là ${calculatedDeposit} đ`"
             @input="handleDepositInput"
             class="no-arrows"
@@ -99,6 +99,22 @@
             <option value="credit-card">VN-Pay</option>
             <option value="momo">Ví Momo</option>
           </select>
+        </div>
+
+        <div
+          v-if="
+            selectedPaymentMethod === 'credit-card' ||
+            selectedPaymentMethod === 'momo'
+          "
+        >
+          <label>
+            <input
+              type="checkbox"
+              v-model="payFull"
+              @change="handlePayFullChange"
+            />
+            Trả hết
+          </label>
         </div>
 
         <div class="form-group">
@@ -154,6 +170,7 @@ export default {
       partyTime: "",
       isSubmitting: false,
       depositAmount: 0,
+      payFull: false,
     };
   },
   computed: {
@@ -171,7 +188,14 @@ export default {
         }
       },
     },
-
+    showDepositInput() {
+      return (
+        this.selectedPaymentMethod === "cash" ||
+        ((this.selectedPaymentMethod === "credit-card" ||
+          this.selectedPaymentMethod === "momo") &&
+          !this.payFull)
+      );
+    },
     calculatedDeposit() {
       if (this.totalPriceForTables >= 20000000) {
         return this.totalPriceForTables * 0.5;
@@ -206,10 +230,20 @@ export default {
   methods: {
     ...mapActions(["fetchCart", "confirmOrder"]),
 
+    handlePayFullChange() {
+      if (this.payFull) {
+        this.depositAmount = this.totalPriceForTables;
+      } else {
+        this.depositAmount = this.calculatedDeposit;
+      }
+    },
     handleDepositInput() {
-      // Đảm bảo rằng giá trị không bị thay đổi nếu người dùng nhập 0 hoặc để trống
       if (this.depositAmount === "") {
         this.depositAmount = 0;
+      }
+      // Đảm bảo số tiền đặt cọc không vượt quá tổng số tiền
+      if (this.depositAmount > this.totalPriceForTables) {
+        this.depositAmount = this.totalPriceForTables;
       }
     },
     async confirmOrder() {
@@ -234,6 +268,7 @@ export default {
           paymentMethod: this.selectedPaymentMethod,
           totalPrice: Math.floor(this.totalPriceForTables), // Chuyển đổi thành số nguyên
           depositAmount: Math.floor(this.depositAmount),
+          payFull: this.payFull,
           partyAddress: this.partyAddress || null,
           phoneNumber: this.phoneNumber || null,
           note: this.note || null,
@@ -396,8 +431,8 @@ export default {
 
         Swal.fire({
           icon: "success",
-          title: "Đặt hàng thành công!",
-          text: "Cảm ơn bạn đã đặt hàng.",
+          title: "Đặt Tiệc thành công!",
+          text: "Cảm ơn bạn đã đặt tiệc.",
           showConfirmButton: false,
           timer: 3000,
         });
