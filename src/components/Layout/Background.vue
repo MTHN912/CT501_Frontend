@@ -3,14 +3,14 @@
     <div class="left-content">
       <!-- Phần nội dung quảng cáo hoặc hình ảnh nền bên trái -->
       <img
-        src="https://komunitasmea.web.id/wp-content/uploads/2022/07/food1.jpg"
+        src="../../../public/img/Screenshot 2024-10-10 180749.png"
         alt="Promo"
         class="promo-image"
       />
-      <h2 class="promo-title">10/10 Ngày Siêu Mua Sắm</h2>
+      <!-- <h2 class="promo-title">10/10 Ngày Siêu Mua Sắm</h2>
       <p class="promo-subtitle">
         Săn voucher đến 70%, phí ship 0 đồng, cơ hội trúng 99 iPhone
-      </p>
+      </p> -->
     </div>
 
     <div class="right-content">
@@ -34,7 +34,7 @@
 
 .left-content {
   flex: 1;
-  background-color: #ff5722; /* Màu nền cho phần quảng cáo bên trái */
+  background-color: #d4a762; /* Màu nền cho phần quảng cáo bên trái */
   display: flex;
   flex-direction: column;
   justify-content: center;

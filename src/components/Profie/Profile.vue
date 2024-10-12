@@ -212,6 +212,7 @@ export default {
     if (!this.userInfo) {
       this.getUserInfo();
     }
+    window.scrollTo(0, 0);
   },
 };
 </script>

@@ -9,36 +9,43 @@
         <div class="col-lg-7 wow bounceInUp" data-wow-delay="0.3s">
           <small
             class="d-inline-block fw-bold text-dark text-uppercase bg-light border border-primary rounded-pill px-4 py-1 mb-3"
-            >About Us</small
+            >Giới thiệu</small
           >
-          <h1 class="display-5 mb-4">Trusted By 200+ Satisfied Clients</h1>
+          <h1 class="display-5 mb-4">Hơn 200 khách hàng hài lòng tin tưởng</h1>
           <p class="mb-4">
-            Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
-            labore eit esdioilore magna aliqua. Ut enim ad minim veniam, quis
-            nostrud exercitation ullaemco laboeeiris nisi ut aliquip ex ea
-            commodo consequat. Duis aute irure dolor iesdein reprehendeerit in
-            voluptate velit esse cillum dolore.
+            MTHN Restaurant tự hào là điểm đến lý tưởng cho những ai yêu thích
+            ẩm thực tinh tế và không gian sang trọng. Với thực đơn đa dạng từ
+            các món truyền thống Việt Nam đến những hương vị hiện đại quốc tế,
+            chúng tôi mang đến trải nghiệm ẩm thực tuyệt vời, phù hợp cho mọi
+            dịp. Đội ngũ đầu bếp tài năng của chúng tôi luôn tận tâm tạo ra
+            những món ăn độc đáo, được chế biến từ những nguyên liệu tươi ngon
+            nhất. Không chỉ vậy, MTHN Restaurant còn có không gian thiết kế ấm
+            cúng, thanh lịch, phù hợp cho cả những buổi gặp gỡ gia đình, họp mặt
+            bạn bè hay các sự kiện đặc biệt. Hãy đến và cảm nhận sự khác biệt
+            tại MTHN Restaurant, nơi ẩm thực và nghệ thuật hội tụ.
           </p>
           <div class="row g-4 text-dark mb-5">
             <div class="col-sm-6">
-              <i class="fas fa-share text-primary me-2"></i>Fresh and Fast Food
-              Delivery
+              <i class="fas fa-share text-primary me-2"></i>Thức Ăn chất lượng
+              tươi ngon
             </div>
             <div class="col-sm-6">
-              <i class="fas fa-share text-primary me-2"></i>24/7 Customer
-              Support
+              <i class="fas fa-share text-primary me-2"></i>Phục vụ mọi buổi
+              tiệc lớn nhỏ
             </div>
             <div class="col-sm-6">
-              <i class="fas fa-share text-primary me-2"></i>Easy Customization
-              Options
+              <i class="fas fa-share text-primary me-2"></i>Thanh toán dễ dàng
             </div>
             <div class="col-sm-6">
-              <i class="fas fa-share text-primary me-2"></i>Delicious Deals for
-              Delicious Meals
+              <i class="fas fa-share text-primary me-2"></i>Dịch vụ chất lượng 5
+              sao tại nhà của bạn
             </div>
           </div>
-          <a href="" class="btn btn-primary py-3 px-5 rounded-pill">
-            About Us<i class="fas fa-arrow-right ps-2"></i>
+          <a
+            href="http://localhost:3001/about"
+            class="btn btn-primary py-3 px-5 rounded-pill"
+          >
+            Giới Thiệu<i class="fas fa-arrow-right ps-2"></i>
           </a>
         </div>
       </div>

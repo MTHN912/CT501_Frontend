@@ -99,6 +99,7 @@ export default {
           `http://localhost:3000/dish/getDishById/${dishId}`
         );
         this.dish = response.data;
+        this.$store.dispatch("updateCategory", this.dish.category);
       } catch (error) {
         console.error("Lỗi khi tải thông tin món ăn:", error);
       }

@@ -97,6 +97,7 @@ export default {
           params: {
             name: this.searchQuery,
             category: this.searchQuery,
+            description: this.searchQuery,
           },
         });
 

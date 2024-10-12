@@ -147,6 +147,10 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    // Luôn cuộn lên đầu trang khi điều hướng
+    return { top: 0 }; 
+  },
 });
 
 export default router;

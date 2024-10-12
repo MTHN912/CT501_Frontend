@@ -4,10 +4,10 @@
     <Hero />
     <About />
     <Fact />
-    <Service />
-    <Event />
+    <!-- <Service />
+    <Event /> -->
     <Menu />
-    <Blog />
+    <!-- <Blog /> -->
     <Footer />
     <!-- Other components or content -->
   </div>
@@ -15,12 +15,12 @@
 
 <script>
 import About from "@/components/Home/About.vue";
-import Blog from "@/components/Home/Blog.vue";
-import Event from "@/components/Home/Event.vue";
+// import Blog from "@/components/Home/Blog.vue";
+// import Event from "@/components/Home/Event.vue";
 import Fact from "@/components/Home/Fact.vue";
 import Hero from "@/components/Home/Hero.vue";
 import Menu from "@/components/Home/Menu.vue";
-import Service from "@/components/Home/Service.vue";
+// import Service from "@/components/Home/Service.vue";
 import Footer from "@/components/Layout/Footer.vue";
 import Navbar from "@/components/Layout/Navbar.vue";
 export default {
@@ -29,10 +29,10 @@ export default {
     Hero,
     About,
     Fact,
-    Service,
-    Event,
+    // Service,
+    // Event,
     Menu,
-    Blog,
+    // Blog,
     Footer,
   },
 };

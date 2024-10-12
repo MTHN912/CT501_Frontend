@@ -98,7 +98,7 @@ const login = async () => {
   });
   if (role === "admin") {
     router.push("/");
-  } else if (role === "staff") {
+  } else if (role === "unauthorized") {
     router.push("/");
   } else if (role === "unauthorized") {
     isModalVisible.value = true;
@@ -150,7 +150,7 @@ const handleGoogleLogin = async () => {
   font-size: 28px;
   margin-bottom: 25px;
   font-weight: bold;
-  color: #ee4d2d;
+  color: #d4a762;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -183,7 +183,7 @@ const handleGoogleLogin = async () => {
 .btn-submit {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(45deg, #ee4d2d, #ff5733); /* Thêm gradient */
+  background: linear-gradient(45deg, #d4a762, #d4a762); /* Thêm gradient */
   color: white;
   border: none;
   border-radius: 8px; /* Tăng border-radius */
@@ -195,8 +195,8 @@ const handleGoogleLogin = async () => {
 .btn-submit:hover {
   background: linear-gradient(
     45deg,
-    #ff5733,
-    #ff6f61
+    #c09759,
+    #c09759
   ); /* Thay đổi gradient khi hover */
 }
 

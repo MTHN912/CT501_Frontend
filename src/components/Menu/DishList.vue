@@ -6,6 +6,8 @@
   <div v-if="showMessage" class="success-message">
     {{ successMessage }}
   </div>
+
+  <!-- Danh mục món ăn -->
   <aside class="category-list">
     <ul v-show="showCategories">
       <li
@@ -24,17 +26,16 @@
       </li>
     </ul>
   </aside>
+
+  <!-- Danh sách món ăn -->
   <div class="menu-container">
     <div v-if="showMessage" class="success-message">
       {{ successMessage }}
     </div>
 
-    <!-- Danh mục món ăn -->
-
-    <!-- Danh sách món ăn -->
     <div class="dish-list" ref="dishList">
       <ul class="dish-grid">
-        <li v-for="dish in filteredDishes" :key="dish.id" class="dish-item">
+        <li v-for="dish in paginatedDishes" :key="dish.id" class="dish-item">
           <div class="dish-info">
             <img
               :src="dish.image"
@@ -51,18 +52,14 @@
               <!-- Nút yêu thích và đánh giá -->
               <div class="dish-controls">
                 <div class="dish-rating">
-                  <!-- Kiểm tra nếu có dữ liệu đánh giá cho món ăn -->
                   <span
                     v-if="
                       ratings[dish._id] && ratings[dish._id].reviewCount > 0
                     "
                   >
-                    <!-- Hiển thị điểm đánh giá trung bình -->
-                    <span class="average-rating">{{
-                      ratings[dish._id].averageRating.toFixed(1)
-                    }}</span>
-
-                    <!-- Hiển thị số sao dựa trên đánh giá trung bình -->
+                    <span class="average-rating">
+                      {{ ratings[dish._id].averageRating.toFixed(1) }}
+                    </span>
                     <span class="stars">
                       <span
                         v-for="n in 5"
@@ -75,11 +72,9 @@
                         >★</span
                       >
                     </span>
-
-                    <!-- Hiển thị số lượt đánh giá -->
-                    <span class="review-count"
-                      >| {{ ratings[dish._id].reviewCount }} đánh giá</span
-                    >
+                    <span class="review-count">
+                      | {{ ratings[dish._id].reviewCount }} đánh giá
+                    </span>
                   </span>
                   <span v-else>Chưa có đánh giá</span>
                 </div>
@@ -125,6 +120,42 @@
         </li>
       </ul>
     </div>
+
+    <!-- Thanh phân trang -->
+    <nav aria-label="Dish pagination">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <a
+            class="page-link"
+            href="#"
+            aria-label="Previous"
+            @click.prevent="changePage(currentPage - 1)"
+          >
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        <li
+          v-for="page in totalPages"
+          :key="page"
+          class="page-item"
+          :class="{ active: currentPage === page }"
+        >
+          <a class="page-link" href="#" @click.prevent="changePage(page)">
+            {{ page }}
+          </a>
+        </li>
+        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+          <a
+            class="page-link"
+            href="#"
+            aria-label="Next"
+            @click.prevent="changePage(currentPage + 1)"
+          >
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
   </div>
 </template>
 
@@ -143,6 +174,9 @@ export default {
       successMessage: "",
       showMessage: false,
       isLoading: false,
+      // Phân trang
+      currentPage: 1,
+      itemsPerPage: 9,
     };
   },
   computed: {
@@ -162,6 +196,14 @@ export default {
         0
       );
     },
+    paginatedDishes() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = this.currentPage * this.itemsPerPage;
+      return this.filteredDishes.slice(start, end); // Phân trang trên danh sách đã lọc
+    },
+    totalPages() {
+      return Math.ceil(this.filteredDishes.length / this.itemsPerPage);
+    },
     // Truy cập giỏ hàng từ store
     cart() {
       return this.$store.state.cart;
@@ -176,10 +218,19 @@ export default {
         dish.quantity--;
       }
     },
-    // Lọc món ăn theo danh mục
+    changePage(page) {
+      this.currentPage = page;
+      this.$nextTick(() => {
+        const dishList = this.$refs.dishList;
+        if (dishList) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+    },
     // Lọc món ăn theo danh mục
     filterByCategory(category) {
       this.selectedCategory = category;
+      this.currentPage = 1; // Đặt lại về trang đầu tiên khi đổi danh mục
 
       // Gọi lại API để lấy món ăn theo danh mục đã chọn
       this.fetchDishes(category);
@@ -215,8 +266,7 @@ export default {
         const confirmMessage = `Món ${dish.name} đã có trong giỏ hàng với số lượng ${cartItem.quantity}. Bạn có muốn thêm ${dish.quantity} món này nữa không?`;
 
         if (confirm(confirmMessage)) {
-          // Người dùng xác nhận, thêm số lượng mới vào giỏ hàng
-          this.addToCart(dish, true); // Truyền thêm cờ để biết đây là thêm số lượng
+          this.addToCart(dish, true);
         } else {
           // Người dùng hủy hành động, không làm gì cả
           return;
@@ -676,5 +726,22 @@ export default {
   100% {
     transform: rotate(360deg);
   }
+}
+.pagination {
+  margin-top: 20px;
+}
+
+.page-item.active .page-link {
+  background-color: #d4a762;
+  border-color: #d4a762;
+  color: white;
+}
+
+.page-link {
+  color: #d4a762;
+}
+
+.page-link:hover {
+  color: #d4a762;
 }
 </style>

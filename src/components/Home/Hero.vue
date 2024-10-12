@@ -9,18 +9,17 @@
             >Welcome to MTHN</small
           >
           <h1 class="display-1 mb-4 animated bounceInDown">
-            Book <span class="text-primary">MTHN</span>Restaurant For Your Dream
-            Event
+            Đến <span class="text-primary">MTHN</span>Restaurant Để Thưởng Thức Mỹ Vị
           </h1>
           <a
-            href=""
+            href="http://localhost:3001/menu"
             class="btn btn-primary border-0 rounded-pill py-3 px-4 px-md-5 me-4 animated bounceInLeft"
-            >Book Now</a
+            >Đặt Ngay</a
           >
           <a
-            href=""
+            href="http://localhost:3001/about"
             class="btn btn-primary border-0 rounded-pill py-3 px-4 px-md-5 animated bounceInLeft"
-            >Know More</a
+            >Xem Thêm</a
           >
         </div>
         <div class="col-lg-5 col-md-12">

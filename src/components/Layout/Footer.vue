@@ -12,13 +12,14 @@
               MTHN<span class="text-dark">Restaurant</span>
             </h1>
             <p class="lh-lg mb-4">
-              There cursus massa at urnaaculis estieSed aliquamellus vitae ultrs
-              condmentum leo massamollis its estiegittis miristum.
+              Mình về ta chẳng cho về. Ta nắm lấy áo, ta đề câu thơ Câu thơ ba
+              chữ sành sành. Chữ trung, chữ hiếu, chữ tình là ba. Chữ trung ta
+              để phần cha. Chữ hiếu phần mẹ, đôi ta chữ tình
             </p>
             <div class="footer-icon d-flex">
               <a
                 class="btn btn-primary btn-sm-square me-2 rounded-circle"
-                href=""
+                href="https://www.facebook.com/maitranhoangnguyen"
                 ><i class="fab fa-facebook-f"></i
               ></a>
               <a
@@ -28,7 +29,7 @@
               ></a>
               <a
                 class="btn btn-primary btn-sm-square me-2 rounded-circle"
-                href=""
+                href="https://www.instagram.com/nguyen_912?fbclid=IwY2xjawF17ABleHRuA2FlbQIxMAABHTl0jsOQs_C5bVrKZuFnsbSJL0strA1B9_l0zb_whoesg9dlrZ2ycqJ0aw_aem_0OatJLhvL9p9tyma4zRIAg"
                 ><i class="fab fa-instagram"></i
               ></a>
               <a class="btn btn-primary btn-sm-square rounded-circle" href=""
@@ -41,7 +42,7 @@
         <!-- Special Facilities -->
         <div class="col-lg-3 col-md-6">
           <div class="footer-item">
-            <h4 class="mb-4">Special Facilities</h4>
+            <h4 class="mb-4">Tiêu chí nhà hàng</h4>
             <div class="d-flex flex-column align-items-start">
               <!-- Use FacilityItem component -->
               <FacilityItem
@@ -56,11 +57,11 @@
         <!-- Contact Us -->
         <div class="col-lg-3 col-md-6">
           <div class="footer-item">
-            <h4 class="mb-4">Contact Us</h4>
+            <h4 class="mb-4">Liên Hệ</h4>
             <div class="d-flex flex-column align-items-start">
               <p>
-                <i class="fa fa-map-marker-alt text-primary me-2"></i> 123
-                Street, New York, USA
+                <i class="fa fa-map-marker-alt text-primary me-2"></i> 147H2/18,
+                An Khánh, Ninh Kiều, Cần Thơ
               </p>
               <p>
                 <i class="fa fa-phone-alt text-primary me-2"></i> (+84)
@@ -71,7 +72,8 @@
                 nguyenb2014678@student.ctu.edu.vn
               </p>
               <p>
-                <i class="fa fa-clock text-primary me-2"></i> 26/7 Hours Service
+                <i class="fa fa-clock text-primary me-2"></i> Phục vụ mọi lúc
+                mọi nơi
               </p>
             </div>
           </div>
@@ -80,7 +82,7 @@
         <!-- Social Gallery -->
         <div class="col-lg-3 col-md-6">
           <div class="footer-item">
-            <h4 class="mb-4">Social Gallery</h4>
+            <h4 class="mb-4">Các Món Tiêu Biểu</h4>
             <div class="row g-2">
               <div
                 v-for="(image, index) in galleryImages"
@@ -113,18 +115,18 @@ export default {
   data() {
     return {
       facilities: [
-        "Cheese Burger",
-        "Sandwich",
-        "Panner Burger",
-        "Special Sweets",
+        "Nhân nghĩa làm gốc",
+        "Trung quân ái quốc",
+        "Hiếu thuận phụ mẫu",
+        "Liêm chính thật thà",
       ],
       galleryImages: [
-        "img/menu-01.jpg",
-        "img/menu-02.jpg",
-        "img/menu-03.jpg",
-        "img/menu-04.jpg",
-        "img/menu-05.jpg",
-        "img/menu-06.jpg",
+        "http://cdn.tgdd.vn/Files/2022/01/06/1409477/cach-lam-vit-quay-bac-kinh-thom-phuc-chuan-vi-nguoi-hoa-202201061633018730.jpg",
+        "https://trivietphat.net/wp-content/uploads/2023/11/sun-ga-chien-gion.webp",
+        "https://cdn.tgdd.vn/2020/12/CookProduct/Untitled-1-1200x676-10.jpg",
+        "https://matika.vn/wp-content/uploads/2022/09/mon-ga-hap-la-sen.jpg",
+        "https://bakafood.com/wp-content/uploads/2023/03/ba7.jpg",
+        "https://monngonmoingay.com/wp-content/uploads/2015/08/lau-nam-chay-880.jpg",
       ],
     };
   },

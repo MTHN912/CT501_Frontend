@@ -27,6 +27,7 @@ const store = createStore({
     cart: { items: [] },
     averageRating: 0,
     totalReviews: 0,
+    category: null,
   },
   mutations: {
     SET_USER_INFO(state, userInfo) {
@@ -88,6 +89,9 @@ const store = createStore({
     SET_AVERAGE_RATING(state, { averageRating, totalReviews }) {
       state.averageRating = averageRating;
       state.totalReviews = totalReviews;
+    },
+    setCategory(state, category) {
+      state.category = category;
     },
     
   },
@@ -364,6 +368,9 @@ const store = createStore({
         console.error("Lỗi khi lấy điểm đánh giá trung bình:", error);
       }
     },
+    updateCategory({ commit }, category) {
+      commit('setCategory', category);
+    },
   },
   getters: {
     isLoggedIn: (state) => state.isLoggedIn,
@@ -374,6 +381,7 @@ const store = createStore({
     cartItems: (state) => state.cart.items,
     averageRating: (state) => state.averageRating,
     totalReviews: (state) => state.totalReviews,
+    category: (state) => state.category,
   },
 });
 

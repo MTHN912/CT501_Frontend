@@ -407,7 +407,7 @@ const handleGoogleLogin = () => {
   font-size: 28px;
   margin-bottom: 25px;
   font-weight: bold;
-  color: #ee4d2d;
+  color: #d4a762;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -450,7 +450,7 @@ const handleGoogleLogin = () => {
 .btn-submit {
   width: 100%;
   padding: 14px;
-  background: #ee4d2d;
+  background: #d4a762;
   color: white;
   border: none;
   border-radius: 8px;
@@ -460,7 +460,7 @@ const handleGoogleLogin = () => {
 }
 
 .btn-submit:hover {
-  background: #ff6347;
+  background: #c09759;
 }
 
 .divider {

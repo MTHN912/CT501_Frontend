@@ -10,7 +10,7 @@
                 <i class="fas fa-users fa-4x mb-4 text-white"></i>
                 <h1 class="display-4 fw-bold" data-toggle="counter-up">689</h1>
                 <p class="text-dark text-uppercase fw-bold mb-0">
-                  Happy Customers
+                  Khách Hàng Hài Lòng
                 </p>
               </div>
             </div>
@@ -19,7 +19,7 @@
                 <i class="fas fa-users-cog fa-4x mb-4 text-white"></i>
                 <h1 class="display-4 fw-bold" data-toggle="counter-up">107</h1>
                 <p class="text-dark text-uppercase fw-bold mb-0">
-                  Expert Chefs
+                  Món Ăn Chất Lượng Cao
                 </p>
               </div>
             </div>
@@ -28,7 +28,7 @@
                 <i class="fas fa-check fa-4x mb-4 text-white"></i>
                 <h1 class="display-4 fw-bold" data-toggle="counter-up">253</h1>
                 <p class="text-dark text-uppercase fw-bold mb-0">
-                  Events Complete
+                  Dịch Vụ Tiệc Thành Công
                 </p>
               </div>
             </div>
@@ -40,7 +40,7 @@
               type="button"
               class="btn btn-play"
               data-bs-toggle="modal"
-              data-src="https://www.youtube.com/embed/DWRcNpR6Kdc"
+              data-src="https://www.youtube.com/embed/jfpQHBsPzkU"
               data-bs-target="#videoModal"
             >
               <span></span>

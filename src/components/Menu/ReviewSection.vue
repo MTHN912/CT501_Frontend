@@ -104,42 +104,50 @@
         <p>{{ review.comment }}</p>
       </div>
     </div>
-    <!-- Phân trang -->
-    <div class="pagination">
-      <button
-        @click="changePage(currentPage - 1)"
-        :disabled="currentPage === 1"
-      >
-        <i class="fas fa-arrow-left"></i>
-      </button>
+    <div class="pagination-container">
+      <ul class="pagination">
+        <!-- Nút trang trước -->
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <a class="page-link" href="#" @click="changePage(currentPage - 1)">
+            «
+          </a>
+        </li>
 
-      <!-- Hiển thị một vài số trang trước và sau trang hiện tại -->
-      <button v-if="currentPage > 3" @click="changePage(1)">1</button>
-      <span v-if="currentPage > 3">...</span>
+        <!-- Trang đầu -->
+        <li class="page-item" v-if="currentPage > 3">
+          <a class="page-link" href="#" @click="changePage(1)">1</a>
+        </li>
+        <li class="page-item" v-if="currentPage > 3">
+          <span class="page-link">...</span>
+        </li>
 
-      <button
-        v-for="page in pagesAroundCurrent"
-        :key="page"
-        @click="changePage(page)"
-        :class="{ active: currentPage === page }"
-      >
-        {{ page }}
-      </button>
+        <!-- Các trang xung quanh trang hiện tại -->
+        <li
+          v-for="page in pagesAroundCurrent"
+          :key="page"
+          class="page-item"
+          :class="{ active: currentPage === page }"
+        >
+          <a class="page-link" href="#" @click="changePage(page)">{{ page }}</a>
+        </li>
 
-      <span v-if="currentPage < totalPages - 2">...</span>
-      <button
-        v-if="currentPage < totalPages - 2"
-        @click="changePage(totalPages)"
-      >
-        {{ totalPages }}
-      </button>
+        <!-- Trang cuối -->
+        <li v-if="currentPage < totalPages - 2">
+          <span class="page-link">...</span>
+        </li>
+        <li class="page-item" v-if="currentPage < totalPages - 2">
+          <a class="page-link" href="#" @click="changePage(totalPages)">
+            {{ totalPages }}
+          </a>
+        </li>
 
-      <button
-        @click="changePage(currentPage + 1)"
-        :disabled="currentPage === totalPages"
-      >
-        <i class="fas fa-arrow-right"></i>
-      </button>
+        <!-- Nút trang sau -->
+        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+          <a class="page-link" href="#" @click="changePage(currentPage + 1)">
+            »
+          </a>
+        </li>
+      </ul>
     </div>
 
     <!-- Phần hiển thị đánh giá của người dùng -->
@@ -449,7 +457,7 @@ export default {
 }
 .tabs button.active,
 .tabs button:hover {
-  background-color: #ff6600;
+  background-color: #d4a762;
   color: white;
 }
 .reviews {
@@ -527,12 +535,12 @@ export default {
   border-radius: 4px;
 }
 .review-form button {
-  background-color: #ff6600;
+  background-color: #d4a762;
   color: white;
   cursor: pointer;
 }
 .review-form button:hover {
-  background-color: #e55a00;
+  background-color: #c09759;
 }
 .stars2 {
   display: flex;
@@ -599,52 +607,73 @@ h3 {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   z-index: 100;
 }
-.pagination {
+.pagination-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  gap: 5px;
+  margin: 20px 0;
 }
 
-.pagination button {
-  background-color: #ddd;
+.page-item .page-link {
+  color: #007bff;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.page-item .page-link:hover {
+  background-color: #007bff;
   color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
 }
 
-.pagination button.active {
-  background-color: #e55a00;
+.page-item.active .page-link {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
 }
 
-.pagination button:disabled {
-  background-color: #e55a00;
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
   cursor: not-allowed;
 }
-
-.pagination button:not(:disabled):hover {
-  background-color: #e55a00;
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
-.pagination span {
-  font-size: 1rem;
-  margin: 0 5px;
-  color: #333;
+.pagination .page-item .page-link {
+  color: #d19b57; /* Màu chữ */
+  background-color: white;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+  border-radius: 0;
 }
 
-.pagination .fas {
-  font-size: 1rem;
-  margin-right: 5px;
+.pagination .page-item .page-link:hover {
+  background-color: #f0f0f0;
 }
 
-.pagination .active {
-  background-color: #333;
+.pagination .page-item.active .page-link {
+  background-color: #d19b57; /* Màu nền khi active */
   color: white;
+  border-color: #d19b57;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #ccc;
+  pointer-events: none;
+  background-color: white;
+}
+
+.pagination .page-item .page-link:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.pagination .page-item .page-link:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 </style>
