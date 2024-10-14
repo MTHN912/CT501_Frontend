@@ -162,65 +162,152 @@
     </div>
 
     <!-- Modal chi tiết đơn hàng -->
-    <div v-if="isDetailModalOpen" class="modal">
-      <div class="modal-content">
-        <h2>Chi tiết đơn hàng</h2>
-        <p><strong>Loại Tiệc:</strong> {{ selectedOrder.partyType }}</p>
-        <p><strong>Số bàn:</strong> {{ selectedOrder.tables }}</p>
-        <p>
-          <strong>Phương thức thanh toán:</strong>
-          {{ translatePaymentMethod(selectedOrder.paymentMethod) }}
-        </p>
-
-        <p>
-          <strong>Tổng tiền:</strong>
-          {{ formatCurrency(selectedOrder.totalPrice) }}
-        </p>
-        <p><strong>Địa chỉ:</strong> {{ selectedOrder.partyAddress }}</p>
-        <p>
-          <strong>Ngày diễn ra:</strong>
-          {{ formatDate(selectedOrder.eventDate) }}
-        </p>
-        <p><strong>Trạng Thái Tiệc:</strong> {{ selectedOrder.partyStatus }}</p>
-        <p><strong>Số điện thoại:</strong> {{ selectedOrder.phoneNumber }}</p>
-        <p><strong>Ghi chú:</strong> {{ selectedOrder.note }}</p>
-        <p><strong>Trạng thái:</strong> {{ selectedOrder.status }}</p>
-        <p>
-          <strong>Ngày tạo:</strong> {{ formatDate(selectedOrder.createdAt) }}
-        </p>
-        <h3>Danh sách món:</h3>
-        <ul>
-          <li v-for="item in selectedOrder.items" :key="item._id">
-            <strong>{{ item.name }}</strong> - Số lượng: {{ item.quantity }} -
-            Giá: {{ formatCurrency(item.price) }}
-          </li>
-        </ul>
-
-        <button @click="closeDetailModal">Đóng</button>
+    <div v-if="isDetailModalOpen" class="modal2">
+      <div class="modal-content3">
+        <div class="modal-header">
+          <h2>Chi tiết đơn hàng</h2>
+          <button type="button" class="close" @click="closeDetailModal">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="info-section">
+            <p class="info-item">
+              <i class="fas fa-glass-cheers"></i>
+              <span class="info-label">Loại Tiệc:</span>
+              <span class="info-content">{{ selectedOrder.partyType }}</span>
+            </p>
+            <p class="info-item">
+              <i class="fas fa-chair"></i>
+              <span class="info-label">Số bàn:</span>
+              <span class="info-content">{{ selectedOrder.tables }}</span>
+            </p>
+            <p class="info-item">
+              <i class="fas fa-clock"></i>
+              <span class="info-label">Ngày tạo:</span>
+              <span class="info-content">{{
+                formatDate(selectedOrder.createdAt)
+              }}</span>
+            </p>
+            <p class="info-item total-price">
+              <i class="fas fa-money-bill-wave"></i>
+              <span class="info-label">Tổng tiền:</span>
+              <span class="info-content">{{
+                formatCurrency(selectedOrder.totalPrice)
+              }}</span>
+            </p>
+          </div>
+          <div class="info-section">
+            <p class="info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span class="info-label">Tổng tiền:</span>
+              <span class="info-content">{{ selectedOrder.partyAddress }}</span>
+            </p>
+            <p class="info-item">
+              <i class="fas fa-calendar-alt"></i>
+              <strong>Ngày diễn ra:</strong>
+              {{ formatDate(selectedOrder.eventDate) }}
+            </p>
+            <p class="info-item">
+              <i class="fas fa-info-circle"></i>
+              <strong>Trạng thái Tiệc:</strong> {{ selectedOrder.partyStatus }}
+            </p>
+            <p class="info-item">
+              <i class="fas fa-phone"></i> <strong>Số điện thoại:</strong>
+              {{ selectedOrder.phoneNumber }}
+            </p>
+          </div>
+          <div class="info-section">
+            <p class="info-item">
+              <i class="fas fa-sticky-note"></i> <strong>Ghi chú:</strong>
+              {{ selectedOrder.note || "Không có" }}
+            </p>
+            <p class="info-item">
+              <i class="fas fa-credit-card"></i>
+              <strong>Phương thức thanh toán:</strong>
+              {{ translatePaymentMethod(selectedOrder.paymentMethod) }}
+            </p>
+            <p class="info-item">
+              <i class="fas fa-check-circle"></i>
+              <strong>Trạng thái thanh toán:</strong>
+              {{ selectedOrder.status }}
+            </p>
+            <p class="info-item total-price">
+              <i class="fas fa-money-bill-wave"></i>
+              <strong>Đã trả:</strong>
+              {{ formatCurrency(selectedOrder.paidDepositAmount) }}
+            </p>
+          </div>
+          <div class="menu-section">
+            <h3><i class="fas fa-utensils"></i> Danh sách món:</h3>
+            <ul class="menu-list">
+              <li
+                v-for="item in selectedOrder.items"
+                :key="item._id"
+                class="menu-item"
+              >
+                <span class="item-name color">{{ item.name }}</span>
+                <span class="item-quantity color"
+                  >Số lượng: {{ item.quantity }}</span
+                >
+                <span class="item-price color"
+                  >Giá: {{ formatCurrency(item.price) }}</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn close-btn" @click="closeDetailModal">
+            Đóng
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Modal cập nhật đơn hàng -->
     <div v-if="isUpdateModalOpen" class="modal">
-      <div class="modal-content">
-        <h2>Cập nhật đơn hàng</h2>
-        <form @submit.prevent="submitUpdateOrder">
-          <label for="status">Trạng thái:</label>
-          <select v-model="selectedOrder.status" id="status">
+      <div class="modal-container">
+        <div class="modal-content">
+          <h2>Cập nhật đơn hàng</h2>
+          <label for="status">Trạng thái thanh toán:</label>
+          <select
+            v-model="selectedOrder.status"
+            id="status"
+            class="form-control"
+          >
             <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
             <option value="Đã Thanh Toán">Đã Thanh Toán</option>
             <option value="Đã Hủy">Đã Hủy</option>
           </select>
-          <button type="submit">Cập nhật</button>
-          <button
-            v-if="selectedOrder.partyStatus === 'Chưa Xác Nhận'"
-            @click="confirmOrder"
-            type="button"
-          >
-            Xác nhận đơn hàng
+          <button @click="submitUpdateOrder" class="btn btn-primary">
+            Cập nhật thanh toán
           </button>
-          <button @click="closeUpdateModal" type="button">Hủy</button>
-        </form>
+        </div>
+
+        <!-- Cập nhật trạng thái tiệc với các nút -->
+        <div class="modal-content2">
+          <button
+            v-if="selectedOrder.partyStatus === 'Chưa Diễn Ra'"
+            @click="updatePartyStatus('Chuẩn Bị')"
+            class="btn btn-warning"
+          >
+            Đang Chuẩn Bị
+          </button>
+          <button
+            v-if="selectedOrder.partyStatus === 'Chuẩn Bị'"
+            @click="updatePartyStatus('Đang Diễn Ra')"
+            class="btn btn-success"
+          >
+            Hoàn Tất Chuẩn Bị
+          </button>
+          <button @click="updatePartyStatus('Đã Hủy')" class="btn btn-danger">
+            Hủy Tiệc
+          </button>
+          <button @click="closeUpdateModal" class="btn btn-secondary">
+            Hủy
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -595,6 +682,43 @@ export default {
           icon: "error",
           title: "Lỗi",
           text: "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng.",
+        });
+      }
+    },
+    async updatePartyStatus(newStatus) {
+      try {
+        // Cập nhật trạng thái tiệc theo giá trị được truyền vào
+        this.selectedOrder.partyStatus = newStatus;
+
+        // Gọi API để cập nhật trạng thái tiệc
+        await axios.patch(
+          `http://localhost:3000/order/orders/${this.selectedOrder._id}/party-status`,
+          {
+            partyStatus: this.selectedOrder.partyStatus, // Trạng thái tiệc cần cập nhật
+          }
+        );
+
+        // Lấy lại danh sách đơn hàng
+        this.fetchOrders();
+
+        // Đóng modal cập nhật
+        this.closeUpdateModal();
+
+        // Hiển thị thông báo cập nhật thành công
+        Swal.fire({
+          icon: "success",
+          title: "Cập nhật thành công",
+          text: `Trạng thái tiệc đã được cập nhật thành "${newStatus}"!`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        console.error("Error updating party status:", error);
+        // Hiển thị thông báo lỗi
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Đã xảy ra lỗi khi cập nhật trạng thái tiệc.",
         });
       }
     },
@@ -1023,43 +1147,240 @@ export default {
   align-items: center;
 }
 
-.modal-content {
+.modal-container {
   background-color: white;
   color: #333;
   padding: 20px;
   border-radius: 10px;
-  width: 400px;
+  width: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content {
+  margin-bottom: 20px;
 }
 
 .modal-content h2 {
+  text-align: center;
   margin-bottom: 20px;
 }
 
 .modal-content label {
   display: block;
   margin-bottom: 5px;
+  font-weight: bold;
 }
 
-.modal-content input,
-.modal-content textarea,
 .modal-content select {
   width: 100%;
   padding: 10px;
-  margin-bottom: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
+  margin-bottom: 20px;
 }
 
 .modal-content button {
-  margin-right: 10px;
-  padding: 10px 20px;
-  background-color: #0084ff;
+  width: 100%;
+  padding: 10px;
+  background-color: #d6a653;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-size: 16px;
 }
 
+.modal-content2 {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.modal-content2 button {
+  flex: 1; /* Căn đều các nút */
+  padding: 10px;
+  border-radius: 5px;
+  color: white;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-warning {
+  background-color: #f0ad4e;
+}
+
+.btn-danger {
+  background-color: #d9534f;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+}
+/* Tùy chỉnh giao diện */
+.modal2 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content3 {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 28px;
+  color: #333;
+}
+
+.modal-header .close {
+  font-size: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.3s;
+}
+
+.modal-header .close:hover {
+  color: #333;
+}
+
+.modal-body {
+  margin-top: 20px;
+}
+
+.info-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.info-item {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.info-item i {
+  margin-right: 10px;
+  color: #007bff;
+  width: 20px;
+}
+
+.total-price {
+  font-size: 16px;
+  /* font-weight: bold; */
+  color: #28a745;
+}
+
+.menu-section h3 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 20px;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.item-name {
+  flex: 2;
+  font-weight: bold;
+}
+
+.item-quantity,
+.item-price {
+  flex: 1;
+  text-align: right;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.close-btn {
+  padding: 10px 25px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.close-btn:hover {
+  background-color: #0056b3;
+}
+.color {
+  color: #000;
+}
+.info-item {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #333;
+  display: flex;
+  align-items: flex-start;
+}
+
+.info-item i {
+  margin-right: 10px;
+  color: #007bff;
+  width: 20px;
+  margin-top: 3px; /* Căn chỉnh icon với text */
+}
+
+.info-label {
+  font-weight: bold;
+  min-width: 180px; /* Điều chỉnh độ rộng này tùy theo nội dung của bạn */
+  display: inline-block;
+  margin-right: -95px;
+}
+
+.info-content {
+  flex: 1;
+}
 .view-icon,
 .edit-icon,
 .delete-icon {

@@ -13,7 +13,9 @@
           :key="order._id"
           class="list-group-item list-group-item-action"
         >
-          <h5>Mã Tiệc: #{{ order._id }}</h5>
+          <h5 @click="showOrderDetails(order._id)" style="cursor: pointer">
+            Mã Tiệc: #{{ order._id }}
+          </h5>
           <p><strong>Loại Tiệc:</strong> {{ order.partyType }}</p>
           <p>
             <strong>Thời Gian Đặt:</strong> {{ formatDate(order.createdAt) }}
@@ -107,6 +109,7 @@
           </div>
         </div>
       </div>
+      <OrderDetail v-if="selectedOrder" :order="selectedOrder" />
     </div>
   </div>
 </template>
@@ -114,12 +117,17 @@
 <script>
 import axios from "axios";
 import Swal from "sweetalert2";
+import OrderDetail from "./OrderDetail.vue";
 
 export default {
+  components: {
+    OrderDetail,
+  },
   name: "OrderList",
   data() {
     return {
       orders: [],
+      selectedOrder: null,
     };
   },
   methods: {
@@ -136,6 +144,9 @@ export default {
       } catch (error) {
         console.error("Lỗi khi lấy đơn hàng:", error);
       }
+    },
+    showOrderDetails(orderId) {
+      this.selectedOrder = this.orders.find((order) => order._id === orderId);
     },
     async fetchDishDetails() {
       try {
