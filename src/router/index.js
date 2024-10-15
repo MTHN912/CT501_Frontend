@@ -12,6 +12,7 @@ import EventView from "../views/Event.vue";
 import HomeView from "../views/Home.vue";
 import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
+import OrderDetail from "../views/Payment/OrderDetail.vue";
 import OrderFailed from "../views/Payment/OrderFailed.vue";
 import OrderList from "../views/Payment/OrderList.vue";
 import CheckoutPage from "../views/Payment/Payment.vue";
@@ -111,6 +112,12 @@ const routes = [
     path:'/orderfailed',
     name: 'OrderFailed',
     component: OrderFailed,
+  },
+  {
+    path: '/:id-order',
+    name: 'OrderDetail',
+    component: OrderDetail,
+    props: true,
   },
   {
     path: "/login",

@@ -1,115 +1,119 @@
 <template>
-  <div class="container mt-4">
+  <div class="container">
     <h2>Tiệc Của Bạn</h2>
 
     <div v-if="orders.length === 0" class="alert alert-info">
       Bạn chưa có đơn tiệc nào.
     </div>
 
-    <div v-else>
-      <div class="list-group">
-        <div
-          v-for="order in orders"
-          :key="order._id"
-          class="list-group-item list-group-item-action"
-        >
-          <h5 @click="showOrderDetails(order._id)" style="cursor: pointer">
-            Mã Tiệc: #{{ order._id }}
-          </h5>
-          <p><strong>Loại Tiệc:</strong> {{ order.partyType }}</p>
-          <p>
-            <strong>Thời Gian Đặt:</strong> {{ formatDate(order.createdAt) }}
-          </p>
-          <p>
-            <strong>Thời Gian Bắt Đầu Tiệc:</strong>
-            {{ formatDate(order.eventDate) }}
-          </p>
-          <p><strong>Địa Chỉ Tiệc:</strong> {{ order.partyAddress }}</p>
-          <p>
-            <strong>Trạng Thái Tiệc:</strong>
-            <span class="status">{{ order.partyStatus }}</span>
-          </p>
-          <p>
-            <strong>Trạng Thái Thanh Toán:</strong>
-            <span class="status">{{ order.status }}</span>
-          </p>
-          <p>
-            <strong>Phương Thức Thanh Toán:</strong> {{ order.paymentMethod }}
-          </p>
-          <p><strong>Số Bàn:</strong> {{ order.tables }}</p>
-          <p>
-            <strong>Tổng Tiền:</strong>
-            {{ order.totalPrice.toLocaleString() }} VND
-          </p>
-          <p>
-            <strong>Đã Trả:</strong>
-            {{ order.paidDepositAmount.toLocaleString() }} VND
-          </p>
-          <p><strong>Ghi Chú:</strong> {{ order.note }}</p>
+    <div v-else class="order-list">
+      <div
+        v-for="order in orders"
+        :key="order._id"
+        class="order-item"
+        @click="goToDetail(order._id)"
+        style="cursor: pointer"
+      >
+        <div class="order-header">
+          <h3 class="order-id">Mã Tiệc: #{{ order._id.slice(-8) }}</h3>
+          <span :class="['order-status', getStatusClass(order.partyStatus)]">
+            {{ order.partyStatus }}
+          </span>
+        </div>
 
-          <!-- Cảnh báo nếu chưa thanh toán và số tiền đã trả ít hơn mức cần đặt cọc -->
-          <div
-            v-if="
-              order.status === 'Chưa Thanh Toán' &&
-              order.paidDepositAmount < calculatedDeposit(order.totalPrice)
-            "
-          >
-            <p class="alert alert-warning">
-              Tiệc của bạn có giá trị cao, cần phải cọc tiền trước mới để được
-              xác nhận tiệc.
+        <div class="order-info">
+          <div class="info-column">
+            <p><strong>Loại Tiệc:</strong> {{ order.partyType }}</p>
+            <p><strong>Ngày tiệc:</strong> {{ formatDate(order.eventDate) }}</p>
+            <p><strong>Địa Chỉ:</strong> {{ order.partyAddress }}</p>
+          </div>
+          <div class="info-column">
+            <p><strong>Trạng Thái Thanh Toán:</strong> {{ order.status }}</p>
+            <p><strong>Phương Thức:</strong> {{ order.paymentMethod }}</p>
+            <p>
+              <strong>Tổng Tiền:</strong> {{ formatCurrency(order.totalPrice) }}
+            </p>
+            <p>
+              <strong>Đã Trả:</strong>
+              {{ formatCurrency(order.paidDepositAmount) }}
             </p>
           </div>
-
-          <!-- Danh sách món ăn -->
-          <h3 v-if="order.items.length">
-            Các món đã đặt
-            <span @click="toggleItems(order._id)" class="toggle-btn"
-              >[{{ order.showItems ? "Ẩn" : "Xem" }}]</span
+        </div>
+        <!-- Cảnh báo nếu chưa thanh toán và số tiền đã trả ít hơn mức cần đặt cọc -->
+        <div
+          v-if="
+            order.status === 'Chưa Thanh Toán' &&
+            order.paidDepositAmount < calculatedDeposit(order.totalPrice)
+          "
+        >
+          <p class="alert alert-warning">
+            Tiệc của bạn có giá trị cao, cần phải cọc tiền trước mới để được xác
+            nhận tiệc.
+          </p>
+        </div>
+        <div class="order-items">
+          <h4>Các Món Đã Đặt</h4>
+          <div class="items-grid">
+            <div
+              v-for="(item, index) in order.items"
+              :key="index"
+              class="item-card"
             >
-          </h3>
-          <ul v-if="order.showItems">
-            <li v-for="(item, index) in order.items" :key="index">
-              <strong>Món:</strong> {{ item.name }} - <strong>Giá:</strong>
-              {{ item.price }} đ - <strong>Số lượng:</strong>
-              {{ item.quantity }}
-            </li>
-          </ul>
-          <div class="action-buttons">
-            <!-- Nút Hủy Đơn -->
-            <button
-              v-if="order.partyStatus !== 'Đã Hủy'"
-              @click="cancelOrder(order._id)"
-              class="btn btn-danger"
-            >
-              Hủy Tiệc
-            </button>
-            <button v-else class="btn btn-secondary" disabled>
-              Đã Hủy Tiệc
-            </button>
-
-            <!-- Điều kiện hiển thị nút "Đặt Cọc" và "Thanh Toán" -->
-            <button
-              v-if="
-                order.status === 'Chưa Thanh Toán' && order.totalPrice > 1000000
-              "
-              @click="depositOrder(order._id)"
-              class="btn btn-warning"
-            >
-              Đặt Cọc
-            </button>
-            <button
-              v-if="
-                order.status === 'Chưa Thanh Toán' || order.status === 'Đã Cọc'
-              "
-              @click="payOrder(order._id)"
-              class="btn btn-success"
-            >
-              Thanh Toán
-            </button>
+              <img :src="item.image" alt="item image" class="item-image" />
+              <div class="item-info">
+                <p class="item-name">{{ item.name }}</p>
+                <p class="item-price">{{ formatCurrency(item.price) }}</p>
+                <p class="item-quantity">Số Lượng: {{ item.quantity }}</p>
+              </div>
+            </div>
           </div>
         </div>
+        <div class="order-actions">
+          <button
+            v-if="
+              order.partyStatus !== 'Đã Hủy' &&
+              order.partyStatus !== 'Đã Kết Thúc'
+            "
+            @click.stop="cancelOrder(order._id)"
+            class="btn btn-outline-danger"
+          >
+            Hủy Tiệc
+          </button>
+          <button
+            v-if="
+              order.partyStatus === 'Đang Diễn Ra' &&
+              order.status === 'Đã Thanh Toán'
+            "
+            @click.stop="completeOrder(order._id)"
+            class="btn btn-primary"
+          >
+            Hoàn Thành Tiệc
+          </button>
+
+          <button
+            v-if="
+              order.partyStatus !== 'Đã Hủy' &&
+              order.status === 'Chưa Thanh Toán' &&
+              order.totalPrice > 1000000
+            "
+            @click.stop="depositOrder(order._id)"
+            class="btn btn-warning"
+          >
+            Đặt Cọc
+          </button>
+          <button
+            v-if="
+              (order.partyStatus !== 'Đã Hủy' &&
+                order.status === 'Chưa Thanh Toán') ||
+              order.status === 'Đã Cọc'
+            "
+            @click.stop="payOrder(order._id)"
+            class="btn btn-success"
+          >
+            Thanh Toán
+          </button>
+        </div>
       </div>
-      <OrderDetail v-if="selectedOrder" :order="selectedOrder" />
     </div>
   </div>
 </template>
@@ -120,6 +124,9 @@ import Swal from "sweetalert2";
 import OrderDetail from "./OrderDetail.vue";
 
 export default {
+  props: {
+    orders: Array,
+  },
   components: {
     OrderDetail,
   },
@@ -161,6 +168,7 @@ export default {
                   ...item,
                   name: response.data.name,
                   price: response.data.price,
+                  image: response.data.image,
                 };
               } catch (error) {
                 console.error("Lỗi khi lấy thông tin món ăn:", error);
@@ -172,6 +180,43 @@ export default {
         }
       } catch (error) {
         console.error("Lỗi khi lấy thông tin món ăn:", error);
+      }
+    },
+    async completeOrder(orderId) {
+      try {
+        // Gọi API để cập nhật trạng thái đơn tiệc thành "Đã Kết Thúc"
+        const response = await fetch(
+          `http://localhost:3000/order/orders/${orderId}/party-status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ partyStatus: "Đã Kết Thúc" }), // Gửi trạng thái "Đã Kết Thúc" trong body
+          }
+        );
+
+        if (response.ok) {
+          // Nếu cập nhật thành công, lấy dữ liệu đơn hàng được trả về
+          const data = await response.json();
+          const updatedOrder = data.order; // Đơn hàng đã cập nhật
+
+          // Tìm và cập nhật trạng thái đơn tiệc trong danh sách `orders`
+          const orderIndex = this.orders.findIndex(
+            (order) => order._id === orderId
+          );
+          if (orderIndex !== -1) {
+            this.orders[orderIndex] = updatedOrder;
+          }
+          alert("Tiệc đã được hoàn thành.");
+        } else {
+          const errorData = await response.json();
+          console.error("Failed to complete the order:", errorData.error);
+          alert("Có lỗi xảy ra: " + errorData.error);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Có lỗi kết nối, vui lòng thử lại.");
       }
     },
     calculatedDeposit(totalPriceForTables) {
@@ -316,9 +361,25 @@ export default {
         }
       });
     },
+    goToDetail(orderId) {
+      this.$router.push({ name: "OrderDetail", params: { id: orderId } });
+    },
+    getStatusClass(status) {
+      switch (status) {
+        case "Đã Kết Thúc":
+          return "status-completed";
+        case "Đã Hủy":
+          return "status-cancelled";
+        case "Đang Diễn Ra":
+          return "status-ongoing";
+        default:
+          return "status-pending";
+      }
+    },
   },
   mounted() {
     this.fetchOrders();
+    this.fetchDishDetails();
     window.scrollTo(0, 0);
   },
 };
@@ -329,123 +390,168 @@ export default {
   max-width: 1200px;
   margin: auto;
   padding: 20px;
+  margin-top: 120px;
 }
 
 h2 {
-  margin-top: 110px;
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 2rem;
+  margin-bottom: 30px;
+  font-size: 2.5rem;
   color: #333;
 }
 
-.list-group {
-  margin-top: 50px;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 30px; /* Tạo khoảng cách giữa các tiệc */
-  justify-content: space-between;
-}
-
-.list-group-item {
-  width: 30%;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+.order-list {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.order-item {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(6, 6, 6, 0.1);
+}
+
+.order-header {
+  display: flex;
   justify-content: space-between;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-.list-group-item:hover {
-  transform: scale(1.02); /* Tăng nhẹ kích thước khi hover */
-}
-
-h5 {
-  font-size: 1.35rem;
+.order-id {
+  font-size: 1.2rem;
   color: #007bff;
+  margin: 0;
 }
 
-p {
-  margin: 5px 0;
-  font-size: 0.95rem;
-}
-
-.status {
+.order-status {
+  padding: 5px 10px;
+  border-radius: 4px;
   font-weight: bold;
-  color: #28a745; /* Xanh lá để trạng thái hiển thị rõ hơn */
 }
 
-ul {
-  padding-left: 20px;
+.order-info {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 20px;
 }
 
-ul li {
-  margin-bottom: 8px;
+.info-column {
+  flex: 1;
 }
 
-.toggle-btn {
-  font-size: 0.85rem;
-  color: #007bff;
-  cursor: pointer;
+.info-column p {
+  margin: 5px 0;
+  font-size: 0.9rem;
 }
 
-.alert-info {
-  text-align: center;
-  font-size: 1.1rem;
+.order-items {
+  margin-bottom: 20px;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.item-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   padding: 10px;
-  background-color: #e9f7fa;
-  border: 1px solid #bde5f0;
-  color: #31708f;
+  text-align: center;
 }
 
-.btn-danger {
-  background-color: #dc3545;
+.item-image {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.item-info p {
+  margin: 5px 0;
+  font-size: 0.8rem;
+}
+
+.item-name {
+  font-weight: bold;
+}
+
+.order-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-outline-danger {
+  color: #dc3545;
   border-color: #dc3545;
-  color: white;
 }
 
-.btn-danger:hover {
-  background-color: #c82333;
+.btn-outline-danger:hover {
+  color: #fff;
+  background-color: #dc3545;
 }
 
-@media (max-width: 1024px) {
-  .list-group-item {
-    width: 48%;
-  }
+.btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
 }
 
-@media (max-width: 768px) {
-  .list-group-item {
-    width: 100%;
-  }
-}
 .btn-success {
   background-color: #28a745;
   border-color: #28a745;
+  color: #fff;
+}
+
+.status-completed {
+  background-color: #28a745;
   color: white;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  padding: 4px 20px;
+  border-radius: 15px;
+}
+.status-cancelled {
+  background-color: #dc3545;
+  color: white;
+  padding: 4px 20px;
+  border-radius: 15px;
+}
+.status-ongoing {
+  background-color: #17a2b8;
+  color: white;
+  padding: 4px 20px;
+  border-radius: 15px;
+}
+.status-pending {
+  background-color: #ffc107;
+  color: #212529;
+  padding: 4px 20px;
+  border-radius: 15px;
 }
 
-.btn-success:hover {
-  background-color: #218838;
-  transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
-}
+@media (max-width: 768px) {
+  .order-info {
+    flex-direction: column;
+  }
 
-.btn-success:active {
-  background-color: #1e7e34;
-  transform: scale(1); /* Trở lại kích thước gốc khi bấm nút */
-}
-.action-buttons {
-  display: flex;
-  justify-content: space-between; /* Căn đều hai bên */
-  gap: 10px; /* Tạo khoảng cách giữa các nút */
-  margin-top: 15px; /* Khoảng cách từ phần thông tin phía trên */
+  .items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
 }
 </style>

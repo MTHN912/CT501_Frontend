@@ -205,37 +205,48 @@
             </p>
             <p class="info-item">
               <i class="fas fa-calendar-alt"></i>
-              <strong>Ngày diễn ra:</strong>
-              {{ formatDate(selectedOrder.eventDate) }}
+              <span class="info-label">Ngày diễn ra:</span>
+              <span class="info-content">{{
+                formatDate(selectedOrder.eventDate)
+              }}</span>
             </p>
             <p class="info-item">
               <i class="fas fa-info-circle"></i>
-              <strong>Trạng thái Tiệc:</strong> {{ selectedOrder.partyStatus }}
+              <span class="info-label">Trạng thái Tiệc:</span>
+              <span class="info-content">{{ selectedOrder.partyStatus }}</span>
             </p>
             <p class="info-item">
-              <i class="fas fa-phone"></i> <strong>Số điện thoại:</strong>
-              {{ selectedOrder.phoneNumber }}
+              <i class="fas fa-phone"></i>
+              <span class="info-label">Số điện thoại:</span>
+              <span class="info-content">{{ selectedOrder.phoneNumber }}</span>
             </p>
           </div>
           <div class="info-section">
             <p class="info-item">
-              <i class="fas fa-sticky-note"></i> <strong>Ghi chú:</strong>
-              {{ selectedOrder.note || "Không có" }}
+              <i class="fas fa-sticky-note"></i>
+              <span class="info-label">Ghi chú:</span>
+              <span class="info-content">{{
+                selectedOrder.note || "Không có"
+              }}</span>
             </p>
             <p class="info-item">
               <i class="fas fa-credit-card"></i>
-              <strong>Phương thức thanh toán:</strong>
-              {{ translatePaymentMethod(selectedOrder.paymentMethod) }}
+              <span class="info-label">Phương thức thanh toán:</span>
+              <span class="info-content">{{
+                translatePaymentMethod(selectedOrder.paymentMethod)
+              }}</span>
             </p>
             <p class="info-item">
               <i class="fas fa-check-circle"></i>
-              <strong>Trạng thái thanh toán:</strong>
-              {{ selectedOrder.status }}
+              <span class="info-label">Trạng thái thanh toán:</span>
+              <span class="info-content">{{ selectedOrder.status }}</span>
             </p>
             <p class="info-item total-price">
               <i class="fas fa-money-bill-wave"></i>
-              <strong>Đã trả:</strong>
-              {{ formatCurrency(selectedOrder.paidDepositAmount) }}
+              <span class="info-label">Đã trả:</span>
+              <span class="info-content">{{
+                formatCurrency(selectedOrder.paidDepositAmount)
+              }}</span>
             </p>
           </div>
           <div class="menu-section">
@@ -303,6 +314,13 @@
           </button>
           <button @click="updatePartyStatus('Đã Hủy')" class="btn btn-danger">
             Hủy Tiệc
+          </button>
+          <button
+            v-if="selectedOrder.partyStatus === 'Chưa Xác Nhận'"
+            @click="confirmOrder"
+            type="button"
+          >
+            Xác nhận đơn hàng
           </button>
           <button @click="closeUpdateModal" class="btn btn-secondary">
             Hủy
@@ -1375,7 +1393,7 @@ export default {
   font-weight: bold;
   min-width: 180px; /* Điều chỉnh độ rộng này tùy theo nội dung của bạn */
   display: inline-block;
-  margin-right: -95px;
+  margin-right: 20px;
 }
 
 .info-content {
