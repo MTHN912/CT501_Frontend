@@ -2,13 +2,75 @@
   <div class="container">
     <h2>Tiệc Của Bạn</h2>
 
-    <div v-if="orders.length === 0" class="alert alert-info">
-      Bạn chưa có đơn tiệc nào.
+    <!-- Tabs để lọc đơn tiệc theo trạng thái -->
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: selectedTab === 'all' }"
+          @click="selectedTab = 'all'"
+          >Tất Cả</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: selectedTab === 'Chưa Xác Nhận' }"
+          @click="selectedTab = 'Chưa Xác Nhận'"
+          >Chưa Xác Nhận</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: selectedTab === 'Chưa Diễn Ra' }"
+          @click="selectedTab = 'Chưa Diễn Ra'"
+          >Chưa Diễn Ra</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: selectedTab === 'Chuẩn Bị' }"
+          @click="selectedTab = 'Chuẩn Bị'"
+          >Chuẩn Bị</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: selectedTab === 'Đang Diễn Ra' }"
+          @click="selectedTab = 'Đang Diễn Ra'"
+          >Đang Diễn Ra</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: selectedTab === 'Đã Kết Thúc' }"
+          @click="selectedTab = 'Đã Kết Thúc'"
+          >Đã Kết Thúc</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ active: selectedTab === 'Đã Hủy' }"
+          @click="selectedTab = 'Đã Hủy'"
+          >Đã Hủy</a
+        >
+      </li>
+    </ul>
+
+    <!-- Thông báo khi không có đơn tiệc -->
+    <div v-if="filteredOrders.length === 0" class="alert alert-info">
+      Không có đơn tiệc trong trạng thái này.
     </div>
 
+    <!-- Hiển thị danh sách đơn tiệc -->
     <div v-else class="order-list">
       <div
-        v-for="order in orders"
+        v-for="order in filteredOrders"
         :key="order._id"
         class="order-item"
         @click="goToDetail(order._id)"
@@ -39,18 +101,7 @@
             </p>
           </div>
         </div>
-        <!-- Cảnh báo nếu chưa thanh toán và số tiền đã trả ít hơn mức cần đặt cọc -->
-        <div
-          v-if="
-            order.status === 'Chưa Thanh Toán' &&
-            order.paidDepositAmount < calculatedDeposit(order.totalPrice)
-          "
-        >
-          <p class="alert alert-warning">
-            Tiệc của bạn có giá trị cao, cần phải cọc tiền trước mới để được xác
-            nhận tiệc.
-          </p>
-        </div>
+        <!-- Hiển thị các món ăn đã đặt -->
         <div class="order-items">
           <h4>Các Món Đã Đặt</h4>
           <div class="items-grid">
@@ -135,7 +186,18 @@ export default {
     return {
       orders: [],
       selectedOrder: null,
+      selectedTab: "all",
     };
+  },
+  computed: {
+    filteredOrders() {
+      if (this.selectedTab === "all") {
+        return this.orders;
+      }
+      return this.orders.filter(
+        (order) => order.partyStatus === this.selectedTab
+      );
+    },
   },
   methods: {
     async fetchOrders() {

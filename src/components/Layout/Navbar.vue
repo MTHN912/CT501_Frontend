@@ -31,12 +31,12 @@
               active-class="active"
               >Giới Thiệu</router-link
             >
-            <router-link
+            <!-- <router-link
               to="/services"
               class="nav-item nav-link"
               active-class="active"
               >Khuyến Mãi</router-link
-            >
+            > -->
             <router-link
               to="/events"
               class="nav-item nav-link"

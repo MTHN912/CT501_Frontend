@@ -28,20 +28,35 @@
           class="package-image"
         />
         <span>{{ pkg.name }} - {{ pkg.price }} VND</span>
+        <!-- Hiển thị giá khuyến mãi nếu có -->
+        <span v-if="pkg.promotion"
+          >Giá khuyến mãi: {{ pkg.promotionalPrice }} VND</span
+        >
+        <span v-else>Giá: {{ pkg.price }} VND</span>
         <span>Danh mục: {{ pkg.category }}</span>
         <span>Số bàn: {{ pkg.tables }}</span>
-        <span class="promotion">Ưu đãi: {{ pkg.promotion }}</span>
+        <span class="promotion" v-if="pkg.promotion"
+          >Ưu đãi: {{ pkg.promotion }}%</span
+        >
       </li>
     </ul>
 
     <!-- Hiển thị chi tiết gói tiệc khi được chọn -->
     <div v-if="selectedPackage" class="package-details" ref="packageDetails">
       <h3>Gói: {{ selectedPackage.name }}</h3>
-      <p><strong>Giá:</strong> {{ selectedPackage.price }} VND</p>
+      <!-- Hiển thị cả giá gốc và giá khuyến mãi -->
+      <p>
+        <strong>Giá:</strong>
+        <span v-if="selectedPackage.promotion">
+          <s>{{ selectedPackage.price }} VND</s>
+          {{ selectedPackage.promotionalPrice }} VND
+        </span>
+        <span v-else>{{ selectedPackage.price }} VND</span>
+      </p>
       <p><strong>Danh mục:</strong> {{ selectedPackage.category }}</p>
       <p><strong>Số bàn mặc định:</strong> {{ selectedPackage.tables }}</p>
       <p><strong>Mô tả:</strong> {{ selectedPackage.description }}</p>
-      <p><strong>Ưu đãi:</strong> {{ selectedPackage.promotion }}</p>
+      <p><strong>Ưu đãi:</strong> {{ selectedPackage.promotion }}%</p>
 
       <h4>Combo món chính:</h4>
       <ul>
@@ -62,15 +77,8 @@
           </div>
         </li>
       </ul>
-      <h4>Tráng miệng:</h4>
-      <ul>
-        <li v-for="extra in selectedPackage.extraCombo" :key="extra">
-          {{ extra }}
-        </li>
-      </ul>
 
       <button @click="handleBooking">Đặt tiệc</button>
-
       <button class="close-btn" @click="closePackageDetails">Đóng</button>
     </div>
 
@@ -106,16 +114,14 @@ export default {
   },
   methods: {
     handleBooking() {
-      if (!this.isLoggedIn) {
-        // Hiển thị thông báo
-        alert("Bạn chưa đăng nhập");
-
-        // Chuyển hướng đến trang login
-        this.$router.push("/login");
+      if (this.selectedPackage) {
+        // Nếu đã đăng nhập và có gói tiệc được chọn, chuyển hướng đến trang thanh toán
+        this.$router.push({
+          name: "CheckoutPackage", // Đặt tên route cho trang thanh toán
+          params: { id: this.selectedPackage._id }, // Truyền packageId trong params
+        });
       } else {
-        // Nếu đã đăng nhập, tiếp tục quá trình đặt tiệc
-        // Thêm logic đặt tiệc tại đây
-        console.log("Đang tiến hành đặt tiệc...");
+        alert("Vui lòng chọn một gói tiệc trước khi đặt.");
       }
     },
     // Lấy danh mục tiệc từ API
@@ -165,42 +171,10 @@ export default {
         console.error("Lỗi kết nối khi lấy chi tiết gói tiệc:", error);
       }
     },
-    // Đặt mua gói tiệc
-    async purchasePackage() {
-      if (
-        !this.selectedPackage ||
-        this.numTables <= this.selectedPackage.tables
-      ) {
-        alert(`Số lượng bàn phải lớn hơn ${this.selectedPackage.tables}`);
-        return;
-      }
-
-      try {
-        const response = await this.fakeApiCall({
-          package: this.selectedPackage,
-        });
-
-        if (response.success) {
-          this.purchaseStatus = `Bạn đã đặt thành công gói tiệc ${this.selectedPackage.name}`;
-        } else {
-          this.purchaseStatus = `Đặt gói tiệc ${this.selectedPackage.name} thất bại.`;
-        }
-      } catch (error) {
-        this.purchaseStatus = "Có lỗi xảy ra, vui lòng thử lại.";
-      }
-    },
     // Đóng phần chi tiết gói tiệc và cuộn về đầu trang
     closePackageDetails() {
       this.selectedPackage = null;
       window.scrollTo({ top: 0, behavior: "smooth" }); // Cuộn về đầu trang
-    },
-    // Giả lập API call
-    fakeApiCall(pkg) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true });
-        }, 1000);
-      });
     },
   },
   // Lấy dữ liệu khi component được tạo

@@ -15,12 +15,36 @@
 
     <!-- Danh sách điều hướng với icon -->
     <ul class="nav flex-column">
-      <li class="nav-item" v-for="item in menuItems" :key="item.text">
-        <router-link :to="item.link" class="nav-link" active-class="active">
-          <i :class="item.icon"></i>
-          <!-- Icon -->
-          <span v-if="!isCollapsed">{{ item.text }}</span>
-        </router-link>
+      <!-- Lặp qua các mục menu -->
+      <li v-for="item in menuItems" :key="item.text" class="nav-item">
+        <!-- Hiển thị các mục không có subItems -->
+        <template v-if="!item.subItems || item.subItems.length === 0">
+          <router-link :to="item.link" class="nav-link" active-class="active">
+            <i :class="item.icon"></i>
+            <span v-if="!isCollapsed">{{ item.text }}</span>
+          </router-link>
+        </template>
+
+        <!-- Hiển thị các mục có subItems (dropdown) -->
+        <template v-else>
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            @click.prevent="toggleDropdown(item.text)"
+          >
+            <i :class="item.icon"></i>
+            <span v-if="!isCollapsed">{{ item.text }}</span>
+          </a>
+          <transition name="dropdown">
+            <ul v-if="dropdowns[item.text]" class="dropdown-menu show">
+              <li v-for="subItem in item.subItems" :key="subItem.text">
+                <router-link :to="subItem.link" class="dropdown-item">
+                  {{ subItem.text }}
+                </router-link>
+              </li>
+            </ul>
+          </transition>
+        </template>
       </li>
     </ul>
 
@@ -34,7 +58,6 @@
       <div class="user-info">
         <span class="user-name">MTHN Admin</span>
         <i class="fas fa-ellipsis-h"></i>
-        <!-- Icon tùy chỉnh -->
       </div>
     </div>
   </div>
@@ -46,7 +69,16 @@ export default {
   data() {
     return {
       isCollapsed: false,
+      dropdowns: {
+        "Quản Lý Đơn Hàng": false,
+        "Quản Lý Gói Tiệc": false,
+      },
       menuItems: [
+        {
+          text: "Thống Kê Cửa Hàng",
+          link: "/adminUsers",
+          icon: "fas fa-store",
+        },
         {
           text: "Quản Lý Người Dùng",
           link: "/adminUsers",
@@ -55,7 +87,7 @@ export default {
         {
           text: "Quản Lý Món Ăn",
           link: "/admindishes",
-          icon: "fas fa-boxes",
+          icon: "fas fa-mortar-pestle",
         },
         {
           text: "Quản Lý Danh Mục",
@@ -63,19 +95,20 @@ export default {
           icon: "fas fa-boxes",
         },
         {
-          text: "Quản Lý Đơn Hàng",
-          link: "/adminorder",
+          text: "Quản Lý Đơn Tiệc",
           icon: "fas fa-receipt",
+          subItems: [
+            { text: "Đơn Tiệc", link: "/adminorder" },
+            { text: "Đơn Mua Gói Tiệc", link: "/adminpackageorder" },
+          ],
         },
         {
-          text: "Quản Lý Khuyến Mãi",
-          link: "/admin/promotions",
+          text: "Quản Lý Gói Tiệc",
           icon: "fas fa-tags",
-        },
-        {
-          text: "Quản Lý Sự Kiện",
-          link: "/admin/events",
-          icon: "fas fa-calendar-alt",
+          subItems: [
+            { text: "Thêm Gói", link: "/adminaddpackage" },
+            { text: "Các Gói Tiệc", link: "/adminpackage" },
+          ],
         },
       ],
     };
@@ -85,19 +118,25 @@ export default {
       this.isCollapsed = !this.isCollapsed;
       this.$emit("toggle-sidebar", this.isCollapsed);
     },
+    toggleDropdown(menu) {
+      console.log("Dropdown clicked:", menu); // Thêm lệnh console để kiểm tra
+      const normalizedMenu = menu.trim(); // Loại bỏ khoảng trắng không cần thiết
+      this.dropdowns[normalizedMenu] = !this.dropdowns[normalizedMenu];
+      console.log("Dropdown status:", this.dropdowns[normalizedMenu]);
+    },
   },
   async mounted() {
     try {
-      await this.$store.dispatch("getUserInfo"); // Gọi action để lấy thông tin người dùng
+      await this.$store.dispatch("getUserInfo");
       const isLoggedIn = this.$store.getters.isLoggedIn;
       const userInfo = this.$store.getters.userInfo;
 
       if (!isLoggedIn || !userInfo?.ROLE?.IS_ADMIN) {
-        this.$router.push("/"); // Điều hướng về trang chủ
+        this.$router.push("/");
       }
     } catch (error) {
       console.error("Lỗi khi lấy thông tin người dùng:", error);
-      this.$router.push("/"); // Điều hướng về trang chủ nếu có lỗi
+      this.$router.push("/");
     }
   },
 };
@@ -116,11 +155,9 @@ export default {
   left: 0;
   top: 0;
 }
-
 .sidebar-collapsed {
   width: 80px;
 }
-
 .brand-toggle {
   display: flex;
   align-items: center;
@@ -128,36 +165,30 @@ export default {
   padding: 10px;
   border-bottom: 1px solid #2d2d42;
 }
-
 .sidebar-collapsed .brand-toggle {
-  flex-direction: column; /* Xếp các phần tử theo chiều dọc */
-  align-items: center; /* Căn giữa các phần tử theo chiều ngang */
+  flex-direction: column;
+  align-items: center;
 }
-
 .navbar-brand {
   font-size: 1.5rem;
   color: #ff8800;
 }
-
 .navbar-brand .logo {
-  white-space: nowrap; /* Giữ toàn bộ logo trên một dòng nếu đủ không gian */
+  white-space: nowrap;
   display: inline-block;
 }
-
 .navbar-brand .logo span {
   color: #fff;
 }
-
 .sidebar-collapsed .navbar-brand .logo {
-  white-space: normal; /* Logo tự xuống dòng khi sidebar thu nhỏ */
-  text-align: center; /* Căn giữa logo */
-  font-size: 1.2rem; /* Giảm kích thước logo khi thu nhỏ */
-  margin-bottom: 10px; /* Khoảng cách giữa logo và nút thu/phóng */
+  white-space: normal;
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
 }
 .sidebar-collapsed .navbar-brand .logo span {
-  display: none; /* Ẩn chữ "Restaurant" khi sidebar thu nhỏ */
+  display: none;
 }
-
 .btn-toggle {
   background-color: transparent;
   border: none;
@@ -165,20 +196,16 @@ export default {
   font-size: 1.5rem;
   cursor: pointer;
 }
-
 .sidebar-collapsed .btn-toggle {
-  margin-top: 10px; /* Tạo khoảng cách giữa logo và nút thu/phóng */
+  margin-top: 10px;
 }
-
 .nav {
   list-style: none;
   padding: 0;
 }
-
 .nav-item {
   margin: 15px 0;
 }
-
 .nav-link {
   display: flex;
   align-items: center;
@@ -189,53 +216,146 @@ export default {
   padding: 10px 20px;
   border-radius: 10px;
 }
-
 .nav-link:hover {
   background-color: #2d2d42;
 }
-
+.nav-link.active {
+  background-color: #2d2d42; /* Cùng màu với hover */
+}
 .nav-link i {
   margin-right: 15px;
 }
-
 .sidebar-collapsed .nav-link {
   justify-content: center;
+  padding: 10px;
 }
-
 .sidebar-collapsed .nav-link span {
   display: none;
 }
-
+.sidebar-collapsed .nav-link i {
+  margin-right: 0;
+}
 .user-profile {
   margin-top: auto;
   display: flex;
   align-items: center;
   padding: 15px;
 }
-
 .avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   margin-right: 10px;
 }
-
 .user-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
-
 .user-name {
   font-size: 1rem;
 }
-
 .sidebar-collapsed .user-profile {
   justify-content: center;
 }
-
 .sidebar-collapsed .user-name {
   display: none;
+}
+.dropdown-menu {
+  display: block;
+  background-color: #2d2d42;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
+}
+/* Đảm bảo dropdown nằm trong sidebar */
+.sidebar .dropdown-menu {
+  position: relative; /* Đảm bảo dropdown nằm trong sidebar */
+  background-color: #2d2d42;
+  padding: 0;
+  border-radius: 5px;
+  width: 100%; /* Đảm bảo dropdown không mở rộng ra ngoài */
+  max-width: 250px; /* Độ rộng tối đa của dropdown */
+  overflow: hidden; /* Ẩn các phần dư thừa nếu có */
+}
+
+/* Điều chỉnh từng mục trong dropdown */
+.sidebar .dropdown-menu .dropdown-item {
+  color: #fff;
+  padding: 10px 20px;
+  transition: background-color 0.3s ease;
+  white-space: nowrap; /* Giúp các mục dropdown không bị tràn ra ngoài */
+  overflow: hidden; /* Ẩn phần chữ bị tràn nếu có */
+  text-overflow: ellipsis; /* Thêm dấu "..." nếu chữ quá dài */
+}
+/* Hover effect cho các item */
+.sidebar .dropdown-menu .dropdown-item:hover {
+  background-color: #3a3a57;
+}
+.sidebar .dropdown-menu .dropdown-item.active {
+  background-color: #3a3a57; /* Cùng màu với hover */
+}
+/* Căn chỉnh dropdown với sidebar khi bị thu gọn */
+.sidebar-collapsed .dropdown-menu {
+  position: relative;
+  max-width: 100%;
+}
+
+/* Khi dropdown hiển thị */
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu.show {
+  max-height: 100%;
+  opacity: 1;
+}
+
+.nav-item.dropdown .dropdown-menu {
+  display: block;
+  background-color: #2d2d42;
+  margin-left: 20px;
+  list-style: none;
+  padding: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  max-height: 0;
+  opacity: 0;
+}
+.nav-item.dropdown .dropdown-menu.show {
+  max-height: 500px;
+  opacity: 1;
+}
+.nav-item.dropdown .dropdown-item {
+  color: #fff;
+  padding: 10px 20px;
+  text-decoration: none;
+  display: block;
+  transition: background-color 0.3s ease, padding 0.3s ease;
+}
+.nav-item.dropdown .dropdown-item:hover {
+  background-color: #3a3a57;
+  padding-left: 25px;
+}
+.sidebar-collapsed .nav-item.dropdown .dropdown-menu {
+  position: relative; /* Đảm bảo dropdown không bị đẩy ra ngoài */
+  max-width: 80px; /* Giới hạn kích thước theo chiều rộng của sidebar */
+  padding: 0;
+  display: block;
+  visibility: visible;
+}
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  max-height: 0;
+  opacity: 0;
 }
 </style>

@@ -4,6 +4,9 @@ import AdminCategory from "../views/Admin/Category/Category.vue";
 import AdminDish from "../views/Admin/Dish/AdminDish.vue";
 import AdminHome from "../views/Admin/Home/AdminHome.vue";
 import AdminOrder from "../views/Admin/Order/AdminOrder.vue";
+import AdminOrderPackage from "../views/Admin/Order/AdminOrderPackage.vue";
+import AdminAddPackage from "../views/Admin/Package/AdminAddPackage.vue";
+import AdminPackage from "../views/Admin/Package/AdminPackage.vue";
 import AdminUser from "../views/Admin/User/AdminUser.vue";
 import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
@@ -16,6 +19,7 @@ import OrderDetail from "../views/Payment/OrderDetail.vue";
 import OrderFailed from "../views/Payment/OrderFailed.vue";
 import OrderList from "../views/Payment/OrderList.vue";
 import CheckoutPage from "../views/Payment/Payment.vue";
+import OrderPackage from "../views/Payment/PaymentPackage.vue";
 import ProfileView from "../views/Profile.vue";
 import RegisterView from "../views/Register.vue";
 import ServicesView from "../views/Service.vue";
@@ -94,6 +98,11 @@ const routes = [
     component: AdminOrder,
   },
   {
+    path: '/adminpackageorder',
+    name: 'AdminOrderPackage',
+    component: AdminOrderPackage,
+  },
+  {
     path: '/checkout',
     name: 'Checkout',
     component: CheckoutPage,
@@ -118,6 +127,22 @@ const routes = [
     name: 'OrderDetail',
     component: OrderDetail,
     props: true,
+  },
+  {
+    path: '/:id-package',
+    name: 'CheckoutPackage',
+    component: OrderPackage,
+    props: true,
+  },
+  {
+    path: '/adminaddpackage',
+    name: 'AdminAddPackage',
+    component: AdminAddPackage,
+  },
+  {
+    path: '/adminpackage',
+    name: 'AdminPackage',
+    component: AdminPackage,
   },
   {
     path: "/login",
