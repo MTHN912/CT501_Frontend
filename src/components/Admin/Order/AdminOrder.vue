@@ -553,7 +553,11 @@ export default {
           }
         );
 
-        this.ordersByCategory = { [this.activeTab]: response.data };
+        const sortedOrders = response.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        this.ordersByCategory = { [this.activeTab]: sortedOrders };
         await this.fetchUsersForOrders();
       } catch (error) {
         console.error("Error fetching orders with both filters:", error);

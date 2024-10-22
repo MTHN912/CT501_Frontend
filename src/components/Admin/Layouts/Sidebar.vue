@@ -76,7 +76,7 @@ export default {
       menuItems: [
         {
           text: "Thống Kê Cửa Hàng",
-          link: "/adminUsers",
+          link: "/statistical",
           icon: "fas fa-store",
         },
         {

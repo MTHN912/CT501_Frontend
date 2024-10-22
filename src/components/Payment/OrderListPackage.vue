@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h2>Tiệc Của Bạn</h2>
+    <h2>Gói Của Bạn</h2>
 
     <div class="main-content">
       <!-- Nội dung chính: Tabs và danh sách đơn hàng -->
@@ -110,20 +110,55 @@
                 </p>
               </div>
             </div>
-            <!-- Hiển thị các món ăn đã đặt -->
-            <div class="order-items">
-              <h4>Các Món Đã Đặt</h4>
-              <div class="items-grid">
-                <div
-                  v-for="(item, index) in order.items"
-                  :key="index"
-                  class="item-card"
-                >
-                  <img :src="item.image" alt="item image" class="item-image" />
-                  <div class="item-info">
-                    <p class="item-name">{{ item.name }}</p>
-                    <p class="item-price">{{ formatCurrency(item.price) }}</p>
-                    <p class="item-quantity">Số Lượng: {{ item.quantity }}</p>
+            <div
+              v-if="order.packageDetails"
+              class="order-details container mt-4"
+            >
+              <div class="card p-4 shadow-sm">
+                <h4 class="mb-4 text-primary">Gói Đã Đặt</h4>
+                <div class="package-details mb-4">
+                  <h5 class="text-secondary">
+                    {{ order.packageDetails.name }}
+                  </h5>
+                  <p class="text-muted">
+                    {{ order.packageDetails.description }}
+                  </p>
+                  <p>
+                    <span class="fw-bold">Giá gốc:</span>
+                    {{ order.packageDetails.price }} VND
+                  </p>
+                  <p>
+                    <span class="fw-bold">Giá gói khuyến mãi:</span
+                    ><span class="text-danger"
+                      >{{ order.packageDetails.promotionalPrice }} VND</span
+                    >
+                  </p>
+                  <p>Số lượng bàn: {{ order.packageDetails.tables }}</p>
+                </div>
+
+                <h4 class="mb-3">Các món trong gói</h4>
+                <div class="row">
+                  <div
+                    v-for="item in order.packageDetails.combo"
+                    :key="item._id"
+                    class="col-md-4 mb-4"
+                  >
+                    <div class="card h-100 shadow-sm">
+                      <img
+                        :src="item.image"
+                        alt="Món ăn"
+                        class="card-img-top img-fluid dish-image"
+                      />
+                      <div class="card-body">
+                        <h5 class="card-title">{{ item.name }}</h5>
+                        <p class="card-text text-muted">
+                          {{ item.description }}
+                        </p>
+                        <p class="card-text fw-bold">
+                          Giá: {{ item.price }} VND
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -220,15 +255,27 @@ export default {
     async fetchOrders() {
       try {
         const response = await axios.get(
-          "http://localhost:3000/order/getOrdersByUserId"
+          "http://localhost:3000/order/getOrdersPackageByUserId"
         );
-        this.orders = response.data
-          .map((order) => ({
-            ...order,
-            showItems: false,
-          }))
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        await this.fetchDishDetails();
+
+        // Map lại orders và lấy package details cho từng order
+        this.orders = await Promise.all(
+          response.data.map(async (order) => {
+            const packageDetails = await this.fetchPackageDetails(
+              order.packageId
+            );
+            return {
+              ...order,
+              packageDetails, // Gán thông tin chi tiết gói vào từng đơn
+              showItems: false, // Bạn có thể bỏ showItems nếu không cần nữa
+            };
+          })
+        );
+
+        // Sắp xếp các đơn hàng theo thời gian mới nhất (createdAt)
+        this.orders.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
       } catch (error) {
         console.error("Lỗi khi lấy đơn hàng:", error);
       }
@@ -236,38 +283,27 @@ export default {
     showOrderDetails(orderId) {
       this.selectedOrder = this.orders.find((order) => order._id === orderId);
     },
-    async fetchDishDetails() {
+    async fetchPackageDetails(packageId) {
       try {
-        for (const order of this.orders) {
-          const itemsWithDetails = await Promise.all(
-            order.items.map(async (item) => {
-              try {
-                const response = await axios.get(
-                  `http://localhost:3000/dish/getDishById/${item.dishId}`
-                );
-                return {
-                  ...item,
-                  name: response.data.name,
-                  price: response.data.price,
-                  image: response.data.image,
-                };
-              } catch (error) {
-                console.error("Lỗi khi lấy thông tin món ăn:", error);
-                return item;
-              }
-            })
-          );
-          order.items = itemsWithDetails;
+        const response = await axios.get(
+          `http://localhost:3000/package/getPackageById/${packageId}`
+        );
+        if (response.data.success) {
+          return response.data.data; // Trả về chi tiết gói
+        } else {
+          console.error("Không thể lấy thông tin gói");
+          return null;
         }
       } catch (error) {
-        console.error("Lỗi khi lấy thông tin món ăn:", error);
+        console.error("Lỗi khi lấy thông tin gói: ", error);
+        return null;
       }
     },
     async completeOrder(orderId) {
       try {
         // Gọi API để cập nhật trạng thái đơn tiệc thành "Đã Kết Thúc"
         const response = await fetch(
-          `http://localhost:3000/order/orders/${orderId}/party-status`,
+          `http://localhost:3000/order/ordersPackage/${orderId}/party-status`,
           {
             method: "PATCH",
             headers: {
@@ -324,7 +360,7 @@ export default {
       if (confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
         try {
           await axios.patch(
-            `http://localhost:3000/order/orders/${orderId}/cancel`
+            `http://localhost:3000/order/ordersPackage/${orderId}/cancel`
           );
           alert("Đơn hàng đã được hủy thành công!");
           this.fetchOrders();
@@ -355,7 +391,7 @@ export default {
         if (result.isConfirmed) {
           try {
             const response = await axios.post(
-              "http://localhost:3000/order/create_payment_url",
+              "http://localhost:3000/order/orderPaymentPackage",
               {
                 orderId: orderId,
                 amount: depositAmount, // Gửi số tiền đúng định dạng
@@ -404,7 +440,7 @@ export default {
           // Nếu chọn VNPay
           try {
             const response = await axios.post(
-              "http://localhost:3000/order/create_payment_url",
+              "http://localhost:3000/order/orderPaymentPackage",
               {
                 orderId: newOrderId, // Sử dụng mã đơn hàng mới
                 amount: remainingAmount, // Gửi số tiền còn lại để thanh toán
@@ -461,7 +497,7 @@ export default {
   },
   mounted() {
     this.fetchOrders();
-    this.fetchDishDetails();
+    this.fetchPackageDetails();
     window.scrollTo(0, 0);
   },
 };
@@ -469,11 +505,10 @@ export default {
 
 <style scoped>
 .container {
-  max-width: 2000px;
+  max-width: 1200px;
   margin: auto;
   padding: 20px;
   margin-top: 120px;
-  width: 100%;
 }
 
 h2 {
@@ -492,7 +527,7 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  flex: 3;
+  /* flex: 3; */
 }
 
 .order-item {
@@ -647,7 +682,6 @@ h2 {
   gap: 20px;
   flex: 3;
 }
-
 /* Các phần còn lại giữ nguyên */
 .order-item {
   background-color: #ffffff;
@@ -801,5 +835,13 @@ h2 {
   .items-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
+}
+.dish-image {
+  width: 100%; /* Makes the image take the full width of its container */
+  height: 150px; /* Set a fixed height */
+  object-fit: cover; /* Ensures the image scales and crops to fill the set size */
+}
+.card {
+  max-width: 1070px; /* Adjust the width to your desired size */
 }
 </style>

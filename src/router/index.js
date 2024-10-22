@@ -7,6 +7,7 @@ import AdminOrder from "../views/Admin/Order/AdminOrder.vue";
 import AdminOrderPackage from "../views/Admin/Order/AdminOrderPackage.vue";
 import AdminAddPackage from "../views/Admin/Package/AdminAddPackage.vue";
 import AdminPackage from "../views/Admin/Package/AdminPackage.vue";
+import statistical from "../views/Admin/Statistical/statistical.vue";
 import AdminUser from "../views/Admin/User/AdminUser.vue";
 import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
@@ -18,6 +19,7 @@ import MenuView from "../views/Menu.vue";
 import OrderDetail from "../views/Payment/OrderDetail.vue";
 import OrderFailed from "../views/Payment/OrderFailed.vue";
 import OrderList from "../views/Payment/OrderList.vue";
+import OrderListPackage from "../views/Payment/OrderListPackage.vue";
 import CheckoutPage from "../views/Payment/Payment.vue";
 import OrderPackage from "../views/Payment/PaymentPackage.vue";
 import ProfileView from "../views/Profile.vue";
@@ -70,7 +72,6 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: ProfileView,
-    props: true,
   },
   {
     path: '/admin',
@@ -113,6 +114,11 @@ const routes = [
     component: OrderList,
   },
   {
+    path: '/orderlistpackage',
+    name: 'OrderListPackage',
+    component: OrderListPackage,
+  },
+  {
     path: '/ordersuccess',
     name: 'OrderSuccess',
     component: () => import('@/views/Payment/OrderSuccess.vue'),
@@ -143,6 +149,11 @@ const routes = [
     path: '/adminpackage',
     name: 'AdminPackage',
     component: AdminPackage,
+  },
+  {
+    path: '/statistical',
+    name: 'Statistical',
+    component: statistical,
   },
   {
     path: "/login",

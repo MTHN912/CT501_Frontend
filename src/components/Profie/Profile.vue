@@ -219,25 +219,26 @@ export default {
 
 <style scoped>
 .title {
-  font-size: 2rem;
-  margin-bottom: 20px;
+  margin-top: 120px;
   text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #333;
 }
 .profile-container {
-  margin-top: 100px;
   display: flex;
   justify-content: center;
-  align-items: center;
   height: 100%;
 }
 
 .profile-card {
-  width: 80%;
+  width: 95%;
   padding: 40px; /* Tăng padding cho cảm giác thoáng hơn */
   background-color: #f0f2f5;
   margin-top: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
+  height: 500px;
 }
 
 .profile-title {

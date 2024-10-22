@@ -517,24 +517,29 @@ export default {
 .food-management {
   padding: 20px;
   background-color: #101827;
-  color: #fff;
+  color: #f8fafc;
   width: 100%;
-  height: 870px;
+  min-height: 100vh;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .header h2 {
   color: white;
 }
+.header h1 {
+  color: #f8fafc;
+  font-size: 2.5rem;
+}
 
 .search-container {
   position: relative;
+  width: 300px;
 }
 
 .search-icon {
@@ -542,68 +547,108 @@ export default {
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: #64748b;
 }
 
 .search {
-  padding: 10px 10px 10px 35px;
-  background-color: #1d283c;
-  border-radius: 5px;
-  border: 1px solid #444;
-  width: 200px;
-  color: white;
+  padding: 12px 12px 12px 40px;
+  background-color: #1e293b;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  width: 100%;
+  color: #f8fafc;
+  font-size: 1rem;
+  transition: all 0.3s ease;
 }
-
+.search:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
 .add-button {
-  background-color: #0084ff;
+  background-color: #3b82f6;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 12px 24px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.add-button:hover {
+  background-color: #2563eb;
 }
 
 .food-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 10px;
   text-align: left;
 }
 
 .food-table th,
 .food-table td {
-  padding: 10px;
-  border-bottom: 1px solid #444;
+  padding: 15px;
+  background-color: #1e293b;
 }
 
 .food-table th {
   cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.food-table tr {
+  transition: all 0.3s ease;
+}
+
+.food-table tr:hover {
+  background-color: #334155;
 }
 
 .food-image {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  margin-right: 10px;
+  margin-right: 15px;
   vertical-align: middle;
+  object-fit: cover;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  align-items: center;
+  margin-top: 30px;
 }
 
 .pagination button {
-  background-color: #0084ff;
+  background-color: #3b82f6;
   color: white;
   border: none;
-  padding: 10px;
-  margin: 0 5px;
+  padding: 10px 20px;
+  margin: 0 10px;
   cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.pagination button:disabled {
+  background-color: #64748b;
+  cursor: not-allowed;
 }
 
 .pagination span {
-  margin: 0 10px;
+  font-size: 1rem;
+  color: #f8fafc;
 }
 
 .modal {
@@ -619,10 +664,12 @@ export default {
 }
 
 .modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 400px;
+  background-color: #1e293b;
+  padding: 30px;
+  border-radius: 12px;
+  width: 500px;
+  max-width: 90%;
+  color: #f8fafc;
 }
 .modal-content select {
   width: 100%;
@@ -653,22 +700,33 @@ export default {
 }
 .modal-content h2 {
   margin-bottom: 20px;
+  font-size: 1.5rem;
 }
-
 .modal-content label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  font-weight: bold;
 }
 
 .modal-content input,
-.modal-content textarea {
+.modal-content textarea,
+.modal-content select {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  background-color: #374151;
+  color: #f8fafc;
+  font-size: 1rem;
 }
-
+.modal-content input:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
 .modal-content button {
   margin-right: 10px;
   padding: 10px 20px;
@@ -677,6 +735,21 @@ export default {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+}
+.modal-content button {
+  margin-right: 10px;
+  padding: 12px 24px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.modal-content button:hover {
+  background-color: #2563eb;
 }
 .edit-icon {
   color: #4caf50;
@@ -705,20 +778,29 @@ export default {
 }
 .tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 15px;
+  margin-bottom: 30px;
+  overflow-x: auto;
+  padding-bottom: 10px;
 }
 
 .tabs button {
-  padding: 10px;
-  background-color: #1d283c;
-  color: white;
+  padding: 10px 20px;
+  background-color: #1e293b;
+  color: #f8fafc;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tabs button:hover {
+  background-color: #334155;
 }
 
 .tabs .active {
-  background-color: #0084ff;
+  background-color: #3b82f6;
 }
 </style>

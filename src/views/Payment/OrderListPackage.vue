@@ -7,7 +7,7 @@
       </div>
 
       <div class="content">
-        <OrderList />
+        <OrderListPackage />
       </div>
     </div>
 
@@ -18,19 +18,19 @@
 <script>
 import Footer from "@/components/Layout/Footer.vue";
 import Navbar from "@/components/Layout/Navbar.vue";
-import OrderList from "@/components/Payment/OrderList.vue";
+import OrderListPackage from "@/components/Payment/OrderListPackage.vue";
 import Sidebar from "@/components/Payment/Sidebar.vue";
 
 export default {
   components: {
     Navbar,
-    OrderList,
+    OrderListPackage,
     Footer,
     Sidebar, // Đăng ký Sidebar
   },
   data() {
     return {
-      activeMenuItem: "OrderList", // Mặc định chọn OrderList
+      activeMenuItem: "OrderListPackage", // Mặc định chọn OrderList
     };
   },
   methods: {

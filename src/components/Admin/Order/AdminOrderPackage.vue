@@ -249,24 +249,6 @@
               }}</span>
             </p>
           </div>
-          <!-- <div class="menu-section">
-            <h3><i class="fas fa-utensils"></i> Danh sách món:</h3>
-            <ul class="menu-list">
-              <li
-                v-for="item in selectedOrder.items"
-                :key="item._id"
-                class="menu-item"
-              >
-                <span class="item-name color">{{ item.name }}</span>
-                <span class="item-quantity color"
-                  >Số lượng: {{ item.quantity }}</span
-                >
-                <span class="item-price color"
-                  >Giá: {{ formatCurrency(item.price) }}</span
-                >
-              </li>
-            </ul>
-          </div> -->
         </div>
         <div class="modal-footer">
           <button type="button" class="btn close-btn" @click="closeDetailModal">
@@ -552,8 +534,12 @@ export default {
             },
           }
         );
+        const sortedOrders = response.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
 
-        this.ordersByCategory = { [this.activeTab]: response.data };
+        this.ordersByCategory = { [this.activeTab]: sortedOrders };
+        // this.ordersByCategory = { [this.activeTab]: response.data };
         await this.fetchUsersForOrders();
       } catch (error) {
         console.error("Error fetching orders with both filters:", error);
