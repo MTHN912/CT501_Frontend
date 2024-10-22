@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
+    <SearchModal />
     <div class="main-content">
       <div class="sidebar">
         <Sidebar :activeMenuItem="activeMenuItem" @navigate="navigateTo" />
@@ -18,12 +19,14 @@
 <script>
 import Footer from "@/components/Layout/Footer.vue";
 import Navbar from "@/components/Layout/Navbar.vue";
+import SearchModal from "@/components/Layout/SearchModal.vue";
 import Sidebar from "@/components/Payment/Sidebar.vue";
 import Profile from "@/components/Profie/Profile.vue";
 
 export default {
   components: {
     Navbar,
+    SearchModal,
     Profile,
     Footer,
     Sidebar, // Đăng ký Sidebar

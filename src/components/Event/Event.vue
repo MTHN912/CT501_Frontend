@@ -1,8 +1,5 @@
 <template>
   <div class="party-package">
-    <h2>Gói Menu Ưu Đãi</h2>
-
-    <!-- Loading danh mục hoặc gói tiệc -->
     <p v-if="isLoading">Đang tải dữ liệu...</p>
 
     <!-- Hiển thị danh mục tiệc -->
@@ -15,71 +12,97 @@
     </select>
 
     <!-- Danh sách gói tiệc -->
-    <ul v-if="!isLoading">
+    <ul v-if="!isLoading" class="row list-unstyled">
       <li
         v-for="pkg in filteredPackages"
         :key="pkg.id"
         @click="fetchPackageDetails(pkg._id)"
-        :class="{ selected: selectedPackage && selectedPackage.id === pkg._id }"
+        class="col-md-4 mb-4"
       >
-        <img
-          :src="pkg.image"
-          alt="Image of {{ pkg.name }}"
-          class="package-image"
-        />
-        <span>{{ pkg.name }} - {{ pkg.price }} VND</span>
-        <!-- Hiển thị giá khuyến mãi nếu có -->
-        <span v-if="pkg.promotion"
-          >Giá khuyến mãi: {{ pkg.promotionalPrice }} VND</span
+        <div
+          :class="{
+            'card selected': selectedPackage && selectedPackage.id === pkg._id,
+          }"
         >
-        <span v-else>Giá: {{ pkg.price }} VND</span>
-        <span>Danh mục: {{ pkg.category }}</span>
-        <span>Số bàn: {{ pkg.tables }}</span>
-        <span class="promotion" v-if="pkg.promotion"
-          >Ưu đãi: {{ pkg.promotion }}%</span
-        >
+          <img
+            :src="pkg.image"
+            class="card-img-top"
+            alt="Image of {{ pkg.name }}"
+          />
+          <div class="card-body">
+            <h5 class="card-title">{{ pkg.name }}</h5>
+            <p class="card-text">{{ pkg.price }} VND</p>
+            <p v-if="pkg.promotion" class="text-danger">
+              Giá khuyến mãi: {{ pkg.promotionalPrice }} VND
+            </p>
+            <p v-else>Giá: {{ pkg.price }} VND</p>
+            <p>Danh mục: {{ pkg.category }}</p>
+            <p>Số bàn: {{ pkg.tables }}</p>
+          </div>
+        </div>
       </li>
     </ul>
 
     <!-- Hiển thị chi tiết gói tiệc khi được chọn -->
-    <div v-if="selectedPackage" class="package-details" ref="packageDetails">
-      <h3>Gói: {{ selectedPackage.name }}</h3>
-      <!-- Hiển thị cả giá gốc và giá khuyến mãi -->
-      <p>
-        <strong>Giá:</strong>
-        <span v-if="selectedPackage.promotion">
-          <s>{{ selectedPackage.price }} VND</s>
-          {{ selectedPackage.promotionalPrice }} VND
-        </span>
-        <span v-else>{{ selectedPackage.price }} VND</span>
-      </p>
-      <p><strong>Danh mục:</strong> {{ selectedPackage.category }}</p>
-      <p><strong>Số bàn mặc định:</strong> {{ selectedPackage.tables }}</p>
-      <p><strong>Mô tả:</strong> {{ selectedPackage.description }}</p>
-      <p><strong>Ưu đãi:</strong> {{ selectedPackage.promotion }}%</p>
-
-      <h4>Combo món chính:</h4>
-      <ul>
-        <li
-          v-for="dish in selectedPackage.combo"
-          :key="dish.name"
-          class="dish-item"
-        >
-          <img
-            :src="dish.image"
-            alt="Image of {{ dish.name }}"
-            class="dish-image"
-          />
-          <div class="dish-info">
-            <h5>{{ dish.name }}</h5>
-            <p>{{ dish.description }}</p>
-            <p>Số lượng: x{{ dish.quantity }}</p>
+    <!-- Modal Bootstrap -->
+    <div
+      v-if="selectedPackage"
+      class="modal fade show d-block"
+      tabindex="-1"
+      role="dialog"
+    >
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Gói: {{ selectedPackage.name }}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              @click="closePackageDetails"
+            ></button>
           </div>
-        </li>
-      </ul>
+          <div class="modal-body">
+            <p>
+              <strong>Giá:</strong>
+              {{ selectedPackage.promotionalPrice || selectedPackage.price }}
+              VND
+            </p>
+            <p><strong>Danh mục:</strong> {{ selectedPackage.category }}</p>
+            <p>
+              <strong>Số bàn mặc định:</strong> {{ selectedPackage.tables }}
+            </p>
+            <p><strong>Mô tả:</strong> {{ selectedPackage.description }}</p>
 
-      <button @click="handleBooking">Đặt tiệc</button>
-      <button class="close-btn" @click="closePackageDetails">Đóng</button>
+            <h4>Combo món chính:</h4>
+            <ul class="combo-list">
+              <li
+                v-for="dish in selectedPackage.combo"
+                :key="dish.name"
+                class="list-group-item"
+              >
+                <img
+                  :src="dish.image"
+                  alt="Image of {{ dish.name }}"
+                  class="img-thumbnail"
+                />
+                <div class="d-inline-block">
+                  <h5>{{ dish.name }}</h5>
+                  <p>{{ dish.description }}</p>
+                  <p>Số lượng: x{{ dish.quantity }}</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" @click="handleBooking">
+              Đặt tiệc
+            </button>
+            <button class="btn btn-secondary" @click="closePackageDetails">
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <p v-if="purchaseStatus">{{ purchaseStatus }}</p>
@@ -198,17 +221,15 @@ h3,
 h4 {
   color: #2c3e50;
   text-align: center;
-  margin-bottom: 20px; /* Tăng khoảng cách giữa tiêu đề và các phần tử khác */
+  margin-bottom: 20px;
 }
 
 ul {
   list-style-type: none;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(320px, 1fr)
-  ); /* Điều chỉnh kích thước tối thiểu của các card */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 30px; /* Tăng khoảng cách giữa các thẻ */
   margin: 20px 0;
 }
@@ -225,13 +246,14 @@ li {
   justify-content: space-between;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Tăng độ mờ của bóng */
   text-align: left;
+  max-width: 320px; /* Giới hạn chiều rộng tối đa của thẻ */
 }
 
 li:hover {
   background-color: #f0f8ff;
-  transform: scale(1.05); /* Tăng hiệu ứng phóng to khi hover */
+  transform: scale(1.05);
   border-color: #1abc9c;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Tăng độ mờ của bóng khi hover */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 li.selected {
@@ -244,11 +266,11 @@ li.selected {
   height: 180px;
   object-fit: cover;
   border-radius: 10px;
-  margin-bottom: 15px; /* Tạo khoảng cách giữa hình và nội dung */
+  margin-bottom: 15px;
 }
 
 .package-info {
-  font-size: 18px; /* Tăng kích thước font chữ */
+  font-size: 18px;
   color: #2c3e50;
   margin-bottom: 10px;
 }
@@ -265,7 +287,7 @@ li.selected {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 800px; /* Giới hạn chiều rộng */
+  max-width: 800px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -341,7 +363,6 @@ button:hover {
   font-size: 14px;
 }
 
-/* Điều chỉnh khoảng cách và kiểu input */
 input {
   padding: 8px;
   border-radius: 5px;
@@ -350,7 +371,6 @@ input {
   margin-top: 10px;
 }
 
-/* Sắp xếp lưới món ăn thêm */
 ul.extra-list {
   display: flex;
   flex-wrap: wrap;
@@ -365,19 +385,106 @@ li.extra-item {
   text-align: center;
   width: 150px;
 }
+.modal-content {
+  width: 1500px; /* Tăng chiều rộng modal */
+  height: 700px; /* Giới hạn chiều cao modal để không chiếm quá nhiều không gian */
+  overflow-y: auto; /* Thêm thanh cuộn dọc nếu nội dung vượt quá chiều cao */
+  margin-left: -340px;
+  padding: 20px;
+}
+.modal-header,
+.modal-body,
+.modal-footer {
+  padding: 20px;
+}
 
-/* Canh giữa các phần của trang */
-h3,
-h4,
-h5 {
+.modal-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.combo-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(200px, 1fr)
+  ); /* Tạo nhiều cột với kích thước tối thiểu */
+  gap: 20px; /* Khoảng cách giữa các món */
+  margin-top: 20px;
+  width: 100%; /* Để lưới combo chiếm toàn bộ chiều rộng modal */
+}
+
+.list-group-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.list-group-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 10px;
   margin-bottom: 10px;
-  font-weight: bold;
-  color: #333;
+}
+.modal-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.modal-body img {
+  width: 100%; /* Hình ảnh sẽ rộng tối đa nhưng không vượt quá modal */
+  height: auto;
+}
+
+.modal-body h2,
+.modal-body h3 {
+  text-align: center;
+}
+button {
+  margin: 20px;
+  padding: 12px 24px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:hover {
+  background-color: #218838;
+}
+/* Giảm thiểu modal che khuất header */
+.modal {
+  top: 10vh; /* Đảm bảo modal cách xa header */
+}
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 100%;
+    max-height: 90vh; /* Tăng chiều cao tối đa trên thiết bị nhỏ */
+  }
 }
 
 @media (max-width: 768px) {
   ul {
-    grid-template-columns: 1fr; /* Đối với màn hình nhỏ, hiển thị 1 cột */
+    flex-direction: column;
+    gap: 20px;
   }
 }
 </style>

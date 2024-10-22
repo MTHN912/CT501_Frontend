@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
+    <SearchModal />
     <HeroDishDetail />
     <DishDetail class="dish-detail" />
     <ReviewSection class="review-section" />
@@ -12,14 +13,15 @@
 <script>
 import Footer from "@/components/Layout/Footer.vue";
 import Navbar from "@/components/Layout/Navbar.vue";
+import SearchModal from "@/components/Layout/SearchModal.vue";
 import DishDetail from "@/components/Menu/DishDetail.vue";
 import HeroDishDetail from "@/components/Menu/HeroDishDetail.vue";
 import ReviewSection from "@/components/Menu/ReviewSection.vue";
 import SimilarDishes from "@/components/Menu/SimilarDishes.vue";
-
 export default {
   components: {
     Navbar,
+    SearchModal,
     HeroDishDetail,
     DishDetail,
     ReviewSection,

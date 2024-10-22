@@ -1,5 +1,6 @@
 <template>
   <div class="container">
+    <h2>Chi Tiết Đơn Tiệc</h2>
     <button @click="goBack" class="btn btn-primary mb-3 shadow-sm">
       Trở Lại
     </button>
@@ -55,7 +56,7 @@
 
       <!-- Chi tiết đơn tiệc -->
       <div class="order-details card p-4 mt-4 shadow-sm bg-light">
-        <h3>Chi tiết đơn tiệc #{{ order._id }}</h3>
+        <h3 class="text-primary">Chi tiết đơn tiệc #{{ order._id }}</h3>
         <div class="row">
           <div class="col-md-6">
             <p><strong>Loại Tiệc:</strong> {{ order.partyType }}</p>
@@ -71,41 +72,43 @@
             <p><strong>Số Bàn:</strong> {{ order.tables }}</p>
           </div>
         </div>
-        <p>
+        <p class="total">
           <strong>Tổng Tiền:</strong>
-          {{
-            order.totalPrice
-              ? order.totalPrice.toLocaleString()
-              : "Chưa có dữ liệu"
-          }}
+          {{ order.totalPrice ? order.totalPrice.toLocaleString() : "0" }}
           VND
         </p>
-        <p>
+        <p class="paid">
           <strong>Đã Trả:</strong>
           {{
             order.paidDepositAmount
               ? order.paidDepositAmount.toLocaleString()
-              : "Chưa có dữ liệu"
+              : "0"
           }}
           VND
         </p>
-        <p><strong>Ghi Chú:</strong> {{ order.note }}</p>
+        <p class="note"><strong>Ghi Chú:</strong> {{ order.note }}</p>
 
         <!-- Danh sách món ăn -->
-        <h4>Các món đã đặt</h4>
+        <h4 class="mt-4">Các món đã đặt</h4>
         <ul class="list-group">
+          <li class="list-group-item">
+            <span>Món</span>
+            <span>Giá</span>
+            <span>Số lượng</span>
+          </li>
           <li
             v-for="(item, index) in order.items"
             :key="index"
-            class="list-group-item d-flex justify-content-between align-items-center border rounded shadow-sm"
+            class="list-group-item"
           >
-            <span><strong>Món:</strong> {{ item.name }}</span>
-            <span>
-              <strong>Giá:</strong>
-              {{ item.price !== undefined ? item.price.toLocaleString() : "0" }}
-              đ
-            </span>
-            <span><strong>Số lượng:</strong> {{ item.quantity }}</span>
+            <span>{{ item.name }}</span>
+            <span
+              >{{
+                item.price !== undefined ? item.price.toLocaleString() : "0"
+              }}
+              đ</span
+            >
+            <span>{{ item.quantity }}</span>
           </li>
         </ul>
       </div>
@@ -207,6 +210,12 @@ export default {
 .container {
   margin-top: 120px;
 }
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+  color: #333;
+}
 .progress-bar2 {
   display: flex;
   justify-content: space-between;
@@ -286,10 +295,38 @@ export default {
   padding: 30px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
 }
+
 .list-group-item {
-  background-color: white;
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr; /* Điều chỉnh tỷ lệ các cột */
+  gap: 15px;
+  background-color: #fff;
   margin-bottom: 10px;
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  align-items: center;
+  font-size: 16px; /* Điều chỉnh kích thước chữ */
+}
+
+.list-group-item:first-child {
+  font-weight: bold;
+  background-color: #f8f9fa; /* Làm nổi bật tiêu đề */
+}
+
+.list-group-item span {
+  color: #555;
+  text-align: left; /* Căn chỉnh văn bản trái */
+}
+
+.list-group-item span:last-child {
+  text-align: right; /* Căn chỉnh văn bản phải cho cột "Số lượng" */
+}
+
+.list-group-item span:nth-child(2) {
+  text-align: center; /* Căn giữa cho cột "Giá" */
 }
 
 .shadow-sm {
@@ -297,10 +334,15 @@ export default {
 }
 .order-details h3 {
   margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
 }
 
 .order-details p {
   margin: 5px 0;
+  font-size: 16px;
+  color: #555;
 }
 
 .order-details ul {
@@ -314,5 +356,32 @@ export default {
 
 .order-details ul li strong {
   color: #333;
+}
+.order-details .row {
+  margin-bottom: 15px;
+}
+
+.order-details .col-md-6 p {
+  margin-bottom: 10px;
+}
+
+.order-details p strong {
+  font-weight: bold;
+  color: #333;
+}
+
+.order-details .total,
+.order-details .paid {
+  font-size: 18px;
+  font-weight: bold;
+  color: #28a745;
+  margin-top: 10px;
+}
+
+.order-details .note {
+  margin-top: 15px;
+  font-size: 16px;
+  font-style: italic;
+  color: #6c757d;
 }
 </style>

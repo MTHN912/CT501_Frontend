@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
+    <SearchModal />
     <Hero />
     <About />
     <Fact />
@@ -23,9 +24,11 @@ import Menu from "@/components/Home/Menu.vue";
 // import Service from "@/components/Home/Service.vue";
 import Footer from "@/components/Layout/Footer.vue";
 import Navbar from "@/components/Layout/Navbar.vue";
+import SearchModal from "@/components/Layout/SearchModal.vue";
 export default {
   components: {
     Navbar,
+    SearchModal,
     Hero,
     About,
     Fact,
