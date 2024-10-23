@@ -2,49 +2,38 @@
   <div class="party-package">
     <p v-if="isLoading">Đang tải dữ liệu...</p>
 
-    <!-- Hiển thị danh mục tiệc -->
-    <label for="fetchCategories" v-if="!isLoading">Danh mục Tiệc:</label>
-    <select id="fetchCategories" v-if="!isLoading" v-model="selectedCategory">
-      <option value="">Tất cả</option>
-      <option v-for="cat in categories" :key="cat.id" :value="cat.name">
-        {{ cat.name }}
-      </option>
-    </select>
+    <div v-if="!isLoading" class="category-selector">
+      <label for="fetchCategories">Danh mục Tiệc:</label>
+      <select id="fetchCategories" v-model="selectedCategory">
+        <option value="">Tất cả</option>
+        <option v-for="cat in categories" :key="cat.id" :value="cat.name">
+          {{ cat.name }}
+        </option>
+      </select>
+    </div>
 
     <!-- Danh sách gói tiệc -->
-    <ul v-if="!isLoading" class="row list-unstyled">
+    <ul v-if="!isLoading">
       <li
         v-for="pkg in filteredPackages"
         :key="pkg.id"
         @click="fetchPackageDetails(pkg._id)"
-        class="col-md-4 mb-4"
+        :class="{ selected: selectedPackage && selectedPackage.id === pkg._id }"
       >
-        <div
-          :class="{
-            'card selected': selectedPackage && selectedPackage.id === pkg._id,
-          }"
-        >
-          <img
-            :src="pkg.image"
-            class="card-img-top"
-            alt="Image of {{ pkg.name }}"
-          />
-          <div class="card-body">
-            <h5 class="card-title">{{ pkg.name }}</h5>
-            <p class="card-text">{{ pkg.price }} VND</p>
-            <p v-if="pkg.promotion" class="text-danger">
-              Giá khuyến mãi: {{ pkg.promotionalPrice }} VND
-            </p>
-            <p v-else>Giá: {{ pkg.price }} VND</p>
-            <p>Danh mục: {{ pkg.category }}</p>
-            <p>Số bàn: {{ pkg.tables }}</p>
-          </div>
+        <img :src="pkg.image" :alt="pkg.name" class="package-image" />
+        <div class="card-body">
+          <h5 class="card-title">{{ pkg.name }}</h5>
+          <div class="category-label">{{ pkg.category }}</div>
+          <p class="price">{{ formatPrice(pkg.price) }}</p>
+          <p v-if="pkg.promotion" class="promotion">
+            Giá khuyến mãi: {{ formatPrice(pkg.promotionalPrice) }}
+          </p>
+          <p class="tables-info">Số bàn: {{ pkg.tables }}</p>
         </div>
       </li>
     </ul>
 
-    <!-- Hiển thị chi tiết gói tiệc khi được chọn -->
-    <!-- Modal Bootstrap -->
+    <!-- Modal chi tiết -->
     <div
       v-if="selectedPackage"
       class="modal fade show d-block"
@@ -54,45 +43,51 @@
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Gói: {{ selectedPackage.name }}</h5>
+            <h5 class="modal-title">{{ selectedPackage.name }}</h5>
             <button
               type="button"
               class="btn-close"
               @click="closePackageDetails"
             ></button>
           </div>
-          <div class="modal-body">
-            <p>
-              <strong>Giá:</strong>
-              {{ selectedPackage.promotionalPrice || selectedPackage.price }}
-              VND
-            </p>
-            <p><strong>Danh mục:</strong> {{ selectedPackage.category }}</p>
-            <p>
-              <strong>Số bàn mặc định:</strong> {{ selectedPackage.tables }}
-            </p>
-            <p><strong>Mô tả:</strong> {{ selectedPackage.description }}</p>
 
-            <h4>Combo món chính:</h4>
-            <ul class="combo-list">
-              <li
-                v-for="dish in selectedPackage.combo"
-                :key="dish.name"
-                class="list-group-item"
-              >
-                <img
-                  :src="dish.image"
-                  alt="Image of {{ dish.name }}"
-                  class="img-thumbnail"
-                />
-                <div class="d-inline-block">
+          <div class="modal-body">
+            <div class="package-details">
+              <div class="price-info">
+                <p class="price">
+                  <strong>Giá gốc:</strong>
+                  {{ formatPrice(selectedPackage.price) }} VND
+                </p>
+                <p v-if="selectedPackage.promotion" class="promotion">
+                  <strong>Giá khuyến mãi:</strong>
+                  {{ formatPrice(selectedPackage.promotionalPrice) }} VND
+                </p>
+              </div>
+
+              <div class="category-label">{{ selectedPackage.category }}</div>
+
+              <p class="tables-info">
+                <strong>Số bàn mặc định:</strong> {{ selectedPackage.tables }}
+              </p>
+
+              <p class="description">{{ selectedPackage.description }}</p>
+
+              <h4 class="combo-title">Combo món chính:</h4>
+              <div class="combo-list">
+                <div
+                  v-for="dish in selectedPackage.combo"
+                  :key="dish.name"
+                  class="list-group-item"
+                >
+                  <img :src="dish.image" :alt="dish.name" />
                   <h5>{{ dish.name }}</h5>
                   <p>{{ dish.description }}</p>
-                  <p>Số lượng: x{{ dish.quantity }}</p>
+                  <p class="quantity">Số lượng: x{{ dish.quantity }}</p>
                 </div>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
+
           <div class="modal-footer">
             <button class="btn btn-success" @click="handleBooking">
               Đặt tiệc
@@ -136,6 +131,12 @@ export default {
     },
   },
   methods: {
+    formatPrice(value) {
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(value);
+    },
     handleBooking() {
       if (this.selectedPackage) {
         // Nếu đã đăng nhập và có gói tiệc được chọn, chuyển hướng đến trang thanh toán
@@ -210,281 +211,307 @@ export default {
 
 <style scoped>
 .party-package {
-  margin-top: 100px;
-  padding: 30px 20px;
-  font-family: Arial, sans-serif;
+  margin-top: 50px;
+  padding: 40px 30px;
+  font-family: "Poppins", Arial, sans-serif;
   text-align: center;
+  background-color: #faf8f5;
 }
 
-h2,
-h3,
-h4 {
+select {
+  padding: 10px 15px;
+  border: 2px solid #d4a067;
+  border-radius: 8px;
+  font-size: 16px;
+  margin: 20px 0;
+  background-color: white;
   color: #2c3e50;
-  text-align: center;
-  margin-bottom: 20px;
+  width: 250px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #b78346;
+  box-shadow: 0 0 0 2px rgba(212, 160, 103, 0.2);
 }
 
 ul {
   list-style-type: none;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 30px; /* Tăng khoảng cách giữa các thẻ */
-  margin: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 35px;
+  margin: 30px 0;
 }
 
 li {
-  padding: 20px;
+  padding: 0;
   cursor: pointer;
-  border: 1px solid #ccc;
-  border-radius: 15px; /* Tăng độ bo tròn cho các thẻ */
-  background-color: #f9f9f9;
-  transition: all 0.3s ease;
+  border: none;
+  border-radius: 20px;
+  background-color: white;
+  transition: all 0.4s ease;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Tăng độ mờ của bóng */
-  text-align: left;
-  max-width: 320px; /* Giới hạn chiều rộng tối đa của thẻ */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 li:hover {
-  background-color: #f0f8ff;
-  transform: scale(1.05);
-  border-color: #1abc9c;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(212, 160, 103, 0.2);
 }
 
 li.selected {
-  background-color: #d3f9d8;
-  border-color: #28a745;
+  border: 2px solid #d4a067;
+  background-color: #fff9f2;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 22px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-weight: 600;
 }
 
 .package-image {
   width: 100%;
-  height: 180px;
+  height: 220px;
   object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 15px;
+  border-radius: 20px 20px 0 0;
 }
 
-.package-info {
-  font-size: 18px;
+.price {
+  font-size: 20px;
   color: #2c3e50;
-  margin-bottom: 10px;
+  margin: 15px 0;
 }
 
 .promotion {
-  font-weight: bold;
-  color: #d35400;
+  color: #d4a067;
+  font-weight: 600;
+  font-size: 18px;
   margin-top: 10px;
 }
 
-.package-details {
-  margin-top: 20px;
-  background-color: #f4f6f9;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-button {
-  margin-top: 20px;
-  padding: 12px 24px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-button:hover {
-  background-color: #218838;
-}
-
-.close-btn {
-  margin-top: 20px;
-  padding: 12px 24px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-.close-btn:hover {
-  background-color: #c82333;
-}
-
-.promotion {
-  font-weight: bold;
-  color: #d35400;
-}
-
-.package-details-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-
-.dish-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 15px;
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
-
-.dish-image {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-.dish-info {
-  text-align: center;
+.category-label {
+  background-color: #f8f1e9;
+  color: #d4a067;
+  padding: 5px 15px;
+  border-radius: 15px;
+  display: inline-block;
+  margin: 10px 0;
   font-size: 14px;
 }
 
-input {
-  padding: 8px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  width: 50%;
+.tables-info {
+  color: #666;
   margin-top: 10px;
+  font-size: 15px;
 }
 
-ul.extra-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
+/* Modal Styling */
+.modal {
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
-li.extra-item {
-  padding: 10px;
-  background-color: #f0f0f0;
-  border-radius: 10px;
-  text-align: center;
-  width: 150px;
+.modal-dialog {
+  max-width: 90%;
+  width: 1200px;
+  margin: 30px auto;
 }
 .modal-content {
-  width: 1500px; /* Tăng chiều rộng modal */
-  height: 700px; /* Giới hạn chiều cao modal để không chiếm quá nhiều không gian */
-  overflow-y: auto; /* Thêm thanh cuộn dọc nếu nội dung vượt quá chiều cao */
-  margin-left: -340px;
-  padding: 20px;
-}
-.modal-header,
-.modal-body,
-.modal-footer {
-  padding: 20px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #f8f1e9;
+  border-radius: 20px 20px 0 0;
+  border-bottom: none;
+}
+
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1000;
+  background-color: white;
+  border-top: 1px solid #f0e5d8;
+  padding: 15px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-title {
+  color: #d4a067;
+  font-weight: 600;
+}
+
+.btn-close {
+  background-color: #d4a067;
+  opacity: 1;
+  padding: 10px;
 }
 
 .modal-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  padding: 30px;
+  overflow-y: auto;
 }
 .combo-list {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(200px, 1fr)
-  ); /* Tạo nhiều cột với kích thước tối thiểu */
-  gap: 20px; /* Khoảng cách giữa các món */
-  margin-top: 20px;
-  width: 100%; /* Để lưới combo chiếm toàn bộ chiều rộng modal */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 25px;
+  padding: 0 15px;
 }
 
 .list-group-item {
+  border: 1px solid #f0e5d8;
+  border-radius: 15px;
+  padding: 15px;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f9f9f9;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  height: auto;
+}
+
+.list-group-item:hover {
+  background-color: #fff9f2;
+  border-color: #d4a067;
 }
 
 .list-group-item img {
   width: 100%;
   height: 150px;
   object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 10px;
+  border-radius: 12px;
+  margin-bottom: 15px;
 }
-.modal-footer {
-  display: flex;
-  justify-content: center;
-}
-
-.modal-body img {
-  width: 100%; /* Hình ảnh sẽ rộng tối đa nhưng không vượt quá modal */
-  height: auto;
-}
-
-.modal-body h2,
-.modal-body h3 {
+.list-group-item h5 {
+  font-size: 16px;
+  margin: 10px 0;
   text-align: center;
 }
-button {
-  margin: 20px;
-  padding: 12px 24px;
-  background-color: #28a745;
-  color: white;
+
+.list-group-item p {
+  font-size: 14px;
+  margin: 5px 0;
+  text-align: center;
+}
+
+/* Package Details Styling */
+.package-details {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.price-info {
+  margin-bottom: 20px;
+}
+
+.description {
+  margin: 20px 0;
+  line-height: 1.6;
+}
+
+.combo-title {
+  margin: 30px 0 20px;
+  color: #d4a067;
+  font-weight: 600;
+}
+.btn {
+  min-width: 120px;
+  padding: 12px 25px;
+}
+.btn-success {
+  background-color: #d4a067;
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  padding: 12px 30px;
   font-size: 16px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
 }
 
-button:hover {
-  background-color: #218838;
+.btn-success:hover {
+  background-color: #b78346;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(212, 160, 103, 0.3);
 }
-/* Giảm thiểu modal che khuất header */
-.modal {
-  top: 10vh; /* Đảm bảo modal cách xa header */
+
+.btn-secondary {
+  background-color: #e9ecef;
+  color: #2c3e50;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  border-radius: 10px;
 }
+
+.btn-secondary:hover {
+  background-color: #dee2e6;
+  color: #2c3e50;
+}
+
+/* Responsive Adjustments */
 @media (max-width: 768px) {
+  .modal-dialog {
+    width: 95%;
+    margin: 10px auto;
+  }
+
+  .combo-list {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+  }
+
+  .list-group-item img {
+    height: 120px;
+  }
+
   .modal-content {
-    max-width: 100%;
-    max-height: 90vh; /* Tăng chiều cao tối đa trên thiết bị nhỏ */
+    max-height: 90vh;
+  }
+
+  .modal-body {
+    padding: 15px;
+  }
+
+  .package-details {
+    padding: 10px;
   }
 }
 
-@media (max-width: 768px) {
-  ul {
-    flex-direction: column;
-    gap: 20px;
-  }
+/* Scrollbar Styling */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #d4a067;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #b78346;
 }
 </style>
