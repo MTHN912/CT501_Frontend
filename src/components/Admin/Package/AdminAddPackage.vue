@@ -88,13 +88,15 @@
       </div>
 
       <!-- Hình ảnh -->
+      <!-- Thay đổi trường Hình ảnh (URL) thành Tải lên file -->
       <div class="form-group mb-3">
-        <label for="image">Hình ảnh (URL):</label>
+        <label for="image">Hình ảnh:</label>
         <input
-          v-model="packageData.image"
-          type="text"
+          type="file"
           id="image"
           class="form-control"
+          @change="uploadImage"
+          accept="image/*"
         />
       </div>
 
@@ -302,6 +304,32 @@ export default {
         this.resetForm();
       } catch (error) {
         this.message = "Có lỗi xảy ra khi tạo gói tiệc";
+      }
+    },
+    async uploadImage(event) {
+      const file = event.target.files[0]; // Lấy file đã chọn
+
+      if (file) {
+        try {
+          const formData = new FormData();
+          formData.append("image", file); // Tạo form data để gửi file
+
+          const response = await axios.post(
+            "http://localhost:3000/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data", // Header cho upload file
+              },
+            }
+          );
+
+          // Gán link ảnh từ phản hồi của API vào packageData.image
+          this.packageData.image = response.data.data.url; // Sử dụng link ảnh từ response.data.data.url
+        } catch (error) {
+          console.error("Lỗi khi tải ảnh lên:", error);
+          this.message = "Không thể tải ảnh lên";
+        }
       }
     },
     resetForm() {
