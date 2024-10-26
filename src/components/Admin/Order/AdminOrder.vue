@@ -125,7 +125,17 @@
             <span :class="['status-badge', getStatusClass(order.status)]">
               {{ order.status }}
             </span>
+            <button
+              v-if="
+                order.partyStatus === 'Đã Hủy' && order.paidDepositAmount > 0
+              "
+              @click="requestRefund(order)"
+              class="refund-button"
+            >
+              Chờ Hoàn Tiền
+            </button>
           </td>
+
           <td>
             <i
               @click="openDetailModal(order)"
@@ -289,7 +299,6 @@
           >
             <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
             <option value="Đã Thanh Toán">Đã Thanh Toán</option>
-            <option value="Đã Hủy">Đã Hủy</option>
           </select>
           <button @click="submitUpdateOrder" class="btn btn-primary">
             Cập nhật thanh toán
@@ -515,7 +524,7 @@ export default {
         this.selectedStatus = "";
         this.selectedPartyStatus = "";
         this.selectedEventDate = ""; // Reset ngày khi chọn "Tất cả"
-        this.fetchOrders();
+        this.fetchOrdersWithBothFilters();
       }
     },
     updateTabSelection(event, tabValue) {
@@ -531,11 +540,41 @@ export default {
       this.fetchOrdersWithBothFilters();
     },
     filterByStatus() {
-      this.fetchOrders();
+      this.fetchOrdersWithBothFilters();
     },
 
     filterByPartyStatus() {
-      this.fetchOrders();
+      this.fetchOrdersWithBothFilters();
+    },
+    async requestRefund(order) {
+      const refundAmount = order.paidDepositAmount / 2; // Tính 50% của số tiền đã trả
+      const paymentData = {
+        amount: refundAmount, // Số tiền cần hoàn lại
+        orderId: order._id, // ID của đơn hàng
+        bankCode: "", // Để trống nếu không có ngân hàng cụ thể
+        language: "vn", // Sử dụng tiếng Việt cho giao diện VNPay
+      };
+
+      try {
+        const vnpayResponse = await axios.post(
+          "http://localhost:3000/order/create_payment_url3",
+          paymentData
+        );
+
+        // Kiểm tra phản hồi từ VNPay và chuyển hướng nếu có URL thanh toán
+        if (vnpayResponse.data && vnpayResponse.data.paymentUrl) {
+          window.location.href = vnpayResponse.data.paymentUrl; // Chuyển hướng đến URL thanh toán
+        } else {
+          console.error(
+            "Lỗi khi gọi API hoàn tiền:",
+            vnpayResponse.data.message
+          );
+          alert("Có lỗi xảy ra khi tạo URL thanh toán");
+        }
+      } catch (error) {
+        console.error("Lỗi khi gọi API hoàn tiền:", error);
+        alert("Có lỗi xảy ra khi hoàn tiền");
+      }
     },
     async fetchOrdersWithBothFilters() {
       try {
@@ -580,7 +619,10 @@ export default {
             },
           }
         );
-        this.ordersByCategory = { [this.activeTab]: response.data };
+        const sortedOrders = response.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        this.ordersByCategory = { [this.activeTab]: sortedOrders };
         await this.fetchUsersForOrders();
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -684,7 +726,7 @@ export default {
         );
 
         // Sau khi cập nhật, lấy lại danh sách đơn hàng
-        this.fetchOrders();
+        this.fetchOrdersWithBothFilters();
 
         // Đóng modal cập nhật
         this.closeUpdateModal();
@@ -721,7 +763,7 @@ export default {
         );
 
         // Lấy lại danh sách đơn hàng
-        this.fetchOrders();
+        this.fetchOrdersWithBothFilters();
 
         // Đóng modal cập nhật
         this.closeUpdateModal();
@@ -761,7 +803,7 @@ export default {
           this.closeUpdateModal();
 
           // Cập nhật lại danh sách đơn hàng
-          this.fetchOrders();
+          this.fetchOrdersWithBothFilters();
 
           // Hiển thị thông báo xác nhận thành công
           Swal.fire({
@@ -831,7 +873,6 @@ export default {
     },
   },
   mounted() {
-    this.fetchOrders();
     this.fetchOrdersWithBothFilters();
   },
 };
@@ -1484,5 +1525,15 @@ export default {
 .date-range-filter input[type="date"]:focus {
   border-color: #007bff;
   outline: none;
+}
+.refund-button {
+  margin-top: 8px;
+  background-color: #ffc107; /* màu vàng */
+  color: #fff;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
 }
 </style>

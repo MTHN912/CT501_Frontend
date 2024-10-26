@@ -48,6 +48,20 @@
         </div>
         <div class="info-item">
           <p>
+            <strong>Số Điện Thoại:</strong>
+            <template v-if="!editing">
+              <span class="content">{{ userInfo?.PHONE }}</span>
+            </template>
+            <input
+              v-else
+              type="text"
+              :value="editData.PHONE"
+              @input="updateEditData('PHONE', $event.target.value)"
+            />
+          </p>
+        </div>
+        <div class="info-item">
+          <p>
             <strong>Giới tính:</strong>
             <template v-if="!editing">
               <span class="content">{{ userInfo?.GENDER }}</span>
@@ -99,6 +113,7 @@ export default {
       loadingAvatar: false,
       editData: {
         FULLNAME: "",
+        PHONE: "",
         ADDRESS: "",
         GENDER: "",
         AVATAR: "",
@@ -159,6 +174,7 @@ export default {
       this.originalData = { ...this.userInfo };
       this.editData = {
         FULLNAME: this.userInfo.FULLNAME,
+        PHONE: this.userInfo.PHONE,
         ADDRESS: this.userInfo.ADDRESS,
         GENDER: this.userInfo.GENDER,
       };
