@@ -125,6 +125,15 @@
             <span :class="['status-badge', getStatusClass(order.status)]">
               {{ order.status }}
             </span>
+            <button
+              v-if="
+                order.partyStatus === 'Đã Hủy' && order.paidDepositAmount > 0
+              "
+              @click="requestRefund(order)"
+              class="refund-button"
+            >
+              Chờ Hoàn Tiền
+            </button>
           </td>
           <td>
             <i
@@ -271,7 +280,6 @@
           >
             <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
             <option value="Đã Thanh Toán">Đã Thanh Toán</option>
-            <option value="Đã Hủy">Đã Hủy</option>
           </select>
           <button @click="submitUpdateOrder" class="btn btn-primary">
             Cập nhật thanh toán
@@ -518,6 +526,67 @@ export default {
 
     filterByPartyStatus() {
       this.fetchOrders();
+    },
+    async requestRefund(order) {
+      let refundAmount;
+
+      // Kiểm tra nếu mảng partyStatusTimes có đủ phần tử để xác định trạng thái trước đó
+      if (order.partyStatusTimes.length > 1) {
+        // Tìm trạng thái gần nhất trước khi đơn hàng bị hủy
+        const previousStatus =
+          order.partyStatusTimes[order.partyStatusTimes.length - 2]?.status;
+
+        // Tính toán số tiền hoàn lại dựa trên trạng thái gần nhất
+        if (
+          previousStatus === "Chưa Diễn Ra" ||
+          previousStatus === "Chưa Xác Nhận"
+        ) {
+          refundAmount = order.paidDepositAmount; // Hoàn lại toàn bộ số tiền đã thanh toán
+        } else if (previousStatus === "Chuẩn Bị") {
+          refundAmount = order.paidDepositAmount * 0.7; // Hoàn lại 70% số tiền đã thanh toán
+        } else {
+          console.error("Trạng thái trước đó không hợp lệ để hoàn tiền.");
+          alert(
+            "Có lỗi xảy ra: Trạng thái trước đó không hợp lệ để hoàn tiền."
+          );
+          return; // Dừng hàm nếu trạng thái không hợp lệ
+        }
+      } else {
+        console.error("Không thể xác định trạng thái trước đó của đơn hàng.");
+        alert(
+          "Có lỗi xảy ra: Không thể xác định trạng thái trước đó của đơn hàng."
+        );
+        return; // Dừng hàm nếu không thể xác định trạng thái trước đó
+      }
+
+      // Cấu hình dữ liệu thanh toán
+      const paymentData = {
+        amount: refundAmount,
+        orderId: order._id,
+        bankCode: "", // Để trống nếu không có ngân hàng cụ thể
+        language: "vn", // Sử dụng tiếng Việt cho giao diện VNPay
+      };
+
+      try {
+        const vnpayResponse = await axios.post(
+          "http://localhost:3000/order/create_payment_url4",
+          paymentData
+        );
+
+        // Kiểm tra phản hồi từ VNPay và chuyển hướng nếu có URL thanh toán
+        if (vnpayResponse.data && vnpayResponse.data.paymentUrl) {
+          window.location.href = vnpayResponse.data.paymentUrl; // Chuyển hướng đến URL thanh toán
+        } else {
+          console.error(
+            "Lỗi khi gọi API hoàn tiền:",
+            vnpayResponse.data.message
+          );
+          alert("Có lỗi xảy ra khi tạo URL thanh toán");
+        }
+      } catch (error) {
+        console.error("Lỗi khi gọi API hoàn tiền:", error);
+        alert("Có lỗi xảy ra khi hoàn tiền");
+      }
     },
     async fetchOrdersWithBothFilters() {
       try {
@@ -1036,7 +1105,16 @@ export default {
   font-size: 12px;
   font-weight: bold;
 }
-
+.refund-button {
+  margin-top: 8px;
+  background-color: #ffc107; /* màu vàng */
+  color: #fff;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
 .unpaid {
   background-color: #ffa500;
   color: #000;

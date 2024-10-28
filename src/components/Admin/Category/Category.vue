@@ -75,6 +75,43 @@
           </tr>
         </tbody>
       </table>
+      <!-- Modal cập nhật danh mục (hiện ra khi click vào nút chỉnh sửa) -->
+      <div v-if="isUpdateModalOpen" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Cập nhật danh mục</h2>
+            <button @click="closeUpdateModal" class="close-btn">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <form @submit.prevent="updateCategory">
+            <div class="form-group">
+              <label for="update-name">
+                Tên danh mục {{ selectedTab === "food" ? "món ăn" : "tiệc" }}:
+              </label>
+              <input
+                v-model="newCategoryName"
+                type="text"
+                id="update-name"
+                placeholder="Nhập tên mới cho danh mục"
+              />
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="submit-btn">Cập nhật</button>
+              <button
+                @click="closeUpdateModal"
+                type="button"
+                class="cancel-btn"
+              >
+                Hủy
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- Nút phân trang -->
       <div class="pagination">
         <button @click="prevPage" :disabled="currentPage === 1">
@@ -124,16 +161,6 @@
             />
           </div>
 
-          <div class="form-group">
-            <label for="description">Mô tả:</label>
-            <input
-              v-model="newCategory.description"
-              type="text"
-              id="description"
-              placeholder="Nhập mô tả ngắn"
-            />
-          </div>
-
           <div class="form-actions">
             <button type="submit" class="submit-btn">Thêm danh mục</button>
             <button @click="closeModal" type="button" class="cancel-btn">
@@ -173,10 +200,18 @@ export default {
       isUpdateModalOpen: false,
       selectedCategory: {},
       selectedCategoryPackage: {},
-      selectedTab: "food", // Tab mặc định là danh mục món ăn
+      selectedTab: "food",
+      selectedCategory: { name: "", _id: "" },
+      selectedCategoryPackage: { name: "", _id: "" },
+      newCategoryName: "",
     };
   },
   computed: {
+    categoryName: function () {
+      return this.selectedTab === "food"
+        ? this.selectedCategory.name
+        : this.selectedCategoryPackage.name;
+    },
     filteredCategoriesFood() {
       return this.categories.filter(
         (category) =>
@@ -322,23 +357,71 @@ export default {
         this.fetchCategoryPackages();
       }
     },
+    async updateCategory() {
+      try {
+        if (this.selectedTab === "food") {
+          await axios.put(
+            `http://localhost:3000/category/updateCategory/${this.selectedCategory._id}`,
+            { name: this.newCategoryName }
+          );
+          this.fetchCategories(); // Cập nhật danh sách món ăn sau khi thêm
+        } else if (this.selectedTab === "package") {
+          await axios.put(
+            `http://localhost:3000/categorypackage/updateCategoryPackage/${this.selectedCategoryPackage._id}`,
+            { name: this.newCategoryName }
+          );
+          this.fetchCategoryPackages(); // Cập nhật danh sách tiệc sau khi thêm
+        }
+
+        // Thông báo thành công
+        Swal.fire({
+          icon: "success",
+          title: "Cập nhật thành công",
+          text: "Danh mục đã được cập nhật!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        this.closeUpdateModal(); // Đóng modal sau khi hoàn tất
+      } catch (error) {
+        console.error("Error updating category:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Đã xảy ra lỗi khi cập nhật danh mục.",
+        });
+      }
+    },
     resetNewCategory() {
       this.newCategory = { name: "", description: "" };
     },
     openUpdateModal(category) {
-      this.selectedCategory = { ...category };
       this.isUpdateModalOpen = true;
+      if (this.selectedTab === "food") {
+        this.selectedCategory = category;
+        this.newCategoryName = category.name;
+      } else {
+        this.selectedCategoryPackage = category;
+        this.newCategoryName = category.name;
+      }
     },
     closeUpdateModal() {
       this.isUpdateModalOpen = false;
+      this.newCategoryName = ""; // Reset giá trị khi đóng modal
     },
     async deleteCategory(categoryId) {
       if (confirm("Bạn có chắc chắn muốn xóa danh mục này không?")) {
         try {
-          await axios.delete(
-            `http://localhost:3000/category/deleteCategory/${categoryId}`
-          );
-          this.fetchCategories();
+          if (this.selectedTab === "food") {
+            await axios.delete(
+              `http://localhost:3000/category/deleteCategory/${categoryId}`
+            );
+            this.fetchCategories(); // Cập nhật danh sách món ăn sau khi xóa
+          } else if (this.selectedTab === "package") {
+            await axios.delete(
+              `http://localhost:3000/categorypackage/deleteCategoryPackage/${categoryId}`
+            );
+            this.fetchCategoryPackages(); // Cập nhật danh sách tiệc sau khi xóa
+          }
 
           Swal.fire({
             icon: "success",

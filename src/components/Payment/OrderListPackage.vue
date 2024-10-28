@@ -111,6 +111,17 @@
               </div>
             </div>
             <div
+              v-if="
+                order.status === 'Chưa Thanh Toán' &&
+                order.paidDepositAmount < calculatedDeposit(order.totalPrice)
+              "
+            >
+              <p class="alert alert-warning">
+                Tiệc của bạn có giá trị cao, cần phải cọc tiền trước mới để được
+                xác nhận tiệc.
+              </p>
+            </div>
+            <div
               v-if="order.packageDetails"
               class="order-details container mt-4"
             >
@@ -190,7 +201,7 @@
                 v-if="
                   order.partyStatus !== 'Đã Hủy' &&
                   order.status === 'Chưa Thanh Toán' &&
-                  order.totalPrice > 1000000
+                  order.totalPrice > 5000000
                 "
                 @click.stop="depositOrder(order._id)"
                 class="btn btn-warning"
@@ -357,6 +368,107 @@ export default {
       return new Date(dateString).toLocaleString("vi-VN");
     },
     async cancelOrder(orderId) {
+      const order = this.orders.find((o) => o._id === orderId);
+
+      // Trường hợp không cho phép hủy khi đơn tiệc đang "Đang Diễn Ra"
+      if (order.partyStatus === "Đang Diễn Ra") {
+        Swal.fire({
+          title: "Không thể hủy",
+          text: "Tiệc của bạn đang diễn ra và không thể hủy.",
+          icon: "info",
+        });
+        return; // Không thực hiện gọi API hủy
+      }
+
+      // Trường hợp không cho phép hủy khi đơn tiệc là "Chuẩn Bị" và "Chưa Thanh Toán"
+      if (
+        order.partyStatus === "Chuẩn Bị" &&
+        order.status === "Chưa Thanh Toán"
+      ) {
+        Swal.fire({
+          title: "Không thể hủy",
+          text: "Tiệc của bạn chưa thanh toán nên không thể hủy.",
+          icon: "info",
+        });
+        return; // Không thực hiện gọi API hủy
+      }
+
+      // Trường hợp hiển thị cảnh báo khi "Chuẩn Bị" và đã "Đã Cọc" hoặc "Đã Thanh Toán"
+      if (
+        order.partyStatus === "Chuẩn Bị" &&
+        (order.status === "Đã Cọc" || order.status === "Đã Thanh Toán")
+      ) {
+        Swal.fire({
+          title: "Cảnh Báo",
+          text: "Tiệc của bạn đang trong giai đoạn chuẩn bị, nếu hủy sẽ chỉ được hoàn lại 50% số tiền đã trả. Bạn có chắc chắn muốn hủy?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Xác Nhận Hủy",
+          cancelButtonText: "Không Hủy",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            // Gọi API để hủy tiệc
+            try {
+              await axios.patch(
+                `http://localhost:3000/order/ordersPackage/${orderId}/cancel`
+              );
+              Swal.fire(
+                "Thành Công",
+                "Đơn hàng đã được hủy thành công!",
+                "success"
+              );
+              this.fetchOrders();
+            } catch (error) {
+              console.error("Lỗi khi hủy đơn hàng:", error);
+              Swal.fire(
+                "Lỗi",
+                "Không thể hủy đơn hàng. Vui lòng thử lại sau.",
+                "error"
+              );
+            }
+          }
+        });
+        return;
+      }
+      if (
+        (order.partyStatus === "Chưa Xác Nhận" ||
+          order.partyStatus === "Chưa Diễn Ra") &&
+        (order.status === "Đã Cọc" || order.status === "Đã Thanh Toán")
+      ) {
+        Swal.fire({
+          title: "Thông Báo",
+          text: "Khi thực hiện hủy tiệc bạn sẽ được hoàn lại toàn bộ số tiền đã trả. Vui lòng chờ thông báo tiếp theo!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Xác Nhận Hủy",
+          cancelButtonText: "Không Hủy",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            // Gọi API để hủy tiệc
+            try {
+              await axios.patch(
+                `http://localhost:3000/order/ordersPackage/${orderId}/cancel`
+              );
+              Swal.fire(
+                "Thành Công",
+                "Đơn hàng đã được hủy thành công!",
+                "success"
+              );
+              this.fetchOrders();
+            } catch (error) {
+              console.error("Lỗi khi hủy đơn hàng:", error);
+              Swal.fire(
+                "Lỗi",
+                "Không thể hủy đơn hàng. Vui lòng thử lại sau.",
+                "error"
+              );
+            }
+          }
+        });
+        return;
+      }
+
+      // Trường hợp hủy thông thường cho các đơn không thuộc các điều kiện trên
       if (confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
         try {
           await axios.patch(
@@ -480,7 +592,10 @@ export default {
       });
     },
     goToDetail(orderId) {
-      this.$router.push({ name: "OrderDetail", params: { id: orderId } });
+      this.$router.push({
+        name: "OrderDetailPackage",
+        params: { id: orderId },
+      });
     },
     getStatusClass(status) {
       switch (status) {

@@ -547,10 +547,41 @@ export default {
       this.fetchOrdersWithBothFilters();
     },
     async requestRefund(order) {
-      const refundAmount = order.paidDepositAmount / 2; // Tính 50% của số tiền đã trả
+      let refundAmount;
+
+      // Kiểm tra nếu mảng partyStatusTimes có đủ phần tử để xác định trạng thái trước đó
+      if (order.partyStatusTimes.length > 1) {
+        // Tìm trạng thái gần nhất trước khi đơn hàng bị hủy
+        const previousStatus =
+          order.partyStatusTimes[order.partyStatusTimes.length - 2]?.status;
+
+        // Tính toán số tiền hoàn lại dựa trên trạng thái gần nhất
+        if (
+          previousStatus === "Chưa Diễn Ra" ||
+          previousStatus === "Chưa Xác Nhận"
+        ) {
+          refundAmount = order.paidDepositAmount; // Hoàn lại toàn bộ số tiền đã thanh toán
+        } else if (previousStatus === "Chuẩn Bị") {
+          refundAmount = order.paidDepositAmount * 0.7; // Hoàn lại 70% số tiền đã thanh toán
+        } else {
+          console.error("Trạng thái trước đó không hợp lệ để hoàn tiền.");
+          alert(
+            "Có lỗi xảy ra: Trạng thái trước đó không hợp lệ để hoàn tiền."
+          );
+          return; // Dừng hàm nếu trạng thái không hợp lệ
+        }
+      } else {
+        console.error("Không thể xác định trạng thái trước đó của đơn hàng.");
+        alert(
+          "Có lỗi xảy ra: Không thể xác định trạng thái trước đó của đơn hàng."
+        );
+        return; // Dừng hàm nếu không thể xác định trạng thái trước đó
+      }
+
+      // Cấu hình dữ liệu thanh toán
       const paymentData = {
-        amount: refundAmount, // Số tiền cần hoàn lại
-        orderId: order._id, // ID của đơn hàng
+        amount: refundAmount,
+        orderId: order._id,
         bankCode: "", // Để trống nếu không có ngân hàng cụ thể
         language: "vn", // Sử dụng tiếng Việt cho giao diện VNPay
       };
@@ -576,6 +607,7 @@ export default {
         alert("Có lỗi xảy ra khi hoàn tiền");
       }
     },
+
     async fetchOrdersWithBothFilters() {
       try {
         // Gửi cả hai giá trị của status và partyStatus đến API
