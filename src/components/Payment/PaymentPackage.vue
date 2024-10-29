@@ -44,13 +44,65 @@
       </div>
 
       <div class="home-party-details">
+        <!-- Chọn Tỉnh/Thành phố -->
         <div class="form-group">
-          <label for="party-address">Địa chỉ tổ chức tiệc:</label>
+          <label for="city">Chọn Tỉnh/Thành phố:</label>
+          <select
+            v-model="selectedCity"
+            @change="onCityChange"
+            class="form-select form-select-sm mb-3"
+            id="city"
+          >
+            <option value="">Chọn Tỉnh/Thành phố</option>
+            <option v-for="city in cities" :key="city.Id" :value="city.Id">
+              {{ city.Name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Chọn Quận/Huyện -->
+        <div class="form-group">
+          <label for="district">Chọn Quận/Huyện:</label>
+          <select
+            v-model="selectedDistrict"
+            @change="onDistrictChange"
+            class="form-select form-select-sm mb-3"
+            id="district"
+          >
+            <option value="">Chọn Quận/Huyện</option>
+            <option
+              v-for="district in districts"
+              :key="district.Id"
+              :value="district.Id"
+            >
+              {{ district.Name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Chọn Phường/Xã -->
+        <div class="form-group">
+          <label for="ward">Chọn Phường/Xã:</label>
+          <select
+            v-model="selectedWard"
+            class="form-select form-select-sm"
+            id="ward"
+          >
+            <option value="">Chọn Phường/Xã</option>
+            <option v-for="ward in wards" :key="ward.Id" :value="ward.Id">
+              {{ ward.Name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Địa chỉ cụ thể -->
+        <div class="form-group">
+          <label for="party-address">Địa chỉ cụ thể:</label>
           <input
             type="text"
             id="party-address"
-            v-model="partyAddress"
-            placeholder="Nhập địa chỉ tổ chức tiệc"
+            v-model="specificAddress"
+            placeholder="Nhập địa chỉ cụ thể"
           />
         </div>
 
@@ -145,15 +197,23 @@
 <script>
 import axios from "axios";
 import Swal from "sweetalert2";
+import { mapState } from "vuex";
 export default {
   data() {
     return {
       selectedPackage: null,
       numberOfTables: 1, // Khởi tạo số bàn
-      partyAddress: "",
+      // partyAddress: "",
+      cities: [],
+      districts: [],
+      wards: [],
+      selectedCity: "",
+      selectedDistrict: "",
+      selectedWard: "",
+      specificAddress: "",
       partyDate: "",
       partyTime: "",
-      phoneNumber: "",
+      phoneNumber: this.phoneNumberComputed,
       note: "",
       depositAmount: 0,
       selectedPaymentMethod: "cash",
@@ -162,7 +222,25 @@ export default {
       isLoading: true,
     };
   },
+  watch: {
+    selectedCity(newCityId) {
+      this.resetDistrictAndWard();
+      if (newCityId) {
+        this.loadDistricts(newCityId);
+      }
+    },
+    selectedDistrict(newDistrictId) {
+      this.wards = [];
+      if (newDistrictId) {
+        this.loadWards(newDistrictId);
+      }
+    },
+  },
   computed: {
+    ...mapState(["cart", "userInfo"]),
+    phoneNumberComputed() {
+      return this.userInfo && this.userInfo.PHONE ? this.userInfo.PHONE : "";
+    },
     computedDepositAmount: {
       get() {
         return this.depositAmount === 0 ? "" : this.depositAmount;
@@ -202,6 +280,15 @@ export default {
         return this.totalPriceForTables * 0.3;
       }
       return this.depositAmount || 0; // Đặt cọc tùy chọn
+    },
+    partyAddress() {
+      const cityName =
+        this.cities.find((c) => c.Id === this.selectedCity)?.Name || "";
+      const districtName =
+        this.districts.find((d) => d.Id === this.selectedDistrict)?.Name || "";
+      const wardName =
+        this.wards.find((w) => w.Id === this.selectedWard)?.Name || "";
+      return `${this.specificAddress}, ${wardName}, ${districtName}, ${cityName}`;
     },
   },
   methods: {
@@ -247,8 +334,8 @@ export default {
           paymentMethod: this.selectedPaymentMethod,
           totalPrice: this.totalPriceForTables,
           depositAmount: Math.floor(this.depositAmount),
-          partyAddress: this.partyAddress,
-          phoneNumber: this.phoneNumber,
+          partyAddress: this.partyAddress || null,
+          phoneNumber: this.phoneNumber || null,
           note: this.note,
           partyDateTime: `${this.partyDate}T${this.partyTime}`,
         };
@@ -417,9 +504,38 @@ export default {
         this.isSubmitting = false;
       }
     },
+    async loadCities() {
+      try {
+        const response = await axios.get("/data.json");
+        this.cities = response.data;
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách tỉnh/thành phố:", error);
+      }
+    },
+    loadDistricts(cityId) {
+      const city = this.cities.find((c) => c.Id === cityId);
+      if (city) {
+        this.districts = city.Districts;
+      }
+    },
+    loadWards(districtId) {
+      const district = this.districts.find((d) => d.Id === districtId);
+      if (district) {
+        this.wards = district.Wards;
+      }
+    },
+    resetDistrictAndWard() {
+      this.districts = [];
+      this.wards = [];
+      this.selectedDistrict = "";
+      this.selectedWard = "";
+    },
   },
   mounted() {
     this.getPackageDetails(); // Gọi API khi component được tạo
+    this.loadCities();
+    this.phoneNumber =
+      this.userInfo && this.userInfo.PHONE ? this.userInfo.PHONE : "";
   },
 };
 </script>
