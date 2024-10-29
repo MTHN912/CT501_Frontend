@@ -73,6 +73,23 @@
           </li>
         </ul>
       </div>
+      <!-- Thống kê tổng số người dùng -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <h3>Tổng số người dùng:</h3>
+          <span class="icon">👥</span>
+        </div>
+        <p class="stat-value">{{ totalUsers }}</p>
+      </div>
+
+      <!-- Thống kê tổng số món ăn -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <h3>Tổng số món ăn:</h3>
+          <span class="icon">🍽️</span>
+        </div>
+        <p class="stat-value">{{ totalDishes }}</p>
+      </div>
 
       <!-- Gói tiệc phổ biến -->
       <!-- <div class="stat-card wide">
@@ -118,6 +135,9 @@ export default {
       totalAllOrderRevenue: 0,
       popularDishes: [],
       popularPackages: [],
+      totalUsers: 0,
+      totalDishes: 0,
+      tabStatus: "4",
     };
   },
   mounted() {
@@ -143,6 +163,20 @@ export default {
         const packagesResponse = await axios.get(
           "http://localhost:3000/order/getAllPartyOrders"
         );
+        const usersResponse = await axios.get(
+          "http://localhost:3000/user/getUsers",
+          {
+            params: {
+              tabStatus: this.tabStatus,
+              page: 1,
+              limit: 1000,
+              search: "",
+            },
+          }
+        );
+        const allDishesResponse = await axios.get(
+          "http://localhost:3000/dish/getDish"
+        );
 
         this.totalOrders = ordersResponse.data.length;
         this.totalOrderRevenue = ordersResponse.data.reduce(
@@ -158,6 +192,8 @@ export default {
         this.totalAllOrders = this.totalOrders + this.totalOrdersPackage;
         this.totalAllOrderRevenue =
           this.totalOrderRevenue + this.totalOrderPackageRevenue;
+        this.totalUsers = usersResponse.data.totalCount; // Use totalCount from response
+        this.totalDishes = allDishesResponse.data.length;
 
         this.drawPieChart();
         this.drawBarChart();

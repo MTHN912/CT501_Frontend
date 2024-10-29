@@ -13,6 +13,7 @@ import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
 import DishDetail from "../views/DishDetail.vue";
 import EventView from "../views/Event.vue";
+import ForgotPassword from "../views/ForgotPassword.vue";
 import HomeView from "../views/Home.vue";
 import LoginView from "../views/Login.vue";
 import MenuView from "../views/Menu.vue";
@@ -161,6 +162,11 @@ const routes = [
     path: '/statistical',
     name: 'Statistical',
     component: statistical,
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
   },
   {
     path: "/login",
