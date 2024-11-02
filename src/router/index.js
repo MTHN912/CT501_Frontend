@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
+import store from "../store/index";
+
 import AboutView from "../views/About.vue";
 import AdminCategory from "../views/Admin/Category/Category.vue";
 import AdminDish from "../views/Admin/Dish/AdminDish.vue";
@@ -27,6 +29,7 @@ import OrderPackage from "../views/Payment/PaymentPackage.vue";
 import ProfileView from "../views/Profile.vue";
 import RegisterView from "../views/Register.vue";
 import ServicesView from "../views/Service.vue";
+import PrivacySettings from "../views/privacy-settings.vue";
 const routes = [
   {
     path: "/",
@@ -165,8 +168,13 @@ const routes = [
   },
   {
     path: '/forgot-password',
-    name: 'ForgotPassword',
+    name: 'Forgot-Password',
     component: ForgotPassword,
+  },
+  {
+    path: '/privacysettings',
+    name: 'PrivacySettings',
+    component: PrivacySettings,
   },
   {
     path: "/login",
@@ -208,5 +216,30 @@ const router = createRouter({
     return { top: 0 }; 
   },
 });
+
+router.beforeEach((to, from, next) => {
+  const userInfo = store.getters.userInfo; // Lấy userInfo từ getter trong store
+
+  if (userInfo) {
+    const isBlocked = userInfo.IS_BLOCKED?.CHECK; // Kiểm tra thuộc tính CHECK trong IS_BLOCKED
+
+    if (isBlocked) {
+      alert("Tài khoản của bạn hiện đã bị khóa");
+
+      // Gọi hàm logout từ store sau khi hiển thị thông báo
+      setTimeout(() => {
+        store.dispatch("logout");
+        next("/login"); // Chuyển hướng về trang đăng nhập
+      }, 1000); // Đợi 1 giây cho người dùng thấy thông báo trước khi logout
+      return;
+    }
+  }
+
+  next();
+});
+
+
+
+
 
 export default router;

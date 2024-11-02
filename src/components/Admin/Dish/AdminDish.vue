@@ -15,19 +15,33 @@
     </div>
     <!-- Tabs -->
     <div class="tabs">
+      <!-- Dropdown chọn danh mục -->
+      <div class="dropdown">
+        <button class="dropbtn">
+          {{ selectedTab === "" ? "Tất cả" : selectedTab }}
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="dropdown-content">
+          <a @click="selectTab('')" class="dropdown-item">Tất cả</a>
+          <a
+            v-for="category in categories"
+            :key="category._id"
+            @click="selectTab(category)"
+            class="dropdown-item"
+          >
+            {{ category.name }}
+          </a>
+        </div>
+      </div>
+      <!-- Tab riêng cho các món bị xóa -->
       <button
-        v-for="category in ['Tất cả', ...categories]"
-        :key="category._id || 'all'"
-        :class="{
-          active:
-            selectedTab === category.name ||
-            (category === 'Tất cả' && selectedTab === ''),
-        }"
-        @click="selectTab(category)"
+        :class="{ active: selectedTab === 'Deleted' }"
+        @click="selectTab('Deleted')"
       >
-        {{ category.name || "Tất cả" }}
+        Món Đã Xóa
       </button>
     </div>
+
     <!-- Danh sách món ăn -->
     <table class="food-table">
       <thead>
@@ -56,13 +70,23 @@
           <td>{{ food.averageRating || "Chưa có đánh giá" }}</td>
           <td>${{ food.price }}</td>
           <td>
-            <!-- Nút cập nhật -->
-            <i @click="openUpdateModal(food)" class="fas fa-edit edit-icon"></i>
-            <!-- Nút xóa -->
-            <i
-              @click="deleteFood(food._id)"
-              class="fas fa-trash delete-icon"
-            ></i>
+            <!-- Kiểm tra nếu ở tab "Deleted" thì hiển thị nút "Khôi phục" -->
+            <template v-if="selectedTab === 'Deleted'">
+              <button @click="restoreFood(food._id)" class="restore-button">
+                Khôi phục
+              </button>
+            </template>
+            <!-- Nếu không thì hiển thị nút cập nhật và xóa -->
+            <template v-else>
+              <i
+                @click="openUpdateModal(food)"
+                class="fas fa-edit edit-icon"
+              ></i>
+              <i
+                @click="deleteFood(food._id)"
+                class="fas fa-trash delete-icon"
+              ></i>
+            </template>
           </td>
         </tr>
       </tbody>
@@ -331,10 +355,10 @@ export default {
         const response = await axios.get("http://localhost:3000/dish/getDish", {
           params: { category },
         });
-
+        const filteredFoods = response.data.filter((food) => !food.isDeleted);
         // Lấy danh sách món ăn và tính toán điểm đánh giá trung bình cho từng món ăn
         const foodsWithRatings = await Promise.all(
-          response.data.map(async (food) => {
+          filteredFoods.map(async (food) => {
             const averageRating = await this.fetchAverageRating(food._id); // Gọi hàm fetchAverageRating với ID của món ăn
             return { ...food, averageRating }; // Thêm thuộc tính averageRating vào object món ăn
           })
@@ -344,6 +368,36 @@ export default {
         this.foods = foodsWithRatings;
       } catch (error) {
         console.error("Error fetching dishes:", error);
+      }
+    },
+    async fetchDeletedFoods() {
+      this.selectedTab = "Deleted";
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/dish/getDishDelete"
+        );
+        this.foods = response.data;
+        // Gọi đánh giá nếu cần
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách món ăn bị xóa:", error);
+      }
+    },
+    async restoreFood(foodId) {
+      try {
+        const response = await fetch(
+          `http://localhost:3000/dish/restoreDish/${foodId}`,
+          {
+            method: "PUT",
+          }
+        );
+        if (response.ok) {
+          alert("Món ăn đã được khôi phục thành công.");
+          this.fetchDeletedFoods(); // Tải lại danh sách món ăn sau khi khôi phục
+        } else {
+          alert("Không thể khôi phục món ăn.");
+        }
+      } catch (error) {
+        console.error("Lỗi khôi phục món ăn:", error);
       }
     },
 
@@ -459,7 +513,7 @@ export default {
     async deleteFood(foodId) {
       if (confirm("Bạn có chắc chắn muốn xóa món ăn này không?")) {
         try {
-          await axios.delete(`http://localhost:3000/dish/deleteDish/${foodId}`);
+          await axios.put(`http://localhost:3000/dish/deleteDish/${foodId}`);
           this.fetchFoods(); // Tải lại danh sách món ăn sau khi xóa
 
           // Hiển thị thông báo thành công
@@ -481,9 +535,15 @@ export default {
       }
     },
     selectTab(category) {
-      this.selectedTab = category.name || ""; // Chọn danh mục hoặc tất cả
-      this.currentPage = 1;
-      this.fetchFoods(this.selectedTab); // Lấy danh sách món ăn theo danh mục
+      if (category === "Deleted") {
+        this.selectedTab = "Deleted";
+        this.currentPage = 1;
+        this.fetchDeletedFoods(); // Gọi hàm để lấy món bị xóa
+      } else {
+        this.selectedTab = category.name || ""; // Gán danh mục được chọn hoặc "Tất cả"
+        this.currentPage = 1;
+        this.fetchFoods(this.selectedTab); // Gọi hàm fetchFoods với danh mục
+      }
     },
     nextPage() {
       if (this.currentPage < this.totalPages) {
@@ -778,10 +838,50 @@ export default {
 }
 .tabs {
   display: flex;
-  gap: 15px;
-  margin-bottom: 30px;
-  overflow-x: auto;
-  padding-bottom: 10px;
+  align-items: center;
+  margin-bottom: 1rem; /* Khoảng cách dưới tabs */
+}
+.dropdown {
+  position: relative; /* Đặt vị trí cho dropdown */
+  margin-right: 1rem; /* Khoảng cách giữa dropdown và nút tab khác */
+}
+
+.dropbtn {
+  background-color: #4caf50; /* Màu nền của nút dropdown */
+  color: white; /* Màu chữ */
+  padding: 10px 15px; /* Khoảng cách bên trong nút */
+  font-size: 16px; /* Kích thước chữ */
+  border: none; /* Không viền */
+  cursor: pointer; /* Con trỏ khi di chuột */
+  border-radius: 4px; /* Bo tròn góc */
+}
+
+.dropbtn:hover {
+  background-color: #45a049; /* Màu nền khi hover */
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white; /* Màu nền của dropdown */
+  min-width: 160px; /* Độ rộng tối thiểu */
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2); /* Đổ bóng cho dropdown */
+  z-index: 1; /* Đưa nội dung lên trên */
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-item {
+  color: black; /* Màu chữ của các mục trong dropdown */
+  padding: 12px 16px; /* Khoảng cách bên trong mục dropdown */
+  text-decoration: none; /* Không gạch chân */
+  display: block; /* Hiển thị các mục như block */
+}
+
+.dropdown-item:hover {
+  background-color: #f1f1f1; /* Màu nền khi hover vào mục dropdown */
 }
 
 .tabs button {
@@ -802,5 +902,12 @@ export default {
 
 .tabs .active {
   background-color: #3b82f6;
+}
+.restore-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
 }
 </style>

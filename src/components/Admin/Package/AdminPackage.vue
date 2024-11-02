@@ -3,12 +3,20 @@
     <h2 class="text-white">Danh Sách Gói Tiệc</h2>
     <div class="form-group mb-3">
       <label class="text-white">Lọc theo danh mục:</label>
-      <input
+      <select
         v-model="categoryFilter"
-        @input="fetchPackages"
+        @change="fetchPackages"
         class="form-control"
-        placeholder="Nhập danh mục"
-      />
+      >
+        <option value="">Tất cả</option>
+        <option
+          v-for="category in categories"
+          :key="category._id"
+          :value="category.name"
+        >
+          {{ category.name }}
+        </option>
+      </select>
     </div>
 
     <div class="row" v-if="partyPackages.length">
@@ -76,6 +84,7 @@ export default {
     return {
       partyPackages: [],
       categoryFilter: "",
+      categories: [],
     };
   },
   methods: {
@@ -94,9 +103,20 @@ export default {
         console.error("Có lỗi xảy ra khi lấy danh sách gói tiệc:", error);
       }
     },
+    async fetchCategories() {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/categorypackage/getCategoryPackage"
+        );
+        this.categories = response.data.data; // Gán danh sách danh mục vào biến `categories`
+      } catch (error) {
+        console.error("Có lỗi xảy ra khi lấy danh sách danh mục:", error);
+      }
+    },
   },
   mounted() {
     this.fetchPackages();
+    this.fetchCategories();
   },
 };
 </script>

@@ -82,7 +82,7 @@
                 <!-- Nút yêu thích -->
                 <button @click="toggleFavorite(dish)" class="favorite-button">
                   <i
-                    :class="dish.favorite ? 'fas fa-heart' : 'far fa-heart'"
+                    :class="isFavorite(dish) ? 'fas fa-heart' : 'far fa-heart'"
                     aria-hidden="true"
                   ></i>
                 </button>
@@ -168,8 +168,9 @@ export default {
     return {
       selectedCategory: "Tất cả",
       showCategories: true,
-      categories: [], // Danh mục lấy từ API
-      dishes: [], // Danh sách món ăn lấy từ API
+      categories: [],
+      favoriteDishes: [],
+      dishes: [],
       ratings: {},
       successMessage: "",
       showMessage: false,
@@ -338,8 +339,63 @@ export default {
       this.$router.push({ name: "Cart" });
     },
     // Yêu thích món ăn
-    toggleFavorite(dish) {
-      dish.favorite = !dish.favorite;
+    isFavorite(dish) {
+      return this.favoriteDishes.includes(dish._id);
+    },
+    async toggleFavorite(dish) {
+      try {
+        const token = localStorage.getItem("token");
+        // Thay đổi trạng thái tạm thời để phản hồi nhanh trên giao diện
+        if (this.isFavorite(dish)) {
+          this.favoriteDishes = this.favoriteDishes.filter(
+            (id) => id !== dish._id
+          );
+        } else {
+          this.favoriteDishes.push(dish._id);
+        }
+
+        // Gọi API chuyển đổi trạng thái yêu thích
+        await axios.patch(
+          `http://localhost:3000/dish/dishes/${dish._id}/favorite`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // Gọi lại fetchFavoriteDishes để cập nhật trạng thái yêu thích chính xác từ server
+        await this.fetchFavoriteDishes();
+      } catch (error) {
+        console.error("Error toggling favorite:", error);
+
+        // Nếu có lỗi, hoàn tác trạng thái yêu thích trong giao diện
+        if (this.isFavorite(dish)) {
+          this.favoriteDishes = this.favoriteDishes.filter(
+            (id) => id !== dish._id
+          );
+        } else {
+          this.favoriteDishes.push(dish._id);
+        }
+      }
+    },
+    async fetchFavoriteDishes() {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          // Gọi API để lấy danh sách món ăn yêu thích của người dùng
+          const response = await axios.get(
+            "http://localhost:3000/dish/getFavoriteDish",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          console.log("Fetched favorite dishes:", response.data);
+          // Lưu danh sách ID món ăn yêu thích vào `favoriteDishes`
+          this.favoriteDishes = response.data.map((dish) => dish._id);
+        }
+      } catch (error) {
+        console.error("Error fetching favorite dishes:", error);
+      }
     },
     // Gọi API để lấy danh mục món ăn
     async fetchCategories() {
@@ -352,7 +408,6 @@ export default {
         console.error("Lỗi khi tải danh mục:", error);
       }
     },
-    // Gọi API để lấy danh sách món ăn
     // Gọi API để lấy danh sách món ăn có thể tìm kiếm theo danh mục
     async fetchDishes(category = "Tất cả") {
       try {
@@ -364,7 +419,10 @@ export default {
 
         // Gọi API để lấy món ăn dựa trên danh mục đã chọn
         const response = await axios.get(apiUrl);
-        this.dishes = response.data;
+
+        // Lọc bỏ các món ăn có isDeleted là true
+        const filteredDishes = response.data.filter((dish) => !dish.isDeleted);
+        this.dishes = filteredDishes;
 
         // Gọi API để lấy đánh giá trung bình cho từng món ăn
         for (const dish of this.dishes) {
@@ -389,6 +447,8 @@ export default {
     this.fetchCategories();
     this.fetchDishes();
     this.fetchCart(); // Lấy giỏ hàng từ store khi component mount
+    console.log("fetchFavoriteDishes called on mounted");
+    this.fetchFavoriteDishes();
   },
 };
 </script>
