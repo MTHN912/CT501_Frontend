@@ -18,6 +18,12 @@
           Thông Tin Cá Nhân
         </li>
         <li
+          :class="{ active: activeMenuItem === 'FavouriteList' }"
+          @click="navigateTo('FavouriteList')"
+        >
+          Các món yêu thích
+        </li>
+        <li
           :class="{ active: activeMenuItem === 'Forgot-Password' }"
           @click="navigateTo('Forgot-Password')"
         >
@@ -69,7 +75,12 @@ export default {
   methods: {
     updateDropdownState(route) {
       // Kiểm tra nếu route là một trong các mục con của "Tài Khoản Của Bạn"
-      const subRoutes = ["/profile", "/forgot-password", "/privacysettings"];
+      const subRoutes = [
+        "/profile",
+        "/favouritelist",
+        "/forgot-password",
+        "/privacysettings",
+      ];
       this.isDropdownOpen = subRoutes.includes(route.path);
     },
     navigateTo(component) {

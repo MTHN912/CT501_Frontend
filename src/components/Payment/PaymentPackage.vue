@@ -3,193 +3,244 @@
     <h2 class="title">Xác nhận đơn tiệc với gói</h2>
 
     <div v-if="isLoading" class="loading">
+      <div class="spinner"></div>
       <p>Đang tải dữ liệu...</p>
     </div>
 
-    <div v-else class="checkout-details">
-      <div class="order-summary">
-        <h3 class="item-name">{{ selectedPackage.name }}</h3>
-        <img
-          :src="selectedPackage.image"
-          alt="Package Image"
-          class="item-image"
-        />
-        <p>Mô tả gói: {{ selectedPackage.description }}</p>
-        <p>
-          Giá gốc: <strong>{{ selectedPackage.price }} đ</strong>
-        </p>
-        <p v-if="selectedPackage.promotion">
-          Giá khuyến mãi: <strong>{{ calculatedPrice }} đ</strong>
-        </p>
-      </div>
-
-      <div class="table-selection">
-        <label for="number-of-tables">Số bàn:</label>
-        <input
-          type="number"
-          id="number-of-tables"
-          v-model.number="numberOfTables"
-          disabled
-        />
-      </div>
-
-      <div class="party-type-selection">
-        <label for="party-type">Loại tiệc:</label>
-        <input
-          type="text"
-          id="party-type"
-          v-model="selectedPackage.category"
-          readonly
-        />
-      </div>
-
-      <div class="home-party-details">
-        <!-- Chọn Tỉnh/Thành phố -->
-        <div class="form-group">
-          <label for="city">Chọn Tỉnh/Thành phố:</label>
-          <select
-            v-model="selectedCity"
-            @change="onCityChange"
-            class="form-select form-select-sm mb-3"
-            id="city"
-          >
-            <option value="">Chọn Tỉnh/Thành phố</option>
-            <option v-for="city in cities" :key="city.Id" :value="city.Id">
-              {{ city.Name }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Chọn Quận/Huyện -->
-        <div class="form-group">
-          <label for="district">Chọn Quận/Huyện:</label>
-          <select
-            v-model="selectedDistrict"
-            @change="onDistrictChange"
-            class="form-select form-select-sm mb-3"
-            id="district"
-          >
-            <option value="">Chọn Quận/Huyện</option>
-            <option
-              v-for="district in districts"
-              :key="district.Id"
-              :value="district.Id"
-            >
-              {{ district.Name }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Chọn Phường/Xã -->
-        <div class="form-group">
-          <label for="ward">Chọn Phường/Xã:</label>
-          <select
-            v-model="selectedWard"
-            class="form-select form-select-sm"
-            id="ward"
-          >
-            <option value="">Chọn Phường/Xã</option>
-            <option v-for="ward in wards" :key="ward.Id" :value="ward.Id">
-              {{ ward.Name }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Địa chỉ cụ thể -->
-        <div class="form-group">
-          <label for="party-address">Địa chỉ cụ thể:</label>
-          <input
-            type="text"
-            id="party-address"
-            v-model="specificAddress"
-            placeholder="Nhập địa chỉ cụ thể"
+    <div v-else class="checkout-content">
+      <!-- Package Summary Card -->
+      <div class="summary-card">
+        <div class="package-info">
+          <img
+            :src="selectedPackage.image"
+            :alt="selectedPackage.name"
+            class="package-image"
           />
+          <div class="package-details">
+            <h3>{{ selectedPackage.name }}</h3>
+            <p class="description">{{ selectedPackage.description }}</p>
+            <div class="price-info">
+              <p class="original-price">
+                Giá gốc: {{ selectedPackage.price }} đ
+              </p>
+              <p v-if="selectedPackage.promotion" class="promotion-price">
+                Giá khuyến mãi: {{ calculatedPrice }} đ
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div class="party-datetime-selection">
-          <label for="party-date">Ngày diễn ra tiệc:</label>
-          <input type="date" id="party-date" v-model="partyDate" required />
-        </div>
-
-        <div class="party-time-selection">
-          <label for="party-time">Giờ diễn ra tiệc:</label>
-          <input type="time" id="party-time" v-model="partyTime" required />
-        </div>
-
-        <div class="form-group">
-          <label for="phone-number">Số điện thoại liên hệ:</label>
-          <input
-            type="tel"
-            id="phone-number"
-            v-model="phoneNumber"
-            placeholder="Nhập số điện thoại"
-          />
-        </div>
-
-        <div v-if="showDepositInput" class="deposit-section">
-          <label for="deposit-amount">Số tiền đặt cọc:</label>
-          <input
-            type="number"
-            id="deposit-amount"
-            v-model.number="depositAmount"
-            :placeholder="`Số tiền đặt cọc tối thiểu là ${calculatedDeposit} đ`"
-            @input="handleDepositInput"
-            class="no-arrows"
-          />
-        </div>
-
-        <div class="payment-method">
-          <label>Phương thức thanh toán:</label>
-          <select v-model="selectedPaymentMethod">
-            <option value="cash">Thanh toán sau tiệc</option>
-            <option value="credit-card">VN-Pay</option>
-            <option value="momo">Ví Momo</option>
-          </select>
-        </div>
-
-        <div
-          v-if="
-            selectedPaymentMethod === 'credit-card' ||
-            selectedPaymentMethod === 'momo'
-          "
-        >
-          <label>
+        <div class="basic-details">
+          <div class="form-group">
+            <label for="number-of-tables">Số bàn:</label>
             <input
-              type="checkbox"
-              v-model="payFull"
-              @change="handlePayFullChange"
+              type="number"
+              id="number-of-tables"
+              v-model.number="numberOfTables"
+              disabled
+              class="form-control"
             />
-            Trả hết
-          </label>
-        </div>
+          </div>
 
-        <div class="form-group">
-          <label for="note">Ghi chú:</label>
-          <textarea
-            id="note"
-            v-model="note"
-            placeholder="Nhập thêm yêu cầu nếu có"
-          ></textarea>
+          <div class="form-group">
+            <label for="party-type">Loại tiệc:</label>
+            <input
+              type="text"
+              id="party-type"
+              v-model="selectedPackage.category"
+              readonly
+              class="form-control"
+            />
+          </div>
         </div>
       </div>
 
-      <div class="checkout-summary">
-        <p>
-          Tổng tiền của gói:
-          <strong>{{ totalPriceForTables }} đ</strong>
-        </p>
-        <p>
-          Số tiền đặt cọc:
-          <strong>{{ depositAmount || calculatedDeposit }} đ</strong>
-        </p>
-        <button
-          @click="confirmOrder"
-          class="confirm-button"
-          :disabled="isSubmitting"
-        >
-          Xác nhận đặt tiệc
-        </button>
-      </div>
+      <!-- Party Details Form -->
+      <form class="party-details-form" @submit.prevent="confirmOrder">
+        <!-- Address Section -->
+        <div class="form-section">
+          <h4 class="section-title">Địa Chỉ Tổ Chức Tiệc</h4>
+          <div class="address-grid">
+            <div class="form-group">
+              <label for="city">Tỉnh/Thành phố:</label>
+              <select
+                v-model="selectedCity"
+                @change="onCityChange"
+                class="form-control"
+                id="city"
+                required
+              >
+                <option value="">Chọn Tỉnh/Thành phố</option>
+                <option v-for="city in cities" :key="city.Id" :value="city.Id">
+                  {{ city.Name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="district">Quận/Huyện:</label>
+              <select
+                v-model="selectedDistrict"
+                @change="onDistrictChange"
+                class="form-control"
+                id="district"
+                required
+              >
+                <option value="">Chọn Quận/Huyện</option>
+                <option
+                  v-for="district in districts"
+                  :key="district.Id"
+                  :value="district.Id"
+                >
+                  {{ district.Name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="ward">Phường/Xã:</label>
+              <select
+                v-model="selectedWard"
+                class="form-control"
+                id="ward"
+                required
+              >
+                <option value="">Chọn Phường/Xã</option>
+                <option v-for="ward in wards" :key="ward.Id" :value="ward.Id">
+                  {{ ward.Name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="specific-address">Địa chỉ cụ thể:</label>
+              <input
+                type="text"
+                id="specific-address"
+                v-model="specificAddress"
+                class="form-control"
+                placeholder="Số nhà, tên đường..."
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Date and Time Section -->
+        <div class="form-section">
+          <h4 class="section-title">Thời Gian Tổ Chức</h4>
+          <div class="datetime-grid">
+            <div class="form-group">
+              <label for="party-date">Ngày diễn ra:</label>
+              <input
+                type="date"
+                id="party-date"
+                v-model="partyDate"
+                class="form-control"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="party-time">Giờ bắt đầu:</label>
+              <input
+                type="time"
+                id="party-time"
+                v-model="partyTime"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact and Payment Section -->
+        <div class="form-section">
+          <h4 class="section-title">Thông Tin Thanh Toán</h4>
+          <div class="payment-grid">
+            <div class="form-group">
+              <label for="phone-number">Số điện thoại liên hệ:</label>
+              <input
+                type="tel"
+                id="phone-number"
+                v-model="phoneNumber"
+                class="form-control"
+                placeholder="0xxxxxxxxx"
+                required
+                pattern="[0-9]{10}"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="payment-method">Phương thức thanh toán:</label>
+              <select
+                v-model="selectedPaymentMethod"
+                class="form-control"
+                id="payment-method"
+                required
+              >
+                <option value="cash">Thanh toán sau tiệc</option>
+                <option value="credit-card">VN-Pay</option>
+                <option value="momo">Ví Momo</option>
+              </select>
+            </div>
+
+            <div v-if="showDepositInput" class="form-group">
+              <label for="deposit-amount">Số tiền đặt cọc:</label>
+              <input
+                type="number"
+                id="deposit-amount"
+                v-model.number="depositAmount"
+                class="form-control"
+                :placeholder="`Tối thiểu ${calculatedDeposit} đ`"
+                @input="handleDepositInput"
+              />
+            </div>
+
+            <div
+              v-if="selectedPaymentMethod !== 'cash'"
+              class="form-group checkbox-group"
+            >
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  v-model="payFull"
+                  @change="handlePayFullChange"
+                />
+                <span>Thanh toán toàn bộ</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note Section -->
+        <div class="form-section">
+          <h4 class="section-title">Ghi Chú</h4>
+          <div class="form-group">
+            <textarea
+              v-model="note"
+              class="form-control"
+              rows="4"
+              placeholder="Nhập thêm yêu cầu đặc biệt nếu có..."
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="order-summary">
+          <div class="summary-row">
+            <span>Tổng tiền:</span>
+            <strong>{{ totalPriceForTables }} đ</strong>
+          </div>
+          <div class="summary-row">
+            <span>Số tiền đặt cọc:</span>
+            <strong>{{ depositAmount || calculatedDeposit }} đ</strong>
+          </div>
+          <button type="submit" class="confirm-button" :disabled="isSubmitting">
+            {{ isSubmitting ? "Đang xử lý..." : "Xác nhận đặt tiệc" }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -542,249 +593,237 @@ export default {
 
 <style scoped>
 .checkout-container {
-  padding: 40px;
-  max-width: 1000px;
-  margin: 0 auto;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 2rem auto;
   background-color: #fff;
-  border-radius: 15px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .title {
-  margin-top: 120px;
-  font-size: 30px;
-  font-weight: bold;
-  color: #2c3e50;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a365d;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
 }
 
 .loading {
-  text-align: center;
-  font-size: 18px;
-  color: #777;
-}
-
-.order-summary {
-  list-style: none;
-  padding: 0;
-  margin-bottom: 20px;
-}
-
-.order-item {
-  border-bottom: 1px solid #ddd;
-  padding: 15px 0;
-  display: flex;
-  justify-content: space-between;
-}
-
-.item-details {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.item-image {
-  width: 80px;
-  height: 80px;
-  margin-right: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  object-fit: cover;
-}
-
-.item-info {
-  flex-grow: 1;
-}
-
-.item-name {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.item-type {
-  font-size: 14px;
-  color: #666;
-}
-
-.item-note {
-  font-size: 12px;
-  color: #ff0000;
-}
-
-.item-pricing {
-  text-align: right;
-}
-
-.item-pricing p {
-  margin: 5px 0;
-}
-.table-selection,
-.payment-method,
-.home-party {
-  margin-top: 25px;
-}
-.form-group {
-  margin-top: 10px;
-}
-.form-group label {
-  font-size: 16px;
-  font-weight: bold;
-  color: #34495e;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.form-group input,
-.form-group textarea,
-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-select:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-  outline: none;
-}
-
-select {
-  appearance: none;
-  background-color: #fff;
-  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="none" stroke="%23999" stroke-width="0.8" d="M2 0L0 2h4L2 0zM2 5L0 3h4l-2 2z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 10px;
-}
-
-select::-ms-expand {
-  display: none;
-}
-
-.form-group input,
-.form-group textarea,
-select {
-  margin-bottom: 15px;
-}
-
-.checkout-summary p {
-  font-size: 16px;
-  color: #2c3e50;
-  font-weight: bold;
-}
-
-.confirm-button {
-  background-color: #27ae60;
-  color: white;
-  border: none;
-  padding: 15px 25px;
-  cursor: pointer;
-  font-size: 20px;
-  font-weight: bold;
-  border-radius: 10px;
-  transition: background-color 0.3s ease;
-}
-
-.confirm-button:hover {
-  background-color: #2ecc71;
-}
-.party-datetime-selection,
-.party-time-selection {
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
+  align-items: center;
+  padding: 2rem;
 }
 
-.party-datetime-selection label,
-.party-time-selection label {
-  font-size: 16px;
-  font-weight: bold;
-  color: #34495e;
-  margin-bottom: 8px;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.party-datetime-selection input,
-.party-time-selection input {
-  padding: 12px 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>')
-    no-repeat right 15px center;
-  background-color: #f9f9f9;
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.party-time-selection input {
-  background: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>')
-    no-repeat right 15px center;
+.checkout-content {
+  display: grid;
+  gap: 2rem;
 }
 
-.party-datetime-selection input:focus,
-.party-time-selection input:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-  outline: none;
-}
-.deposit-section {
-  margin-top: 20px;
+/* Package Summary Card */
+.summary-card {
+  background-color: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.deposit-section label {
-  font-size: 16px;
-  font-weight: bold;
-  color: #34495e;
-  margin-bottom: 8px;
+.package-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.package-image {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.package-details h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.description {
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+.price-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.original-price {
+  color: #718096;
+  text-decoration: line-through;
+}
+
+.promotion-price {
+  color: #2f855a;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* Form Sections */
+.form-section {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Grid Layouts */
+.address-grid,
+.datetime-grid,
+.payment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
   display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
 }
 
-.deposit-section input {
+.form-control {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background-color: #f9f9f9;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
 }
 
-.deposit-section input::placeholder {
-  font-style: italic;
-  color: #999;
-}
-
-.deposit-section input:focus {
-  border-color: #e67e22;
-  box-shadow: 0 0 5px rgba(230, 126, 34, 0.5);
+.form-control:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
   outline: none;
 }
-.no-arrows::-webkit-outer-spin-button,
-.no-arrows::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.party-type-selection input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+.form-control::placeholder {
+  color: #a0aec0;
 }
 
-.party-type-selection input:focus {
-  border-color: #28a745;
-  box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
-  outline: none;
+/* Checkbox Styling */
+.checkbox-group {
+  margin-top: 1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+/* Order Summary */
+.order-summary {
+  background-color: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-top: 2rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+/* Button Styling */
+.confirm-button {
+  width: 100%;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  background-color: #2f855a;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirm-button:hover:not(:disabled) {
+  background-color: #276749;
+}
+
+.confirm-button:disabled {
+  background-color: #9ae6b4;
+  cursor: not-allowed;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .checkout-container {
+    padding: 1rem;
+    margin: 1rem;
+  }
+
+  .package-info {
+    grid-template-columns: 1fr;
+  }
+
+  .package-image {
+    width: 100%;
+    height: auto;
+  }
 }
 </style>

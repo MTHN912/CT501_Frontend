@@ -1,5 +1,11 @@
 <template>
   <div class="food-management">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <span>Dashboard</span>
+      <i class="fas fa-chevron-right"></i>
+      <span>Quản Lý Món Ăn</span>
+    </div>
     <div class="header">
       <h2>Quản Lý Món Ăn</h2>
       <div class="search-container">
@@ -46,11 +52,29 @@
     <table class="food-table">
       <thead>
         <tr>
-          <th @click="sortBy('name')">Tên món ⬍</th>
-          <th @click="sortBy('description')">Mô tả ⬍</th>
-          <th @click="sortBy('category')">Danh mục ⬍</th>
-          <th @click="sortBy('averageRating')">Đánh Giá ⬍</th>
-          <th @click="sortBy('price')">Đơn Giá ⬍</th>
+          <th @click="sortBy('name')" class="sortable-header">
+            <div class="header-content">
+              Tên món <i class="fas fa-sort"></i>
+            </div>
+          </th>
+          <th @click="sortBy('description')" class="sortable-header">
+            <div class="header-content">Mô tả <i class="fas fa-sort"></i></div>
+          </th>
+          <th @click="sortBy('category')" class="sortable-header">
+            <div class="header-content">
+              Danh mục <i class="fas fa-sort"></i>
+            </div>
+          </th>
+          <th @click="sortBy('averageRating')" class="sortable-header">
+            <div class="header-content">
+              Đánh Giá <i class="fas fa-sort"></i>
+            </div>
+          </th>
+          <th @click="sortBy('price')" class="sortable-header">
+            <div class="header-content">
+              Đơn Giá <i class="fas fa-sort"></i>
+            </div>
+          </th>
           <th>Hành động</th>
         </tr>
       </thead>
@@ -94,10 +118,12 @@
 
     <!-- Phân trang -->
     <div class="pagination">
-      <button @click="prevPage" :disabled="currentPage === 1">Trước</button>
+      <button @click="prevPage" :disabled="currentPage === 1">
+        <i class="fas fa-chevron-left"></i> Trước
+      </button>
       <span>{{ currentPage }} / {{ totalPages }}</span>
       <button @click="nextPage" :disabled="currentPage === totalPages">
-        Tiếp
+        Tiếp <i class="fas fa-chevron-right"></i>
       </button>
     </div>
 
@@ -582,15 +608,32 @@ export default {
   min-height: 100vh;
 }
 
+.breadcrumb {
+  margin-bottom: 20px;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.breadcrumb i {
+  font-size: 0.75rem;
+}
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .header h2 {
-  color: white;
+  color: #f8fafc;
+  font-size: 2rem;
+  font-weight: 600;
 }
 .header h1 {
   color: #f8fafc;
@@ -643,23 +686,26 @@ export default {
 
 .food-table {
   width: 100%;
+  background: #1e293b;
+  border-radius: 12px;
   border-collapse: separate;
-  border-spacing: 0 10px;
-  text-align: left;
+  border-spacing: 0;
+  overflow: hidden;
 }
 
 .food-table th,
 .food-table td {
-  padding: 15px;
-  background-color: #1e293b;
+  padding: 25px;
+  text-align: left;
 }
 
 .food-table th {
-  cursor: pointer;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.875rem;
+  background: #262f3f;
+  font-weight: 600;
   color: #94a3b8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .food-table tr {
@@ -683,32 +729,32 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
-.pagination button {
-  background-color: #3b82f6;
+.pagination button,
+.pagination select {
+  margin: 0 5px;
+  padding: 8px 12px;
+  background-color: #1d283c;
   color: white;
-  border: none;
-  padding: 10px 20px;
-  margin: 0 10px;
+  border: 1px solid #444;
+  border-radius: 5px;
   cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
-}
-
-.pagination button:hover:not(:disabled) {
-  background-color: #2563eb;
 }
 
 .pagination button:disabled {
-  background-color: #64748b;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination span {
-  font-size: 1rem;
-  color: #f8fafc;
+.pagination select {
+  appearance: none;
+  padding-right: 25px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  background-repeat: no-repeat;
+  background-position-x: 100%;
+  background-position-y: 5px;
 }
 
 .modal {
@@ -838,8 +884,11 @@ export default {
 }
 .tabs {
   display: flex;
-  align-items: center;
-  margin-bottom: 1rem; /* Khoảng cách dưới tabs */
+  gap: 15px;
+  margin-bottom: 30px;
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 12px;
 }
 .dropdown {
   position: relative; /* Đặt vị trí cho dropdown */
@@ -885,23 +934,26 @@ export default {
 }
 
 .tabs button {
-  padding: 10px 20px;
-  background-color: #1e293b;
+  padding: 12px 24px;
+  background-color: transparent;
   color: #f8fafc;
-  border: none;
+  border: 1px solid #334155;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  white-space: nowrap;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .tabs button:hover {
-  background-color: #334155;
+  background: #334155;
 }
 
-.tabs .active {
-  background-color: #3b82f6;
+.tabs button.active {
+  background: #2563eb;
+  border-color: #2563eb;
 }
 .restore-button {
   background-color: #4caf50;
@@ -909,5 +961,19 @@ export default {
   border: none;
   padding: 5px 10px;
   cursor: pointer;
+}
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sortable-header {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sortable-header:hover {
+  color: #f8fafc;
 }
 </style>

@@ -15,6 +15,7 @@ import CartView from "../views/Cart.vue";
 import ContactView from "../views/Contact.vue";
 import DishDetail from "../views/DishDetail.vue";
 import EventView from "../views/Event.vue";
+import FavouriteList from "../views/Favourite.vue";
 import ForgotPassword from "../views/ForgotPassword.vue";
 import HomeView from "../views/Home.vue";
 import LoginView from "../views/Login.vue";
@@ -175,6 +176,11 @@ const routes = [
     path: '/privacysettings',
     name: 'PrivacySettings',
     component: PrivacySettings,
+  },
+  {
+    path: '/favouritelist',
+    name: 'FavouriteList',
+    component: FavouriteList,
   },
   {
     path: "/login",

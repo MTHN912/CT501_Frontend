@@ -252,7 +252,7 @@ export default {
           .finally(() => {
             this.isLoading = false; // Tắt loading sau khi hoàn tất
           });
-      }, 2000);
+      }, 500);
     },
     // Hiện/Ẩn danh sách danh mục
     toggleCategory() {

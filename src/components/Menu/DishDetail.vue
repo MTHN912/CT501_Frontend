@@ -35,9 +35,10 @@
       </div>
 
       <!-- Nút yêu thích -->
-      <button @click="toggleFavorite" class="favorite-button">
-        <i :class="dish.favorite ? 'fas fa-heart' : 'far fa-heart'"></i>
-        <span>{{ dish.favorite ? "Đã yêu thích" : "Yêu thích" }}</span>
+      <!-- Nút yêu thích -->
+      <button @click="toggleFavorite(dish)" class="favorite-button">
+        <i :class="isFavorite(dish) ? 'fas fa-heart' : 'far fa-heart'"></i>
+        <span>{{ isFavorite(dish) ? "Đã yêu thích" : "Yêu thích" }}</span>
       </button>
 
       <!-- Nút chọn số lượng món -->
@@ -77,6 +78,7 @@ export default {
       totalReviews: 0,
       successMessage: "",
       showMessage: false,
+      favoriteDishes: [],
     };
   },
   created() {
@@ -107,8 +109,64 @@ export default {
     async fetchAverageRating(dishId) {
       await this.$store.dispatch("fetchAverageRating", dishId); // Dispatch action từ store
     },
-    toggleFavorite() {
-      this.dish.favorite = !this.dish.favorite;
+    async toggleFavorite(dish) {
+      try {
+        const dishId = this.$route.params.id;
+        const token = localStorage.getItem("token");
+
+        // Thay đổi trạng thái tạm thời để phản hồi nhanh trên giao diện
+        if (this.isFavorite(dish)) {
+          this.favoriteDishes = this.favoriteDishes.filter(
+            (id) => id !== dish._id
+          );
+        } else {
+          this.favoriteDishes.push(dish._id);
+        }
+
+        // Gọi API chuyển đổi trạng thái yêu thích
+        await axios.patch(
+          `http://localhost:3000/dish/dishes/${dishId}/favorite`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        await this.fetchFavoriteDishes();
+      } catch (error) {
+        console.error("Error toggling favorite:", error);
+        // Hoàn tác trạng thái yêu thích nếu có lỗi
+        if (this.isFavorite(dish)) {
+          this.favoriteDishes = this.favoriteDishes.filter(
+            (id) => id !== dish._id
+          );
+        } else {
+          this.favoriteDishes.push(dish._id);
+        }
+      }
+    },
+    isFavorite(dish) {
+      // Kiểm tra xem dish có trong danh sách yêu thích không
+      return this.favoriteDishes.includes(dish._id);
+    },
+    async fetchFavoriteDishes() {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          // Gọi API để lấy danh sách món ăn yêu thích của người dùng
+          const response = await axios.get(
+            "http://localhost:3000/dish/getFavoriteDish",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          console.log("Fetched favorite dishes:", response.data);
+          // Lưu danh sách ID món ăn yêu thích vào `favoriteDishes`
+          this.favoriteDishes = response.data.map((dish) => dish._id);
+        }
+      } catch (error) {
+        console.error("Error fetching favorite dishes:", error);
+      }
     },
     selectDish() {
       const cartItem = this.$store.state.cart.items.find(
@@ -175,6 +233,7 @@ export default {
     window.scrollTo(0, 0);
     this.fetchDishDetails();
     this.fetchAverageRating();
+    this.fetchFavoriteDishes();
   },
 };
 </script>
