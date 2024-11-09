@@ -1,14 +1,16 @@
 <template>
-  <div class="addpackagecontainer">
+  <div class="updatepackagecontainer">
     <div class="breadcrumb">
       <a href="/admin">Dashboard</a>
       <i class="fas fa-chevron-right"></i>
-      <span>Tạo Gói Tiệc</span>
+      <a href="/adminpackage">Danh Sách Gói Tiệc</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Cập Nhật Gói Tiệc</span>
     </div>
     <div class="header">
-      <h2 class="text-center mb-4">Thêm Gói Tiệc Mới</h2>
+      <h2 class="text-center mb-4">Cập Nhật Thông Tin Gói Tiệc</h2>
     </div>
-    <form @submit.prevent="createPackage">
+    <form @submit.prevent="updatePackage">
       <!-- Tên gói -->
       <div class="form-group mb-3">
         <label for="name">Tên gói:</label>
@@ -95,7 +97,6 @@
       </div>
 
       <!-- Hình ảnh -->
-      <!-- Thay đổi trường Hình ảnh (URL) thành Tải lên file -->
       <div class="form-group mb-3">
         <label for="image">Hình ảnh:</label>
         <input
@@ -128,7 +129,6 @@
                 alt="Dish Image"
                 style="width: 50px; height: 50px; margin-right: 25px"
               />
-              <!-- Nút bỏ chọn -->
               <button
                 type="button"
                 class="btn btn-danger btn-sm ml-2"
@@ -141,8 +141,8 @@
         </ul>
       </div>
 
-      <!-- Nút tạo gói tiệc -->
-      <button type="submit" class="btn btn-success">Tạo Gói Tiệc</button>
+      <!-- Nút cập nhật gói tiệc -->
+      <button type="submit" class="btn btn-success">Cập Nhật Gói Tiệc</button>
     </form>
 
     <!-- Thông báo -->
@@ -163,7 +163,6 @@
             </button>
           </div>
           <div class="modal-body">
-            <!-- Danh mục món ăn -->
             <select
               v-model="selectedCategory"
               class="form-control mb-3"
@@ -177,8 +176,6 @@
                 {{ category.name }}
               </option>
             </select>
-
-            <!-- Danh sách món ăn -->
             <ul class="list-group">
               <li
                 class="list-group-item"
@@ -201,25 +198,24 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 
 export default {
+  props: ["packageId"],
   data() {
     return {
       packageData: {
         name: "",
-        price: 0,
         tables: 0,
         promotion: 0,
         category: "",
         description: "",
-        image: "",
-        combo: "",
+        combo: [],
       },
       message: "",
       isModalOpen: false,
+      selectedCategory: null,
       categories: [],
-      categoryPackages: [],
-      selectedCategory: "",
       dishes: [],
       selectedDishes: [],
       calculatedPrice: 0,
@@ -227,24 +223,72 @@ export default {
     };
   },
   methods: {
-    // Mở modal
-    openModal() {
-      this.isModalOpen = true;
-      this.fetchCategories();
+    async fetchPackageDetails() {
+      try {
+        const packageId = this.packageId || this.$route.params.packageId; // Lấy packageId từ props hoặc route params
+        if (!packageId) {
+          console.error("Không tìm thấy ID của gói tiệc để lấy thông tin.");
+          return;
+        }
+
+        const response = await axios.get(
+          `http://localhost:3000/package/getPackageById/${packageId}` // Sử dụng packageId
+        );
+        this.packageData = response.data.data; // Giả sử dữ liệu gói tiệc ở trong response.data.data
+        this.selectedDishes = this.packageData.combo || [];
+        this.calculatePrice();
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin gói tiệc:", error);
+      }
     },
-    // Đóng modal
-    closeModal() {
-      this.isModalOpen = false;
+
+    async updatePackage() {
+      try {
+        const packageId = this.packageId || this.$route.params.packageId; // Lấy packageId từ props hoặc route params
+        if (!packageId) {
+          this.message = "Không tìm thấy ID của gói tiệc để cập nhật";
+          return;
+        }
+        this.packageData.price = this.calculatedPrice;
+        const requestData = {
+          ...this.packageData,
+          combo: this.selectedDishes.map((dish) => dish._id),
+        };
+        const response = await axios.put(
+          `http://localhost:3000/package/updatePackage/${packageId}`, // Sử dụng packageId
+          requestData
+        );
+        Swal.fire({
+          icon: "success",
+          title: "Cập nhật thành công!",
+          text: response.data.message,
+          timer: 2000, // Thời gian hiển thị thông báo (2 giây)
+          showConfirmButton: false,
+        });
+
+        // Chuyển hướng về trang /adminpackage sau 2 giây
+        setTimeout(() => {
+          this.$router.push("/adminpackage");
+        }, 2000);
+      } catch (error) {
+        this.message = "Có lỗi xảy ra khi cập nhật gói tiệc";
+      }
     },
-    // Lấy danh mục món ăn
+
+    calculatePrice() {
+      const basePrice = 100000 * this.packageData.tables;
+      const discount = (basePrice * this.packageData.promotion) / 100;
+      this.calculatedPrice = basePrice;
+      this.discountedPrice = basePrice - discount;
+    },
     async fetchCategoryPackages() {
       try {
         const response = await axios.get(
           "http://localhost:3000/categorypackage/getCategoryPackage"
         );
-        this.categoryPackages = response.data.data; // Lưu danh sách danh mục vào state
+        this.categoryPackages = response.data.data;
       } catch (error) {
-        console.error("Lỗi khi lấy danh mục package:", error);
+        console.error("Lỗi khi lấy danh mục gói tiệc:", error);
       }
     },
     async fetchCategories() {
@@ -257,7 +301,6 @@ export default {
         console.error("Lỗi khi lấy danh mục:", error);
       }
     },
-    // Lấy danh sách món ăn dựa trên danh mục đã chọn
     async fetchDishes() {
       try {
         const response = await axios.get("http://localhost:3000/dish/getDish", {
@@ -295,23 +338,11 @@ export default {
         (this.calculatedPrice * this.packageData.promotion) / 100;
       this.discountedPrice = this.calculatedPrice - discount;
     },
-
-    async createPackage() {
-      try {
-        this.packageData.price = this.calculatedPrice;
-        const requestData = {
-          ...this.packageData,
-          combo: this.selectedDishes.map((dish) => dish._id),
-        };
-        const response = await axios.post(
-          "http://localhost:3000/package/addPackage",
-          requestData
-        );
-        this.message = response.data.message;
-        this.resetForm();
-      } catch (error) {
-        this.message = "Có lỗi xảy ra khi tạo gói tiệc";
-      }
+    openModal() {
+      this.isModalOpen = true;
+    },
+    closeModal() {
+      this.isModalOpen = false;
     },
     async uploadImage(event) {
       const file = event.target.files[0]; // Lấy file đã chọn
@@ -339,30 +370,17 @@ export default {
         }
       }
     },
-    resetForm() {
-      this.packageData = {
-        name: "",
-        price: 0,
-        tables: 0,
-        promotion: 0,
-        category: "",
-        description: "",
-        image: "",
-        combo: "",
-      };
-      this.selectedDishes = [];
-      this.calculatedPrice = 0;
-      this.discountedPrice = 0;
-    },
   },
   created() {
     this.fetchCategoryPackages();
+    this.fetchPackageDetails();
+    this.fetchCategories();
   },
 };
 </script>
 
 <style scoped>
-.addpackagecontainer {
+.updatepackagecontainer {
   background-color: #101827;
   padding: 20px;
   color: #f1f5f9;
@@ -393,7 +411,6 @@ h2 {
   color: #f1f5f9;
   text-align: center;
 }
-
 .form-control {
   background-color: #1e293b;
   color: #f1f5f9;
@@ -403,7 +420,6 @@ h2 {
 .form-control::placeholder {
   color: #94a3b8;
 }
-
 label {
   color: #94a3b8;
 }

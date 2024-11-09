@@ -93,8 +93,18 @@
                 <p>
                   <strong>Ngày tiệc:</strong> {{ formatDate(order.eventDate) }}
                 </p>
-                <p><strong>Địa Chỉ:</strong> {{ order.partyAddress }}</p>
+                <p>
+                  <strong>Địa Chỉ:</strong>
+                  <span
+                    v-if="order.partyAddress.length > 50"
+                    :title="order.partyAddress"
+                  >
+                    {{ order.partyAddress.slice(0, 50) + "..." }}
+                  </span>
+                  <span v-else>{{ order.partyAddress }}</span>
+                </p>
               </div>
+
               <div class="info-column">
                 <p>
                   <strong>Trạng Thái Thanh Toán:</strong> {{ order.status }}

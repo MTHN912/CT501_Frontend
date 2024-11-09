@@ -9,6 +9,7 @@ import AdminOrder from "../views/Admin/Order/AdminOrder.vue";
 import AdminOrderPackage from "../views/Admin/Order/AdminOrderPackage.vue";
 import AdminAddPackage from "../views/Admin/Package/AdminAddPackage.vue";
 import AdminPackage from "../views/Admin/Package/AdminPackage.vue";
+import UpdatePackageDetails from "../views/Admin/Package/UpdatePackageDetails.vue";
 import statistical from "../views/Admin/Statistical/statistical.vue";
 import AdminUser from "../views/Admin/User/AdminUser.vue";
 import CartView from "../views/Cart.vue";
@@ -181,6 +182,12 @@ const routes = [
     path: '/favouritelist',
     name: 'FavouriteList',
     component: FavouriteList,
+  },
+  {
+    path: "/:packageId-updatepackage",
+    name: "UpdatePackageDetails",
+    component: UpdatePackageDetails,
+    props: true,
   },
   {
     path: "/login",

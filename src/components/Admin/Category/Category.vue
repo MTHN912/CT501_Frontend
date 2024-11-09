@@ -1,5 +1,11 @@
 <template>
   <div class="category-management">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="/admin">Dashboard</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Quản Lý Danh Mục</span>
+    </div>
     <div class="header">
       <h2 class="title">Quản Lý Danh Mục</h2>
       <div class="header-actions">
@@ -13,22 +19,6 @@
           />
         </div>
 
-        <!-- Thay bộ chọn loại danh mục bằng hai tab -->
-        <div class="tab-selector">
-          <button
-            :class="{ active: selectedTab === 'food' }"
-            @click="selectTab('food')"
-          >
-            Danh mục món ăn
-          </button>
-          <button
-            :class="{ active: selectedTab === 'package' }"
-            @click="selectTab('package')"
-          >
-            Danh mục tiệc
-          </button>
-        </div>
-
         <!-- Nút thêm danh mục thay đổi theo loại tab đang chọn -->
         <button @click="openModal" class="add-button">
           <i class="fas fa-plus"></i>
@@ -36,7 +26,21 @@
         </button>
       </div>
     </div>
-
+    <!-- Thay bộ chọn loại danh mục bằng hai tab -->
+    <div class="tabs">
+      <button
+        :class="{ active: selectedTab === 'food' }"
+        @click="selectTab('food')"
+      >
+        Danh mục món ăn
+      </button>
+      <button
+        :class="{ active: selectedTab === 'package' }"
+        @click="selectTab('package')"
+      >
+        Danh mục tiệc
+      </button>
+    </div>
     <div class="table-container">
       <h3 v-if="selectedTab === 'food'">Danh Mục Món Ăn</h3>
       <h3 v-else>Danh Mục Tiệc</h3>
@@ -114,11 +118,8 @@
 
       <!-- Nút phân trang -->
       <div class="pagination">
-        <button @click="prevPage" :disabled="currentPage === 1">
-          Trang trước
-        </button>
-        <span
-          >Trang
+        <button @click="prevPage" :disabled="currentPage === 1">Trước</button>
+        <span>
           {{ selectedTab === "food" ? currentPageFood : currentPagePackage }} /
           {{
             selectedTab === "food" ? totalPagesFood : totalPagesPackage
@@ -132,7 +133,7 @@
               : currentPagePackage === totalPagesPackage
           "
         >
-          Trang sau
+          Tiếp
         </button>
       </div>
     </div>
@@ -471,26 +472,45 @@ export default {
 
 <style scoped>
 .category-management {
-  padding: 2rem;
+  padding: 20px;
   background-color: #101827;
-  color: #fff;
+  color: #f8fafc;
+  width: 100%;
   min-height: 100vh;
+}
+.breadcrumb {
+  margin-bottom: 20px;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.breadcrumb i {
+  font-size: 0.75rem;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1rem 0;
+  margin-bottom: 30px;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
-
 .title {
-  font-size: 1.8rem;
+  color: #f8fafc;
+  font-size: 2rem;
   font-weight: 600;
-  color: #fff;
 }
-
+h3 {
+  color: #f8fafc;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
 .header-actions {
   display: flex;
   gap: 1rem;
@@ -618,27 +638,32 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 20px;
 }
 
-.pagination-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #374151;
-  background-color: #1f2937;
-  color: #fff;
-  border-radius: 0.375rem;
+.pagination button,
+.pagination select {
+  margin: 0 5px;
+  padding: 8px 12px;
+  background-color: #1d283c;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 5px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.pagination-btn:hover:not(:disabled) {
-  background-color: #374151;
-}
-
-.pagination-btn:disabled {
+.pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.pagination select {
+  appearance: none;
+  padding-right: 25px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  background-repeat: no-repeat;
+  background-position-x: 100%;
+  background-position-y: 5px;
 }
 
 .page-info {
@@ -781,5 +806,36 @@ export default {
     transform: translateY(0);
     opacity: 1;
   }
+}
+.tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+.tabs button {
+  padding: 12px 24px;
+  background-color: transparent;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabs button:hover {
+  background: #334155;
+}
+
+.tabs button.active {
+  background: #2563eb;
+  border-color: #2563eb;
 }
 </style>

@@ -2,7 +2,7 @@
   <div class="food-management">
     <!-- Breadcrumb -->
     <div class="breadcrumb">
-      <span>Dashboard</span>
+      <a href="/admin">Dashboard</a>
       <i class="fas fa-chevron-right"></i>
       <span>Quản Lý Món Ăn</span>
     </div>
@@ -118,12 +118,10 @@
 
     <!-- Phân trang -->
     <div class="pagination">
-      <button @click="prevPage" :disabled="currentPage === 1">
-        <i class="fas fa-chevron-left"></i> Trước
-      </button>
+      <button @click="prevPage" :disabled="currentPage === 1">Trước</button>
       <span>{{ currentPage }} / {{ totalPages }}</span>
       <button @click="nextPage" :disabled="currentPage === totalPages">
-        Tiếp <i class="fas fa-chevron-right"></i>
+        Tiếp
       </button>
     </div>
 

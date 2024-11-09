@@ -1,6 +1,8 @@
 <template>
   <div class="content">
-    <h1 class="text-center text-primary mb-5">Chào Mừng Đến Admin Dashboard</h1>
+    <h1 class="text-center text-primary mb-5">
+      Chào Mừng Đến Dashboard Quản Lý
+    </h1>
     <p class="text-center">
       Chọn một trong các mục điều hướng ở thanh bên để quản lý hệ thống.
     </p>
@@ -11,13 +13,15 @@
 export default {
   name: "AdminHome",
 };
-</script> 
+</script>
 
 <style scoped>
 .content {
-  flex: 1;
-  padding: 50px;
-  background-color: #f9fafb;
+  padding: 20px;
+  background-color: #101827;
+  color: #f8fafc;
+  width: 100%;
+  min-height: 100vh;
 }
 
 .welcome-title {

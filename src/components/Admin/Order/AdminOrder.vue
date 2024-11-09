@@ -2,7 +2,7 @@
   <div class="order-management">
     <!-- Breadcrumb -->
     <div class="breadcrumb">
-      <span>Dashboard</span>
+      <a href="/admin">Dashboard</a>
       <i class="fas fa-chevron-right"></i>
       <span>Quản Lý Đơn Tiệc</span>
     </div>
@@ -1134,7 +1134,14 @@ export default {
   border-spacing: 0;
   overflow: hidden;
 }
+.sortable-header {
+  cursor: pointer;
+  transition: color 0.2s;
+}
 
+.sortable-header:hover {
+  color: #f8fafc;
+}
 /* .order-table th {
   padding: 12px;
   text-align: center;

@@ -2,7 +2,7 @@
   <div class="user-management">
     <!-- Breadcrumb -->
     <div class="breadcrumb">
-      <span>Dashboard</span>
+      <a href="/admin">Dashboard</a>
       <i class="fas fa-chevron-right"></i>
       <span>Quản Lý Người Dùng</span>
     </div>
@@ -23,7 +23,7 @@
           <i class="fas fa-filter"></i>
           Lọc
         </button>
-        <button class="action-btn">
+        <button class="action-btn" @click="exportToExcel">
           <i class="fas fa-download"></i>
           Xuất Excel
         </button>
@@ -159,11 +159,10 @@
         @click="changePage(page - 1)"
         :disabled="page === 1"
       >
-        <i class="fas fa-chevron-left"></i>
         Trước
       </button>
       <div class="page-info">
-        <span>Trang {{ page }} / {{ totalPages }}</span>
+        <span>{{ page }} / {{ totalPages }}</span>
       </div>
       <button
         class="page-button"
@@ -171,7 +170,6 @@
         :disabled="page === totalPages"
       >
         Tiếp
-        <i class="fas fa-chevron-right"></i>
       </button>
     </div>
   </div>
@@ -191,6 +189,9 @@ export default {
       limit: 10, // Giới hạn số user mỗi trang
       totalPages: 0,
       tabStatus: "4", // Mặc định hiển thị tất cả người dùng
+      totalUsers: 0,
+      activeUsers: 0,
+      inactiveUsers: 0,
     };
   },
   computed: {
@@ -208,15 +209,6 @@ export default {
       }
 
       return filtered;
-    },
-    totalUsers() {
-      return this.users?.length || 0;
-    },
-    activeUsers() {
-      return this.users?.filter((user) => user.IS_ACTIVATED).length || 0;
-    },
-    inactiveUsers() {
-      return this.users?.filter((user) => !user.IS_ACTIVATED).length || 0;
     },
   },
   methods: {
@@ -278,6 +270,53 @@ export default {
         );
       }
     },
+    async fetchUserCounts() {
+      try {
+        const [allUsersResponse, activeUsersResponse, inactiveUsersResponse] =
+          await Promise.all([
+            axios.get("http://localhost:3000/user/getUsers", {
+              params: { tabStatus: "4" },
+            }),
+            axios.get("http://localhost:3000/user/getUsers", {
+              params: { tabStatus: "2" },
+            }),
+            axios.get("http://localhost:3000/user/getUsers", {
+              params: { tabStatus: "1" },
+            }),
+          ]);
+
+        this.totalUsers = allUsersResponse.data.totalCount;
+        this.activeUsers = activeUsersResponse.data.totalCount;
+        this.inactiveUsers = inactiveUsersResponse.data.totalCount;
+      } catch (error) {
+        console.error("Error fetching user counts:", error);
+      }
+    },
+    async exportToExcel() {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/export/exportExcel",
+          {
+            responseType: "blob", // Để nhận file dưới dạng Blob
+          }
+        );
+
+        // Tạo URL tạm thời và tự động tải xuống
+        const blob = new Blob([response.data], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "users.xlsx");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error exporting Excel:", error);
+      }
+    },
   },
   watch: {
     searchQuery() {
@@ -286,6 +325,7 @@ export default {
   },
   mounted() {
     this.fetchUsers();
+    this.fetchUserCounts();
   },
 };
 </script>

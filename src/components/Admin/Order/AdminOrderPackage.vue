@@ -1,7 +1,13 @@
 <template>
   <div class="order-management">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="/admin">Dashboard</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Đơn Mua Gói Tiệc</span>
+    </div>
     <div class="header">
-      <h2>Quản lý đơn gói tiệc</h2>
+      <h2>Đơn Mua Gói Tiệc</h2>
       <div class="search-container">
         <i class="fas fa-search search-icon"></i>
         <input
@@ -71,30 +77,58 @@
     <table class="order-table">
       <thead>
         <tr>
-          <th @click="sortBy('username')" class="narrow-column1">
+          <th
+            @click="sortBy('username')"
+            class="narrow-column1 sortable-header"
+          >
             Người đặt tiệc
           </th>
-          <th @click="sortBy('partyType')" class="narrow-column2">Loại Tiệc</th>
-          <th @click="sortBy('tables')" class="narrow-column">Số bàn</th>
-          <th @click="sortBy('eventDate')" class="narrow-column3">
+          <th
+            @click="sortBy('partyType')"
+            class="narrow-column2 sortable-header"
+          >
+            Loại Tiệc
+          </th>
+          <th @click="sortBy('tables')" class="narrow-column sortable-header">
+            Số bàn
+          </th>
+          <th
+            @click="sortBy('eventDate')"
+            class="narrow-column3 sortable-header"
+          >
             Ngày Diễn Ra
           </th>
-          <th @click="sortBy('partyStatus')" class="narrow-column4">
+          <th
+            @click="sortBy('partyStatus')"
+            class="narrow-column4 sortable-header"
+          >
             Trạng Thái Tiệc
           </th>
-          <th @click="sortBy('paymentMethod')" class="narrow-column5">
+          <th
+            @click="sortBy('paymentMethod')"
+            class="narrow-column5 sortable-header"
+          >
             Phương Thức Thanh Toán
           </th>
-          <th @click="sortBy('totalPrice')" class="narrow-column6">
+          <th
+            @click="sortBy('totalPrice')"
+            class="narrow-column6 sortable-header"
+          >
             Tổng Tiền
           </th>
-          <th @click="sortBy('depositAmount')" class="narrow-column9">
+          <th
+            @click="sortBy('depositAmount')"
+            class="narrow-column9 sortable-header"
+          >
             Đã Trả
           </th>
-          <th @click="sortBy('phoneNumber')" class="narrow-column7">
+          <th
+            @click="sortBy('phoneNumber')"
+            class="narrow-column7 sortable-header"
+          >
             Số Điện Thoại
           </th>
-          <th @click="sortBy('status')" class="narrow-column8">
+          <th @click="sortBy('status')" class="narrow-column8 sortable-header">
             Trạng Thái Thanh Toán
           </th>
           <th class="narrow-column10">Hành Động</th>
@@ -869,20 +903,36 @@ export default {
 .order-management {
   padding: 20px;
   background-color: #101827;
-  color: #fff;
+  color: #f8fafc;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
 }
-
+.breadcrumb {
+  margin-bottom: 20px;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.breadcrumb i {
+  font-size: 0.75rem;
+}
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .header h2 {
-  color: white;
+  color: #f8fafc;
+  font-size: 2rem;
+  font-weight: 600;
 }
 
 .search-container {
@@ -909,11 +959,15 @@ export default {
 /* Tabs CSS */
 .ustabs {
   display: flex;
+  margin-bottom: 30px;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
 }
 .tabs {
   display: flex;
   justify-content: flex-start;
-  margin-bottom: 20px;
 }
 
 /* Tab 'Tất cả' không hiển thị mũi tên */
@@ -921,7 +975,6 @@ export default {
   display: flex;
   align-items: center;
   margin-right: 10px;
-  margin-bottom: 20px;
 }
 
 .tab-all button {
@@ -1030,35 +1083,50 @@ export default {
 
 .order-table {
   width: 100%;
+  background: #1e293b;
+  border-radius: 12px;
   border-collapse: separate;
-  border-spacing: 0 8px;
-  margin-top: 20px;
+  border-spacing: 0;
+  overflow: hidden;
+}
+.sortable-header {
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
-.order-table th {
+.sortable-header:hover {
+  color: #f8fafc;
+}
+/* .order-table th {
   padding: 12px;
   text-align: center;
   background-color: #1d283c;
-}
-
+} */
+.order-table th,
 .order-table td {
   padding: 12px;
-  /* text-align: left; */
-  background-color: #1d283c;
+  text-align: left;
 }
+/* .order-table td {
+  padding: 12px;
+  background-color: #1d283c;
+} */
 
 .order-table th {
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 14px;
+  background: #262f3f;
+  font-weight: 600;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .order-table tr {
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
 }
 
 .order-table tr:hover {
-  background-color: #2c3e50;
+  background-color: #334155;
 }
 
 .narrow-column {
